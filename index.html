@@ -7,31 +7,33 @@
 <style>
 :root{--yellow:#ffe14d;--red:#c4160a;--ink:#111;color-scheme:dark}
 *{box-sizing:border-box}
-html,body{margin:0;min-height:100%;background:#050403;color:#ddd;
-  font-family:"Comic Sans MS","Chalkboard SE","Trebuchet MS",sans-serif}
-body{display:flex;flex-direction:column;align-items:center;gap:12px;
-  padding:12px 12px calc(12px + env(safe-area-inset-bottom,0px))}
-h1{margin:6px 0 0;font-family:Impact,"Arial Black",sans-serif;font-weight:400;
-  font-size:clamp(24px,5.5vw,44px);color:var(--red);text-shadow:2px 2px 0 #000,0 0 14px #600;transform:rotate(1deg)}
-#wrap{width:min(100%,960px);aspect-ratio:16/9;background:#000;border:4px solid #000;
-  box-shadow:0 0 0 2px #3a1a14,8px 8px 0 #300}
+html,body{margin:0;min-height:100%;background:#050403;color:#ddd;font-family:Arial,Helvetica,sans-serif}
+body{display:flex;flex-direction:column;align-items:center;gap:12px;padding:12px 12px calc(12px + env(safe-area-inset-bottom,0px))}
+h1{margin:6px 0 0;font-family:Arial,Helvetica,sans-serif;font-weight:700;letter-spacing:.16em;font-size:clamp(20px,4vw,30px);color:#e7e7e7;text-shadow:none;transform:none}
+#wrap{width:min(100%,960px);aspect-ratio:16/9;background:#000;border:4px solid #000;box-shadow:0 0 0 2px #3a1a14,8px 8px 0 #300}
 #wrap:fullscreen{width:100vw;height:100vh;aspect-ratio:auto;border:0;box-shadow:none}
 canvas{display:block;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;cursor:pointer}
-.btn{font:inherit;font-weight:700;color:var(--ink);background:var(--yellow);border:3px solid #000;
-  box-shadow:3px 3px 0 #000;padding:8px 14px;border-radius:4px;cursor:pointer}
+.btn{font:inherit;font-weight:700;color:var(--ink);background:var(--yellow);border:3px solid #000;box-shadow:3px 3px 0 #000;padding:8px 14px;border-radius:4px;cursor:pointer}
 .btn:hover{background:#fff}
 .btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000}
 .btn:focus-visible{outline:3px solid #fff;outline-offset:2px}
-#hint{max-width:760px;margin:0;text-align:center;font-size:14px;line-height:1.5;opacity:.75}
-#version{position:fixed;left:10px;bottom:7px;color:#666;font:11px "Comic Sans MS","Trebuchet MS",sans-serif}
+#fsRow{width:min(100%,960px);display:flex;justify-content:flex-end;margin-top:0}
+#below{width:min(100%,960px);display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:4px}
+#objective{max-width:760px;margin:0;text-align:center;font-size:14px;line-height:1.5;color:#c9c3b7}
+#hint{max-width:680px;margin:0;text-align:center;font-size:14px;line-height:1.5;color:#aaa;opacity:.75}
+#version{position:fixed;left:10px;bottom:7px;color:#666;font:11px Arial,Helvetica,sans-serif}
+@media(max-width:560px){#objective{font-size:13px}#hint{font-size:12px;line-height:1.5}#below{margin-top:2px}}
 </style>
 </head>
 <body>
-<h1>lars simulator lol</h1>
+<h1>LARS SIMULATOR</h1>
 <div id="wrap"><canvas id="game" aria-label="Lars Simulator"></canvas></div>
-<button class="btn" id="fsBtn" type="button">Fullscreen</button>
-<p id="hint">WASD move · Mouse look · Shift sprint · C crouch · E interact · Space jump · Q blink · Z hold eyes shut · T torch · RMB focus (scroll to adjust)</p>
-<div id="version">v0.0.6 · made by hand, bugs included</div>
+<div id="fsRow"><button class="btn" id="fsBtn" type="button">Fullscreen</button></div>
+<div id="below">
+  <p id="objective">Restore power by repairing all four generators, then find the exit. Lars is somewhere in the building. Keep your eyes open.</p>
+  <p id="hint">WASD MOVE · MOUSE LOOK · SHIFT SPRINT · C CROUCH · SPACE JUMP · E INTERACT · Q BLINK / HOLD EYES SHUT · Z LOOK BEHIND · T TORCH · RMB FOCUS · [ ] FOV</p>
+</div>
+<div id="version">v0.0.13</div>
 <script>
 /* =========================================================
    LARS SIMULATOR
@@ -183,7 +185,7 @@ function thud(vol, pan) {
 }
 function lstep() {                                       // his shoes: heavier + louder close up, muffled through walls, panned to where he is
   const v = Math.pow(clamp(1 - L.d / 17, 0, 1), 1.4), occ = (L.sees || L.d < 3) ? 1 : .5; if (v < .01) return;
-  const pan = Math.sin(Math.atan2(L.y - P.y, L.x - P.x) - P.a); sh(.14, .5 * v * occ, 'lowpass', 420 * occ + 120, 160, .7, pan, .004); thud(.55 * v * occ, pan);
+  const pan = Math.sin(Math.atan2(L.y - P.y, L.x - P.x) - (P.a + Math.PI * P.lookBack)); sh(.14, .5 * v * occ, 'lowpass', 420 * occ + 120, 160, .7, pan, .004); thud(.55 * v * occ, pan);
 }
 function silencePersistentAudio() {
   try {
@@ -198,42 +200,38 @@ function silencePersistentAudio() {
   } catch (e) {}
 }
 function jumpscareSound() {
-  // Keep the ambience muted, but let the scare itself punch through at normal volume.
-  noise(.32, .34);
-  beep(82, .62, 'sawtooth', .24, 29);
-  beep(720, .24, 'square', .13, 95);
-  sh(.48, .20, 'bandpass', 1450, 260, .75, 0, .012);
-  thud(.32, 0);
+  // Short, physical impact rather than an arcade sting.
+  noise(.42, .62);
+  thud(.9, 0);
+  sh(.34, .42, 'bandpass', 900, 130, .8, 0, .004);
+  try {
+    const n = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(68, n); o.frequency.exponentialRampToValueAtTime(24, n + .48);
+    g.gain.setValueAtTime(.42, n); g.gain.exponentialRampToValueAtTime(.001, n + .5);
+    o.connect(g).connect(masterG); o.start(n); o.stop(n + .51);
+  } catch (e) {}
 }
 function larsAudio() {                                   // runs every frame: you can always hear roughly where he is
   if (!lbG || !L) return;
   if (L.knocked) { lbG.gain.value = 0; if (chaseG) chaseG.gain.value = 0; return; }
-  const asleep = L.st === 'sleep', chase = L.st === 'chase', d = L.d, rel = Math.atan2(L.y - P.y, L.x - P.x) - P.a, v = clamp(1 - d / (asleep ? 9 : 17), 0, 1), occ = (L.sees || d < 3) ? 1 : .45;
+  const asleep = L.st === 'sleep', chase = L.st === 'chase', d = L.d, rel = Math.atan2(L.y - P.y, L.x - P.x) - (P.a + Math.PI * P.lookBack), v = clamp(1 - d / (asleep ? 9 : 17), 0, 1), occ = (L.sees || d < 3) ? 1 : .45;
   lbG.gain.value = v * v * (asleep ? .2 : chase ? .4 : .3) * occ; lbF.frequency.value = (asleep ? 230 : chase ? 780 : 560) * (occ < 1 ? .65 : 1); lbL.frequency.value = asleep ? .22 : chase ? 1 : .5;
   if (lbP) lbP.pan.value = Math.sin(rel);
 }
-function shout(vol, words) {                  // Lars's ordinary one-line comments
+function shout(vol, words) {                  // Lars's spoken lines are captioned only while he speaks
   try {
-    const line = pick(words || ['I SEE YOU', 'dont run', 'come here', 'LARS', 'wait for me', 'where are you going']);
-    if (!window.speechSynthesis) return;
-    larsLoopToken++; speechSynthesis.cancel();
+    if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
+    const line = pick(words || ['I SEE YOU', 'dont run', 'come here', 'LARS', 'Lars, Lars, Lars, Lars', 'wait for me', 'where are you going']);
+    speechSynthesis.cancel();
+    const token = ++speechCaptionToken;
+    speechCaption = 'Lars: ' + line;
+    speechCaptionTimer = clamp(line.length / 11, 1.25, 3.2);
     const u = new SpeechSynthesisUtterance(line);
-    u.pitch = rand(.45, .8); u.rate = rand(.85, 1.05); u.volume = vol; speechSynthesis.speak(u);
-  } catch (e) {}
-}
-function shoutLarsLoop(vol) {                  // Four separate words, with a proper pause between them
-  try {
-    if (!window.speechSynthesis) return;
-    const token = ++larsLoopToken; speechSynthesis.cancel(); let count = 0;
-    const next = () => {
-      if (token !== larsLoopToken || count >= 4) return;
-      const u = new SpeechSynthesisUtterance('Lars');
-      u.pitch = .62; u.rate = .78; u.volume = vol;
-      u.onend = () => { count++; if (count < 4 && token === larsLoopToken) setTimeout(next, 950); };
-      speechSynthesis.speak(u);
-    };
-    next();
-  } catch (e) {}
+    u.pitch = rand(.45, .8); u.rate = rand(.85, 1.05); u.volume = vol;
+    u.onend = () => { if (token === speechCaptionToken) speechCaptionTimer = Math.min(speechCaptionTimer, .12); };
+    u.onerror = () => { if (token === speechCaptionToken) speechCaptionTimer = 0; };
+    speechSynthesis.speak(u);
+  } catch (e) { speechCaptionTimer = 0; }
 }
 let musicT = 0, musicStep = 0;
 function music(dt, prox) {                    // chase music: speeds up and gets louder as he closes in
@@ -258,31 +256,52 @@ function los(x1, y1, x2, y2) {                 // can these two points see each 
   for (let i = 1; i < n; i++) if (solid(x1 + (x2 - x1) * i / n, y1 + (y2 - y1) * i / n)) return false;
   return true;
 }
-
 function jitter(x, y, r) {                      // a random nearby floor spot (so noises are never pinpoint)
   for (let i = 0; i < 25; i++) { const a = x + rand(-r, r), b = y + rand(-r, r); if (a > 1 && b > 1 && a < N - 1 && b < N - 1 && !solid(a, b)) return [a, b]; }
   return [x, y];
 }
 
 /* ---------- State ---------- */
-const P = { x: 3, y: 3, a: 0, vx: 0, vy: 0, stam: 100, tired: false, fov: 1.1, fv: 1.1, bobP: 0, bm: 0, blinkT: -1, crouching: false, crouchAmount: 0, jumpZ: 0, jumpV: 0, jumpFov: 0, eyeHold: 0 };
-let L, gens, dist = new Int16Array(N * N);
+const P = { x: 3, y: 3, a: 0, vx: 0, vy: 0, stam: 100, tired: false, fov: 1.1, fv: 1.1, bobP: 0, bm: 0, blinkT: -1, blinkInterval: 3, crouching: false, crouchAmount: 0, jumpZ: 0, jumpV: 0, jumpFov: 0, eyeHold: 0, lookBack: 0, lookFov: 0 };
+let L, gens, dist = new Int16Array(N * N), cheatWall = null;
 let state = 'title', t = 0, light = 1, bob = 0, msg = '', msgT = 0, time = 0, endT = 0, fixed = 0, fogD = 10;
 let wakeT = 30, clankT = 0, near = null, fixing = null, seenT = 0, routeT = 0, blackT = 0, blackIn = 30, shoutT = 8, hearT = 0, quip = '';
+let speechCaption = '', speechCaptionTimer = 0, speechCaptionToken = 0, ambientBreathT = 0, deathAside = ''; 
 const zbuf = new Float32Array(RW), keys = {}, cam = { dx: 1, dy: 0 };
+const cheatSign = document.createElement('canvas'); cheatSign.width = 128; cheatSign.height = 40; const cheatSignCtx = cheatSign.getContext('2d'); cheatSignCtx.fillStyle = '#241e17'; cheatSignCtx.fillRect(0,0,128,40); cheatSignCtx.strokeStyle = '#897b58'; cheatSignCtx.strokeRect(1,1,126,38); cheatSignCtx.fillStyle = '#d6c8a0'; cheatSignCtx.font = 'bold 15px monospace'; cheatSignCtx.textAlign = 'center'; cheatSignCtx.fillText('SSADAD',64,25);
 let baseFov = 1.1, vk = RH, cameraHeight = .5, zoomAmount = 0, zoomHeld = false, zoomScale = 1.0, shotgun = false, cheatBuffer = '', shotCooldown = 0, shotFlash = 0, ev = { dashT: -99, backT: -99, sprintT: -99, fixT: -99, blink: null, spot: '' };
 const say = (s, d = 2.5) => { if (String(s).startsWith('FOV')) { msg = s; msgT = d; } };   // on-screen text is mostly gone on purpose
 const SEEN = ['SEEN. skill issue.', 'LARS SPOTTED YOU. THIS IS NOT A DRILL.', 'he saw you. he is so excited.', 'lars wants to be friends (violently)', 'LARS.EXE HAS STARTED'];
-const QUIPS = ['Lars was only thirsty.', 'Have you tried not being caught?', 'Lars saw you. He is excited.', 'He just wanted a drink.', 'Oops.'];
+const QUIPS = [
+  'Lars was only thirsty.',
+  'Have you tried not being caught?',
+  'He just wanted a drink.',
+  'Oops.',
+  'Lars wants to be friends. Violently.',
+  'He thought you looked familiar.',
+  'Lars has terrible boundaries.',
+  'He was only saying hello.',
+  'You made his whole day.',
+  'Lars missed you.',
+  'He gets excited easily.',
+  'That was a little awkward.',
+  'He really wanted a hug.',
+  'Lars is not good at personal space.',
+  'He took that personally.',
+  'You should have said goodbye.',
+  'He was just checking on you.',
+  'Lars appreciates the company.',
+  'Well, that escalated quickly.'
+];
 
 function start() {
-  audio(); genLevel(); buildFloor(); P.x = SPAWN[0]; P.y = SPAWN[1]; P.a = 0; P.vx = P.vy = 0; P.stam = 100; P.tired = false; P.bm = 0; P.blinkT = -1; P.crouching = false; P.crouchAmount = 0; P.jumpZ = P.jumpV = P.jumpFov = 0; P.eyeHold = 0; cameraHeight = .5; zoomAmount = 0; zoomHeld = false; zoomScale = 1.0; shotgun = false; cheatBuffer = ''; shotCooldown = shotFlash = 0;
+  audio(); genLevel(); buildFloor(); cheatWall = null; if (Math.random() < .1) { const options = FLOORS.filter(([x,y]) => Math.hypot(x - SPAWN[0], y - SPAWN[1]) > 5 && Math.hypot(x - EXIT.x, y - EXIT.y) > 3 && GEN_POS.every(([gx,gy]) => Math.hypot(x-gx,y-gy) > 2) && [[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy]) => map[(y|0)+dy]?.[(x|0)+dx] !== '.')); if (options.length) { const [sx,sy] = pick(options); const sides = [[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy]) => map[(sy|0)+dy]?.[(sx|0)+dx] !== '.'); const [dx,dy] = pick(sides); cheatWall = [sx + dx*.38, sy + dy*.38]; } } P.x = SPAWN[0]; P.y = SPAWN[1]; P.a = 0; P.vx = P.vy = 0; P.stam = 100; P.tired = false; P.bm = 0; P.blinkT = -1; P.crouching = false; P.crouchAmount = 0; P.jumpZ = P.jumpV = P.jumpFov = 0; P.eyeHold = 0; P.lookBack = 0; P.lookFov = 0; P.blinkInterval = rand(7, 9); P.blinkMode = 'normal'; speechCaption = ''; speechCaptionTimer = 0; ambientBreathT = rand(5, 9); cameraHeight = .5; zoomAmount = 0; zoomHeld = false; zoomScale = 1.0; shotgun = false; cheatBuffer = ''; shotCooldown = shotFlash = 0;
   torchOn = false; torchBattery = 20; torchPower = 0; torchFlicker = 1; nearBattery = false;
   gens = GEN_POS.map(([x, y]) => ({ x, y, p: 0, done: false }));
   for (const [x, y] of SHUTTERS) map[y][x] = 'D';
-  L = { x: LSPAWN[0], y: LSPAWN[1], a: 0, st: 'sleep', tx: 0, ty: 0, lx: 0, ly: 0, lostT: 0, waitT: 0, stepT: 0, d: 99, sees: false, mom: 0, watching: false, rel: 0, gait: 0, pauseT: 0, fuse: false, knocked: false, knockT: 0, flashStun: 0, flashDaze: 0, flashTagged: false, flashStunUsed: false };
+  L = { x: LSPAWN[0], y: LSPAWN[1], a: 0, st: 'sleep', tx: 0, ty: 0, lx: 0, ly: 0, lostT: 0, waitT: 0, searchPasses: 0, stepT: 0, d: 99, sees: false, mom: 0, watching: false, rel: 0, gait: 0, pauseT: 0, fuse: false, knocked: false, knockT: 0, flashStun: 0, flashDaze: 0, flashTagged: false, flashStunUsed: false };
   ev = { dashT: -99, backT: -99, sprintT: -99, fixT: -99, blink: null, spot: '' }; P.fov = P.fv = baseFov;
-  fixed = 0; time = 0; light = 1; power = true; fuseP = 0; fxT = punch = pvel = slowT = snapT = 0; panelOpen = false; wakeT = 30; blackT = 0; blackIn = rand(55, 75); seenT = 0; shoutT = 8; state = 'play';
+  fixed = 0; time = 0; light = 1; power = true; fuseP = 0; fxT = punch = pvel = slowT = snapT = 0; panelOpen = false; wakeT = 30; blackT = 0; blackIn = rand(55, 75); seenT = 0; shoutT = 8; deathAside = ''; state = 'play';
   say('Fix all 4 generators. Lars is asleep. DO NOT WAKE LARS.', 5);
   lockMouse();
 }
@@ -398,30 +417,51 @@ function heard(x, y, r) {                      // noise draws him in (he only he
 }
 function spotted() {                           // Evade-style SEEN moment: flash, sting, he locks on
   ev.spot = fixing ? 'you kept fixing a generator with Lars nearby' : L.st === 'search' ? 'you stayed near the noise you made' : time - ev.sprintT < 1.5 ? 'you sprinted into his sight' : 'you walked into his line of sight';
-  L.mom = 0; L.st = 'chase'; L.lostT = 0; seenT = .25; routeT = 0;
+  L.mom = 0; L.st = 'chase'; L.lostT = 0; L.searchPasses = 0; seenT = .25; routeT = 0;
   punch = .3; pvel = 0; fxT = 1; beep(60, .6, 'sine', .4, 30); sh(.35, .2, 'bandpass', 1100, 1500, .9, 0, .08);   // FOV kick, red edge flash, a gasp. you keep control of the camera
-  noise(.5, .35); beep(880, .35, 'sawtooth', .12, 200); beep(1250, .3, 'square', .06, 150); shout(1, ['I SEE YOU', 'THERE you are', 'Lars saw you. He is excited.', 'got you']);
+  noise(.5, .35); beep(880, .35, 'sawtooth', .12, 200); beep(1250, .3, 'square', .06, 150); shout(1, ['I SEE YOU', 'THERE you are', 'got you']);
   say(pick(SEEN), 3);
 }
-const blinkClosure = () => P.blinkT < 0 ? 0 : P.blinkT < .1 ? P.blinkT / .1 : P.blinkT < .24 ? 1 : clamp(1 - (P.blinkT - .24) / .1, 0, 1);
+const blinkClosure = () => P.blinkT < 0 ? 0 : P.blinkT < .10 ? P.blinkT / .10 : P.blinkT < .24 ? 1 : clamp(1 - (P.blinkT - .24) / .10, 0, 1);
 const closure = () => Math.max(blinkClosure(), P.eyeHold);
-function blink(forced) { if (P.blinkT < 0) { P.blinkT = 0; P.bm = 0; ev.blink = { t: time, d: L ? L.d : 99, forced: !!forced }; beep(200, .06, 'sine', .04, 120); } }
-
-function fireShot() {
-  if (!shotgun || state !== 'play' || shotCooldown > 0) return;
-  shotCooldown = .62; shotFlash = .16;
-  // Stylised arcade sound and a short screen flash; this is a purely fictional game effect.
-  beep(105, .16, 'sawtooth', .19, 42); noise(.11, .16); thud(.09, 0);
-  if (!L || L.knocked) return;
-  const aim = Math.atan2(L.y - P.y, L.x - P.x);
-  const delta = Math.atan2(Math.sin(aim - P.a), Math.cos(aim - P.a));
-  if (L.d < 14 && Math.abs(delta) < .24 && los(P.x, P.y, L.x, L.y)) {
-    L.knocked = true; L.knockT = 0; L.st = 'knocked'; L.sees = false; L.fuse = false; L.mom = 0;
-    msg = 'OW.'; msgT = 1.1;
-    shout(.62, ['ow']);
-  } else {
-    msg = 'MISS.'; msgT = 1;
+function blink(forced) {
+  if (P.blinkT < 0) {
+    P.blinkT = 0;
+    P.bm = 0;
+    P.blinkInterval = zoomHeld ? rand(2, 4) : rand(7, 9);
+    ev.blink = { t: time, d: L ? L.d : 99, forced: !!forced };
+    beep(200, .06, 'sine', .04, 120);
   }
+}
+function getDeathAside() {
+  const recentBlink = ev.blink && (time - ev.blink.t) < 1.25;
+  if (recentBlink && ev.blink.forced) return 'Your eyes ran dry.';
+  if (recentBlink) return pick([
+    'A bad moment to close your eyes.',
+    'He was still there when you opened them.',
+    'That blink lasted just long enough.'
+  ]);
+  if (time - ev.fixT < 1.8) return pick([
+    'The job could have waited.',
+    'Some repairs attract attention.',
+    'The machinery was not the only thing nearby.'
+  ]);
+  if (time - ev.sprintT < 1.5) return pick([
+    'The floor carried the news.',
+    'He heard you coming.',
+    'A little less enthusiasm might have helped.'
+  ]);
+  if (L && L.st === 'chase' && L.mom > .55) return pick([
+    'He liked having you in sight.',
+    'You gave him a little too much room.',
+    'He was gaining confidence.'
+  ]);
+  return pick([
+    'He was closer than he looked.',
+    'The quiet was misleading.',
+    'You were not quite as alone as you thought.',
+    'There was less room than you remembered.'
+  ]);
 }
 
 function fireShot() {
@@ -431,10 +471,11 @@ function fireShot() {
   beep(105, .16, 'sawtooth', .19, 42); noise(.11, .16); thud(.09, 0);
   if (!L || L.knocked) return;
   const aim = Math.atan2(L.y - P.y, L.x - P.x);
-  const delta = Math.atan2(Math.sin(aim - P.a), Math.cos(aim - P.a));
+  const viewA = P.a;
+  const delta = Math.atan2(Math.sin(aim - viewA), Math.cos(aim - viewA));
   if (L.d < 14 && Math.abs(delta) < .24 && los(P.x, P.y, L.x, L.y)) {
     L.knocked = true; L.knockT = 0; L.st = 'knocked'; L.sees = false; L.fuse = false; L.mom = 0;
-    msg = 'OW.'; msgT = 1.1;
+    msg = ''; msgT = 0;
     shout(.62, ['ow']);
   } else {
     msg = 'MISS.'; msgT = 1;
@@ -447,7 +488,8 @@ function updateLars(dt) {
   if (L.st === 'sleep') { if ((wakeT -= dt) <= 0) { const j = jitter(P.x, P.y, 6); wakeUp('LARS WOKE UP ON HIS OWN', j[0], j[1]); } return; }
   const toPlayer = Math.atan2(P.y - L.y, P.x - L.x);
   const facing = Math.atan2(Math.sin(toPlayer - L.a), Math.cos(toPlayer - L.a));
-  const beamAngle = Math.atan2(Math.sin(Math.atan2(L.y - P.y, L.x - P.x) - P.a), Math.cos(Math.atan2(L.y - P.y, L.x - P.x) - P.a));
+  const playerViewA = P.a + Math.PI * P.lookBack;
+  const beamAngle = Math.atan2(Math.sin(Math.atan2(L.y - P.y, L.x - P.x) - playerViewA), Math.cos(Math.atan2(L.y - P.y, L.x - P.x) - playerViewA));
   const torchOnLars = torchOn && torchBattery > 0 && torchPower > .38 && L.d < 8 && Math.abs(beamAngle) < .22 && los(P.x, P.y, L.x, L.y);
   if (torchOnLars) {
     if (!L.flashTagged && !L.flashStunUsed) { L.flashStun = .5; L.flashStunUsed = true; beep(620, .11, 'sine', .08, 280); }
@@ -459,10 +501,10 @@ function updateLars(dt) {
   const inSightCone = Math.abs(facing) < patrolCone * (P.crouching ? .78 : 1);
   L.sees = L.d < sightRange && inSightCone && los(L.x, L.y, P.x, P.y);
   if (L.sees) { if (L.st !== 'chase') spotted(); L.lx = P.x; L.ly = P.y; L.lostT = 0; }
-  else if (L.st === 'chase' && (L.lostT += dt) > 3) { L.st = 'search'; L.waitT = 0; route(L.lx, L.ly); say('he lost you... for now.', 2.5); beep(300, .5, 'sine', .08, 150); }
+  else if (L.st === 'chase' && (L.lostT += dt) > 3) { L.st = 'search'; L.waitT = 0; L.searchPasses = 0; route(L.lx, L.ly); say('he lost you... for now.', 2.5); beep(300, .5, 'sine', .08, 150); }
   if (seenT > 0) { seenT -= dt; return; }                                    // he freezes for a split second when he spots you
   const dashing = P.blinkT >= .1 && P.blinkT < .26;                          // eyes shut = he lunges
-  const rel = Math.atan2(L.y - P.y, L.x - P.x) - P.a; L.rel = Math.atan2(Math.sin(rel), Math.cos(rel));
+  const rel = Math.atan2(L.y - P.y, L.x - P.x) - (P.a + Math.PI * P.lookBack); L.rel = Math.atan2(Math.sin(rel), Math.cos(rel));
   const inView = Math.abs(L.rel) < Math.atan(baseFov) * .8 && closure() < .5;
   L.watching = L.st === 'chase' && L.sees && inView;                         // eye contact
   let sp = L.st === 'chase' ? Math.min(7, 4.9 + fixed * .45) : L.st === 'search' ? 3.4 + fixed * .25 : 2.2;
@@ -488,12 +530,25 @@ function updateLars(dt) {
     const ux = ddx / dd, uy = ddy / dd, mx = ux * ca - uy * sa, my = ux * sa + uy * ca;
     const s = Math.min(sp * dt, dd); L.a = Math.atan2(my, mx); L.x += mx * s; L.y += my * s; L.gait += s * 2.2;
   }
-  if (L.st === 'chase' && !L.sees && Math.hypot(L.x - L.lx, L.y - L.ly) < .6) { L.st = 'search'; L.waitT = 0; say('he lost you... for now.', 2.5); }
+  if (L.st === 'chase' && !L.sees && Math.hypot(L.x - L.lx, L.y - L.ly) < .6) { L.st = 'search'; L.waitT = 0; L.searchPasses = 0; say('he lost you... for now.', 2.5); }
   if (Math.hypot(L.x - L.tx, L.y - L.ty) < .4) {                              // arrived
-    if (L.st === 'patrol') { if (L.fuse) { L.fuse = false; powerOff(); } L.pauseT = rand(.8, 2.2); patrol(); } else if (L.st === 'search' && (L.waitT += dt) > 2.5) { L.waitT = 0; patrol(); }
+    if (L.st === 'patrol') { if (L.fuse) { L.fuse = false; powerOff(); } L.pauseT = rand(.8, 2.2); patrol(); }
+    else if (L.st === 'search') {
+      if (L.searchPasses < 1) {
+        // Small, fair search improvement: check one nearby reachable spot around the last known position.
+        const candidates = FLOORS.filter(([x, y]) => {
+          const d = Math.hypot(x - L.lx, y - L.ly);
+          return d > 1.0 && d < 3.1 && Math.hypot(x - L.x, y - L.y) > .7;
+        });
+        if (candidates.length) {
+          const target = pick(candidates);
+          L.searchPasses++; L.waitT = 0; route(target[0], target[1]);
+        } else if ((L.waitT += dt) > 2.5) { L.waitT = 0; patrol(); }
+      } else if ((L.waitT += dt) > 2.5) { L.waitT = 0; patrol(); }
+    }
   }
   if ((L.stepT -= dt * sp) <= 0) { lstep(); L.stepT = 1.1; }   // footsteps you can hear coming
-  if (L.d < .50 && P.jumpZ < .42 && L.flashStun <= 0) { state = 'dead'; endT = 0; quip = pick(QUIPS); silencePersistentAudio(); jumpscareSound(); }
+  if (L.d < .58 && P.jumpZ < .42 && L.flashStun <= 0 && state === 'play') { deathAside = getDeathAside(); state = 'dead'; endT = 0; quip = pick(QUIPS); speechCaptionTimer = 0; silencePersistentAudio(); jumpscareSound(); if (document.exitPointerLock) document.exitPointerLock(); }
 }
 
 
@@ -501,7 +556,7 @@ function updateLars(dt) {
 function update(dt) {
   t += dt; if (msgT > 0) msgT -= dt; if (fxT > 0) fxT = Math.max(0, fxT - dt * 1.1);
   light += (1 - light) * Math.min(1, dt * 6);
-  if (Math.random() < dt * .018) light = rand(.18, .48);                // rare electrical flicker
+  if (Math.random() < dt * .045) { light = rand(.18, .48); sh(.16, .018, 'bandpass', 520, 180, .8, 0, .004); } // rare electrical flicker and soft ballast buzz
   if (state !== 'play') { endT += dt; if (droneG) droneG.gain.value = 0; if (chaseG) chaseG.gain.value = 0; if (lbG) lbG.gain.value = 0; return; }
   time += dt;
 
@@ -515,25 +570,51 @@ function update(dt) {
     if (torchBattery <= 0) { torchOn = false; torchPower = 0; beep(180, .16, 'square', .06, 60); say('TORCH BATTERY EMPTY.', 2); }
   } else { torchPower = 0; torchFlicker = 1; }
   zoomAmount += ((zoomHeld ? 1 : 0) - zoomAmount) * Math.min(1, dt * 5.5);
-  P.eyeHold += (((keys.KeyZ && state === 'play') ? 1 : 0) - P.eyeHold) * Math.min(1, dt * 12);
-
-  // --- blinking: your eyes dry out, you must blink; Lars lunges while they're shut ---
-  const chasing = L.st === 'chase';
-  if (P.blinkT >= 0) { P.blinkT += dt; if (P.blinkT > .34) { P.blinkT = -1; if (L.st !== 'sleep' && L.d < 7 && L.sees) { noise(.15, .3); beep(900, .14, 'sawtooth', .1, 300); } } }
-  else { P.bm += dt / 6.5 * (chasing ? 1.2 : 1) * (L.watching ? 1.15 : 1); if (P.bm >= 1) blink(true); }   // staring dries your eyes faster
+  // Ordinary dry-eye blinking continues during normal gameplay (7-9 seconds).
+  // RMB squinting makes the interval shorter (2-4 seconds).
+  // Q starts one ordinary blink; holding it keeps that same blink closed, without a second blink.
+  const qHeld = keys.KeyQ && !panelOpen;
+  const blinkMode = zoomHeld ? 'squint' : 'normal';
+  if (P.blinkMode !== blinkMode) {
+    P.blinkMode = blinkMode;
+    P.bm = 0;
+    P.blinkInterval = zoomHeld ? rand(2, 4) : rand(7, 9);
+  }
+  if (qHeld) P.eyeHold = Math.min(1, P.eyeHold + dt * 20);
+  else P.eyeHold = Math.max(0, P.eyeHold - dt * 24);
+  if (P.blinkT >= 0) {
+    P.blinkT += dt;
+    if (P.blinkT > .34) {
+      P.blinkT = -1;
+      P.bm = 0;
+      P.blinkInterval = zoomHeld ? rand(2, 4) : rand(7, 9);
+      if (L.st !== 'sleep' && L.d < 7 && L.sees) { noise(.15, .3); beep(900, .14, 'sawtooth', .1, 300); }
+    }
+  } else if (!qHeld && P.eyeHold < .08 && !panelOpen) {
+    P.bm += dt / P.blinkInterval;
+    if (P.bm >= 1) blink(true);
+  }
+  if (speechCaptionTimer > 0) speechCaptionTimer = Math.max(0, speechCaptionTimer - dt);
+  if ((ambientBreathT -= dt) <= 0) {
+    if (!(keys.ShiftLeft || keys.ShiftRight) && !P.crouching && P.eyeHold < .2) sh(.62, .022, 'bandpass', 760, 490, .85, 0, .16);
+    ambientBreathT = rand(5.5, 9.5);
+  }
 
   // --- movement: momentum, sprint with stamina, FOV kick, head bob ---
   const turn = (keys.ArrowRight ? 1 : 0) - (keys.ArrowLeft ? 1 : 0);
   P.a += turn * 2.6 * dt;
+  P.lookBack += ((keys.KeyZ ? 1 : 0) - P.lookBack) * Math.min(1, dt * 15);
+  P.lookFov = Math.sin(P.lookBack * Math.PI) * .075;
   const fwd = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0), str = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0);
   const len = Math.hypot(fwd, str);
   const wx = len ? (Math.cos(P.a) * fwd - Math.sin(P.a) * str) / len : 0, wy = len ? (Math.sin(P.a) * fwd + Math.cos(P.a) * str) / len : 0;
   P.crouching = !!keys.KeyC;
   P.crouchAmount += ((P.crouching ? 1 : 0) - P.crouchAmount) * Math.min(1, dt * 12);
-  const sprint = !P.crouching && (keys.ShiftLeft || keys.ShiftRight) && len > 0 && P.stam > 0 && !P.tired;
+  const sprint = !P.crouching && !zoomHeld && (keys.ShiftLeft || keys.ShiftRight) && len > 0 && P.stam > 0 && !P.tired;
   P.stam = clamp(P.stam + (sprint ? -30 : 16) * dt, 0, 100);
   if (P.stam <= 0) P.tired = true; if (P.tired && P.stam > 30) P.tired = false;
-  const v = (P.crouching ? 2.0 : sprint ? 6.2 : 4.15) * (fwd < 0 ? .76 : 1), k = Math.min(1, dt * (P.crouching ? 13 : 9)); P.vx += (wx * v - P.vx) * k; P.vy += (wy * v - P.vy) * k;
+  const squintSlow = (zoomHeld ? .78 : 1) * (1 - P.eyeHold * .38);
+  const v = (P.crouching ? 2.0 : sprint ? 6.2 : 4.15) * squintSlow * (fwd < 0 ? .76 : 1), k = Math.min(1, dt * (P.crouching ? 13 : 9)); P.vx += (wx * v - P.vx) * k; P.vy += (wy * v - P.vy) * k;
   if (free(P.x + P.vx * dt, P.y)) P.x += P.vx * dt;
   if (free(P.x, P.y + P.vy * dt)) P.y += P.vy * dt;
   const spd = Math.hypot(P.vx, P.vy);
@@ -541,17 +622,28 @@ function update(dt) {
   P.jumpV -= 30 * dt; P.jumpZ = Math.max(0, P.jumpZ + P.jumpV * dt);
   if (P.jumpZ === 0 && P.jumpV < 0) { P.jumpV = 0; if (wasAirborne) { thud(.14, 0); sh(.09, .045, 'lowpass', 190, 70, .7, 0, .006); } }
   P.jumpFov += ((P.jumpZ > 0 ? Math.min(.10, P.jumpZ * .105) : 0) - P.jumpFov) * Math.min(1, dt * 16);
-  P.fv += ((sprint ? baseFov + .25 : baseFov) - P.fv) * Math.min(1, dt * 9); pvel += (-90 * punch - 9 * pvel) * dt; punch += pvel * dt; P.fov = clamp(P.fv + P.jumpFov + punch - zoomAmount * .50 * zoomScale, .28, 2);
-  P.bobP += spd * dt * 1.6; bob = Math.sin(P.bobP) * Math.min(1, spd / 4) * (sprint ? 1.8 : .9) * (1 - P.crouchAmount * .65);
-  // Physical eye height feeds the floor rays, wall projection and sprite projection.
-  // Standing = .50, crouched = .28, jumping raises the camera with the player.
+  P.fv += ((sprint ? baseFov + .25 : baseFov) - P.fv) * Math.min(1, dt * 9); pvel += (-90 * punch - 9 * pvel) * dt; punch += pvel * dt; P.fov = clamp(P.fv + P.jumpFov + P.lookFov + punch - zoomAmount * .50 * zoomScale, .28, 2);
+  P.bobP += spd * dt * 1.6;
+  const moveForward = P.vx * Math.cos(P.a) + P.vy * Math.sin(P.a);
+  const moveSide = -P.vx * Math.sin(P.a) + P.vy * Math.cos(P.a);
+  const bobScale = Math.min(1, spd / 4) * (1 - P.crouchAmount * .65);
+  if (sprint && spd > .2) {
+    if (Math.abs(moveForward) > Math.abs(moveSide) * 1.15) {
+      bob = moveForward >= 0 ? Math.sin(P.bobP * 2.0) * 2.55 * bobScale : Math.sin(P.bobP * 1.35 + 1.05) * 1.55 * bobScale;
+    } else {
+      bob = Math.sin(P.bobP * 1.55 + .3) * 1.65 * bobScale;
+    }
+  } else {
+    bob = Math.sin(P.bobP) * bobScale * .9;
+  }
+  // Restore the original physical camera height for crouching and jumping.
   cameraHeight = clamp(.50 - P.crouchAmount * .22 + P.jumpZ * .34 + bob * .012, .22, .78);
   if (shotCooldown > 0) shotCooldown = Math.max(0, shotCooldown - dt);
   if (shotFlash > 0) shotFlash = Math.max(0, shotFlash - dt);
   const stp = Math.floor(P.bobP / Math.PI); if (stp !== lastStep) { lastStep = stp; if (spd > 1.5) { thud(P.crouching ? .025 : sprint ? .2 : .1, 0); sh(.09, P.crouching ? .035 : sprint ? .22 : .12, 'lowpass', 520, 220, .7, 0, .004); } }   // your own footsteps
   if ((P.tired || P.stam < 35) && (breathT -= dt) <= 0) { const k = clamp(1 - P.stam / 35, .3, 1) * (P.tired ? 1.2 : 1); breathPh ^= 1;   // in, then out
     if (breathPh) sh(.42, .1 * k, 'bandpass', 800, 1250, .9, 0, .16); else sh(.6, .13 * k, 'bandpass', 700, 420, .8, 0, .12); breathT = breathPh ? .5 : .8; }                      // heavy breathing
-  if (Math.random() < dt * .12) beep(rand(40, 70), 1.4, 'sine', .04, 30);                                      // building creaks
+
   if (sprint) ev.sprintT = time;
   if (sprint && (hearT -= dt) <= 0) { heard(P.x, P.y, 4.5); hearT = .7; }
   else if (P.crouching) hearT = Math.min(hearT, .15);    // sprinting is noisy
@@ -586,10 +678,16 @@ function update(dt) {
   if (L.st === 'chase') {
     music(dt, prox);
     if (chaseG) { const rel = Math.atan2(L.y - P.y, L.x - P.x) - P.a; chaseG.gain.value = prox * prox * .22 * (1 + L.mom * .6); chaseO.frequency.value = 62 + prox * 46 + L.mom * 20; if (chaseP) chaseP.pan.value = Math.sin(rel); }
-    if ((shoutT -= dt) <= 0) { shout(clamp(1.1 - d / 20, .15, 1)); shoutT = 1.8 + d * .12 + rand(0, 1.5); }
+    if ((shoutT -= dt) <= 0) {
+      shout(clamp(1.1 - d / 20, .15, 1));
+      shoutT = 1.8 + d * .12 + rand(0, 1.5);
+    }
   } else {
     if (chaseG) chaseG.gain.value = 0;
-    if (L.st !== 'sleep' && (shoutT -= dt) <= 0) { const v = clamp(.7 - d / 30, .05, .5); if (Math.random() < .22) shoutLarsLoop(v); else shout(v, ['hello?', 'where are you', 'i just want to talk', 'come out', 'i can hear you', 'Lars?']); shoutT = rand(6, 11); }
+    if (L.st !== 'sleep' && (shoutT -= dt) <= 0) {
+      shout(clamp(.7 - d / 30, .05, .5), ['hello?', 'where are you', 'i just want to talk', 'come out', 'i can hear you', 'Lars?']);
+      shoutT = rand(6, 11);
+    }
     if (d < 8 && L.st !== 'sleep') { musicT -= dt; if (musicT <= 0) { beep(60, .14, 'sine', .3, 35); musicT = .4 + d * .1; } }   // heartbeat
   }
   if (droneG) droneG.gain.value = .04 + (L.st !== 'sleep' ? prox * .08 : 0);
@@ -762,31 +860,31 @@ function drawWeaponOverlay() {
 function draw() {
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, RW, RH);
   if (state === 'title') {
-    ctx.fillStyle = '#c4160a';
-    ctx.font = 'bold 27px Impact, "Arial Black", sans-serif';
+    ctx.fillStyle = '#e8e8e8';
+    ctx.font = 'bold 25px Arial, Helvetica, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.shadowColor = '#600'; ctx.shadowBlur = 8;
-    ctx.fillText('LARS SIMULATOR', RW / 2, 67);
-    ctx.shadowBlur = 0;
-    ctx.strokeStyle = '#ffe14d'; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(62, 82); ctx.quadraticCurveTo(160, 88, 258, 81); ctx.stroke();
-    ctx.fillStyle = '#222'; ctx.fillRect(80, 101, 160, 8);
-    ctx.fillStyle = '#c4160a'; ctx.fillRect(80, 101, 158, 8);
-    txt('Loading Lars... 99%', RW / 2, 123, 11, '#aaa');
-    if (Math.sin(t * 4) > -.2) txt('PRESS SPACE OR CLICK TO ENTER', RW / 2, 157, 12, '#ffe14d');
+    ctx.fillText('LARS SIMULATOR', RW / 2, 62);
+    ctx.fillStyle = '#ffe14d';
+    ctx.font = '10px Arial, Helvetica, sans-serif';
+    if (Math.sin(t * 3) > -.2) ctx.fillText('PRESS SPACE OR CLICK TO START', RW / 2, 145);
     return;
   }
-  FL = torchPower * 4.3 + zoomAmount * (5.2 + zoomScale * 3.4); cam.dx = Math.cos(P.a); cam.dy = Math.sin(P.a); vk = RH * Math.pow(.66 / P.fov, .6);   // keeps wall height sensible at wide FOV
+  FL = torchPower * 4.3 + zoomAmount * (5.2 + zoomScale * 3.4); const renderA = P.a + Math.PI * P.lookBack; cam.dx = Math.cos(renderA); cam.dy = Math.sin(renderA); vk = RH * Math.pow(.66 / P.fov, .6);   // keeps wall height sensible at wide FOV
   const prox = L.st === 'sleep' ? 0 : clamp(1 - L.d / 10, 0, 1);
-  const shakeX = rand(-1, 1) * prox * 1.4 + rand(-1, 1) * fxT * 2 + Math.cos(P.bobP * .5) * Math.min(1, Math.hypot(P.vx, P.vy) / 4) * .45;
-  ctx.save(); ctx.translate(shakeX, 0);
+  // V2 camera feel: threat shake on both axes, plus the player's actual run/crouch/jump motion.
+  const shakeX = rand(-1, 1) * prox * 2
+    + rand(-1, 1) * (fxT * 3 + (L.st === 'chase' ? clamp(1 - L.d / 7, 0, 1) * 1.5 : 0))
+    + Math.cos(P.bobP * .5) * Math.min(1, Math.hypot(P.vx, P.vy) / 4) * 1.2;
+  const shakeY = bob + rand(-1, 1) * prox * 2;
+  ctx.save(); ctx.translate(shakeX, shakeY);
   drawFloor();
   castWalls();
   larsFrame();
   const things = [{ x: EXIT.x, y: EXIT.y, c: fixed === gens.length ? exitOpen : exitShut, h: .95, l: 0 },
                   { x: L.x, y: L.y, c: larsC, h: L.knocked ? .54 : .95, l: .04 }];
   for (const g of gens) things.push({ x: g.x, y: g.y, c: GENS[g.done ? 1 : 0][Math.floor(t * (g.done ? 3 : 8)) & 1], h: .5, l: 0 });
+  if (cheatWall) things.push({ x: cheatWall[0], y: cheatWall[1], c: cheatSign, h: .24, l: .48 });
   paintFuse(); things.push({ x: FUSE.x, y: FUSE.y, c: fuseCv, h: .75, l: 0 });
   if (BATTERY.active) things.push({ x: BATTERY.x, y: BATTERY.y, c: batteryCv, h: .42, l: 0 });
   things.sort((a, b) => Math.hypot(b.x - P.x, b.y - P.y) - Math.hypot(a.x - P.x, a.y - P.y));
@@ -816,17 +914,19 @@ function draw() {
   }
   if (fixing) bar(RW / 2 - 40, 114, 80, 5, fixing.p, '#ffe14d');
   if (msgT > 0) txt(msg, RW / 2, 165, 10, '#fff');
+  if (speechCaptionTimer > 0 && state === 'play') { txt(speechCaption, RW / 2, 154, 8, '#fff'); }
 
   if (panelOpen) drawPanel();
   if (state === 'dead') {                       // JUMPSCARE: the close-up zooms in, flashes negative, tears
-    const z = Math.min(1, endT * 6), j = endT < 1.3 ? rand(-7, 7) : 0, s = 80 + z * 330;
+    const z = Math.min(1, endT * 7), j = endT < 1.3 ? rand(-7, 7) : 0, s = 170 + z * 260;
     ctx.fillStyle = endT < .25 ? '#fff' : '#000'; ctx.fillRect(0, 0, RW, RH);
-    const f = IMG[(endT < 1.3 && Math.sin(endT * 40) > .5) ? 'flash' : 'near'];
+    const f = IMG[(endT < 1.3 && Math.sin(endT * 40) > .5) ? 'flash' : 'near'] || IMG.flash || IMG.idle;
     if (f) ctx.drawImage(f, RW / 2 - s / 2 + j, RH / 2 - s / 2 + j, s, s);
     if (endT > .5) txt('LARS GOT YOU', RW / 2, 40, 30, '#fff');
     
-    if (endT > 1.1) txt(quip, RW / 2, 146, 11, '#ddd');
-    if (endT > 2.4) txt('SPACE TO RETRY', RW / 2, 170, 12, '#ffe14d');
+    if (endT > 1.1) txt(quip, RW / 2, 142, 10, '#ddd');
+    if (endT > 1.65) txt(deathAside, RW / 2, 158, 8, '#aaa');
+    if (endT > 2.4) txt('SPACE TO RETRY', RW / 2, 174, 11, '#ffe14d');
   }
   if (state === 'win') {
     ctx.fillStyle = 'rgba(0,30,0,.8)'; ctx.fillRect(0, 0, RW, RH);
@@ -840,9 +940,11 @@ function draw() {
     txt('YOU FOUND THE VERY UNFAIR BUTTON.', RW / 2, 108, 8, '#aaa');
     if (endT > 1.5) txt('SPACE TO PLAY AGAIN', RW / 2, 158, 11, '#ffe14d');
   }  // Final eyelid pass: deliberately above every HUD, panel and ending element.
-  const lidClosure = closure();
-  const lidH = Math.max(lidClosure * RH * .52, zoomAmount * (9 + zoomScale * 10));
-  if (lidH > .5) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, RW, lidH); ctx.fillRect(0, RH - lidH, RW, lidH + 1); }
+  if (state === 'play') {
+    const lidClosure = closure();
+    const lidH = Math.max(lidClosure * RH * .52, zoomAmount * (9 + zoomScale * 10));
+    if (lidH > .5) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, RW, lidH); ctx.fillRect(0, RH - lidH, RW, lidH + 1); }
+  }
 }
 
 /* ---------- Input ---------- */
@@ -860,9 +962,10 @@ addEventListener('keydown', e => {
   }
   if (panelOpen && ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ShiftLeft', 'ShiftRight'].includes(e.code)) return;   // you stand still at the panel
   keys[e.code] = true;
+  if (e.code === 'KeyQ' && state === 'play' && !panelOpen && P.blinkT < 0) blink(false);
   if (state === 'play') { if (e.code === 'KeyE' && nearFuse && !panelOpen) openPanel(); else if ((e.code === 'KeyE' || e.code === 'Escape') && panelOpen) closePanel(); else if (panelOpen && /^Digit[1-5]$/.test(e.code)) flick(+e.code[5] - 1); }
-  if (e.code === 'Space') { if (state === 'play') { if (P.jumpZ <= 0 && !P.crouching) { P.jumpV = 6.9; beep(175, .10, 'triangle', .105, 85); thud(.055, 0); } } else act(); }
-  if (e.code === 'KeyQ' && state === 'play') blink();
+  if (e.code === 'Space') { if (state === 'play') { if (P.jumpZ <= 0 && !P.crouching) { P.jumpV = 6.2; beep(115, .07, 'sine', .045, 75); thud(.055, 0); } } else act(); }
+  
   if (e.code === 'KeyX' && state === 'play') fireShot();
   if (e.code === 'Enter') act();
   if (e.code === 'BracketLeft' || e.code === 'BracketRight') { baseFov = clamp(baseFov + (e.code === 'BracketRight' ? .08 : -.08), .6, 1.7); say('FOV ' + Math.round(2 * Math.atan(baseFov) * 180 / Math.PI), 1.5); }
@@ -877,7 +980,7 @@ addEventListener('keydown', e => {
   }
 });
 addEventListener('keyup', e => keys[e.code] = false);
-addEventListener('blur', () => { for (const k in keys) keys[k] = false; zoomHeld = false; });
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; zoomHeld = false; P.eyeHold = 0; });
 cv.addEventListener('click', e => { if (panelOpen) { panelClick(e); return; } act(); if (state === 'play') lockMouse(); });
 cv.addEventListener('contextmenu', e => e.preventDefault());
 addEventListener('wheel', e => { if (state === 'play' && zoomHeld) { zoomScale = clamp(zoomScale + (e.deltaY < 0 ? .12 : -.12), .7, 1.6); e.preventDefault(); } }, { passive: false });
@@ -889,8 +992,8 @@ addEventListener('mouseup', e => { if (e.button === 2) zoomHeld = false; });
 addEventListener('mousemove', e => { if (document.pointerLockElement === cv && state === 'play') P.a += e.movementX * .0024; });
 
 /* ---------- Gun images: paste your two image URLs here ---------- */
-const GUN_IMAGE_NORMAL_URL = 'https://github.com/blazewingz/lars-simulator/blob/main/assets/gun.png'; // image shown when RMB is NOT held
-const GUN_IMAGE_RMB_URL = 'https://github.com/blazewingz/lars-simulator/blob/main/assets/gun%20but%20aiming.png';    // image shown while RMB IS held
+const GUN_IMAGE_NORMAL_URL = 'https://raw.githubusercontent.com/blazewingz/lars-simulator/main/assets/gun.png'; // image shown when RMB is NOT held
+const GUN_IMAGE_RMB_URL = 'https://raw.githubusercontent.com/blazewingz/lars-simulator/main/assets/gun%20but%20aiming.png'; // image shown while RMB IS held
 const gunImageNormal = new Image();
 const gunImageRmb = new Image();
 if (GUN_IMAGE_NORMAL_URL) gunImageNormal.src = GUN_IMAGE_NORMAL_URL;
