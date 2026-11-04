@@ -889,8 +889,8 @@ addEventListener('mouseup', e => { if (e.button === 2) zoomHeld = false; });
 addEventListener('mousemove', e => { if (document.pointerLockElement === cv && state === 'play') P.a += e.movementX * .0024; });
 
 /* ---------- Gun images: paste your two image URLs here ---------- */
-const GUN_IMAGE_NORMAL_URL = ''; // image shown when RMB is NOT held
-const GUN_IMAGE_RMB_URL = '';    // image shown while RMB IS held
+const GUN_IMAGE_NORMAL_URL = 'https://github.com/blazewingz/lars-simulator/blob/main/assets/gun.png'; // image shown when RMB is NOT held
+const GUN_IMAGE_RMB_URL = 'https://github.com/blazewingz/lars-simulator/blob/main/assets/gun%20but%20aiming.png';    // image shown while RMB IS held
 const gunImageNormal = new Image();
 const gunImageRmb = new Image();
 if (GUN_IMAGE_NORMAL_URL) gunImageNormal.src = GUN_IMAGE_NORMAL_URL;
