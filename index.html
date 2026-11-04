@@ -8,11 +8,11 @@
 :root{--yellow:#ffe14d;--red:#c4160a;--ink:#111;color-scheme:dark}
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%;background:#050403;color:#ddd;
-  font-family:Arial,Helvetica,sans-serif}
+  font-family:"Comic Sans MS","Chalkboard SE","Trebuchet MS",sans-serif}
 body{display:flex;flex-direction:column;align-items:center;gap:12px;
   padding:12px 12px calc(12px + env(safe-area-inset-bottom,0px))}
-h1{margin:6px 0 0;font-family:Arial,Helvetica,sans-serif;font-weight:700;
-  letter-spacing:.16em;font-size:clamp(20px,4vw,30px);color:#e7e7e7;text-shadow:none;transform:none}
+h1{margin:6px 0 0;font-family:Impact,"Arial Black",sans-serif;font-weight:400;
+  font-size:clamp(24px,5.5vw,44px);color:var(--red);text-shadow:2px 2px 0 #000,0 0 14px #600;transform:rotate(1deg)}
 #wrap{width:min(100%,960px);aspect-ratio:16/9;background:#000;border:4px solid #000;
   box-shadow:0 0 0 2px #3a1a14,8px 8px 0 #300}
 #wrap:fullscreen{width:100vw;height:100vh;aspect-ratio:auto;border:0;box-shadow:none}
@@ -22,13 +22,16 @@ canvas{display:block;width:100%;height:100%;object-fit:contain;image-rendering:p
 .btn:hover{background:#fff}
 .btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000}
 .btn:focus-visible{outline:3px solid #fff;outline-offset:2px}
-#hint{max-width:680px;margin:0;text-align:center;font-size:14px;line-height:1.5;opacity:.75}
+#hint{max-width:760px;margin:0;text-align:center;font-size:14px;line-height:1.5;opacity:.75}
+#version{position:fixed;left:10px;bottom:7px;color:#666;font:11px "Comic Sans MS","Trebuchet MS",sans-serif}
 </style>
 </head>
 <body>
-<h1>LARS SIMULATOR</h1>
+<h1>lars simulator lol</h1>
 <div id="wrap"><canvas id="game" aria-label="Lars Simulator"></canvas></div>
 <button class="btn" id="fsBtn" type="button">Fullscreen</button>
+<p id="hint">WASD move · Mouse look · Shift sprint · C crouch · E interact · Space jump · Q blink · Z hold eyes shut · T torch · RMB focus (scroll to adjust)</p>
+<div id="version">v0.0.6 · made by hand, bugs included</div>
 <script>
 /* =========================================================
    LARS SIMULATOR
@@ -421,7 +424,22 @@ function fireShot() {
   }
 }
 
-
+function fireShot() {
+  if (!shotgun || state !== 'play' || shotCooldown > 0) return;
+  shotCooldown = .62; shotFlash = .16;
+  // Stylised arcade sound and a short screen flash; this is a purely fictional game effect.
+  beep(105, .16, 'sawtooth', .19, 42); noise(.11, .16); thud(.09, 0);
+  if (!L || L.knocked) return;
+  const aim = Math.atan2(L.y - P.y, L.x - P.x);
+  const delta = Math.atan2(Math.sin(aim - P.a), Math.cos(aim - P.a));
+  if (L.d < 14 && Math.abs(delta) < .24 && los(P.x, P.y, L.x, L.y)) {
+    L.knocked = true; L.knockT = 0; L.st = 'knocked'; L.sees = false; L.fuse = false; L.mom = 0;
+    msg = 'OW.'; msgT = 1.1;
+    shout(.62, ['ow']);
+  } else {
+    msg = 'MISS.'; msgT = 1;
+  }
+}
 
 function updateLars(dt) {
   L.d = Math.hypot(L.x - P.x, L.y - P.y);
@@ -443,7 +461,7 @@ function updateLars(dt) {
   if (L.sees) { if (L.st !== 'chase') spotted(); L.lx = P.x; L.ly = P.y; L.lostT = 0; }
   else if (L.st === 'chase' && (L.lostT += dt) > 3) { L.st = 'search'; L.waitT = 0; route(L.lx, L.ly); say('he lost you... for now.', 2.5); beep(300, .5, 'sine', .08, 150); }
   if (seenT > 0) { seenT -= dt; return; }                                    // he freezes for a split second when he spots you
-  const dashing = (P.blinkT >= .1 && P.blinkT < .26) || P.eyeHold > .65;                          // eyes shut = he lunges
+  const dashing = P.blinkT >= .1 && P.blinkT < .26;                          // eyes shut = he lunges
   const rel = Math.atan2(L.y - P.y, L.x - P.x) - P.a; L.rel = Math.atan2(Math.sin(rel), Math.cos(rel));
   const inView = Math.abs(L.rel) < Math.atan(baseFov) * .8 && closure() < .5;
   L.watching = L.st === 'chase' && L.sees && inView;                         // eye contact
@@ -475,7 +493,7 @@ function updateLars(dt) {
     if (L.st === 'patrol') { if (L.fuse) { L.fuse = false; powerOff(); } L.pauseT = rand(.8, 2.2); patrol(); } else if (L.st === 'search' && (L.waitT += dt) > 2.5) { L.waitT = 0; patrol(); }
   }
   if ((L.stepT -= dt * sp) <= 0) { lstep(); L.stepT = 1.1; }   // footsteps you can hear coming
-  if (L.d < .6 && P.jumpZ < .42 && L.flashStun <= 0) { state = 'dead'; endT = 0; quip = pick(QUIPS); silencePersistentAudio(); jumpscareSound(); }
+  if (L.d < .50 && P.jumpZ < .42 && L.flashStun <= 0) { state = 'dead'; endT = 0; quip = pick(QUIPS); silencePersistentAudio(); jumpscareSound(); }
 }
 
 
@@ -619,7 +637,8 @@ function sprite(o, c, hScale, lift) {
   if (ty < .15) return;
   const sx = (RW / 2) * (1 + tx / ty), lh = vk / ty, size = lh * hScale, w = size * c.width / c.height * (RW / (2 * P.fov)) / vk;
   const top = RH / 2 + lh * cameraHeight - size - lh * lift;
-  ctx.globalAlpha = clamp(1.3 - ty / (fogD + FL * .5), .08, 1);
+  const ambientSpriteLight = power ? 1 : (torchOn && torchBattery > 0 ? .42 : .012);
+  ctx.globalAlpha = clamp(1.3 - ty / (fogD + FL * .5), 0, 1) * ambientSpriteLight;
   for (let x = Math.max(0, Math.floor(sx - w / 2)); x < Math.min(RW, sx + w / 2); x++) {
     if (ty >= zbuf[x]) continue;
     ctx.drawImage(c, Math.min(c.width - 1, (x - (sx - w / 2)) / w * c.width), 0, Math.max(1, c.width / w), c.height, x, top, 1, size);
@@ -706,9 +725,19 @@ function drawTorchHud() {
   txt(`${Math.ceil(torchBattery)}s`, x + 44, y + 21, 6, torchOn ? '#ffe69a' : '#aeb6bb');
 }
 function drawWeaponOverlay() {
-  // Fictional, blocky first-person prop, drawn directly on the pixel canvas.
-  // RMB raises and steadies it while the camera eases into the zoom.
-  const z = zoomAmount, scale = 1 + z * .34, ox = RW - 114 - z * 66, oy = RH - 68 - z * 8;
+  const z = zoomAmount;
+  const chosenGunImage = zoomHeld ? gunImageRmb : gunImageNormal;
+  if (chosenGunImage.complete && chosenGunImage.naturalWidth > 0) {
+    const iw = chosenGunImage.naturalWidth, ih = chosenGunImage.naturalHeight;
+    const maxW = zoomHeld ? 150 : 126, maxH = zoomHeld ? 112 : 88;
+    const scale = Math.min(maxW / iw, maxH / ih);
+    const w = iw * scale, h = ih * scale;
+    ctx.drawImage(chosenGunImage, RW - w - 5 - z * 10, RH - h + 2);
+    if (shotFlash > 0) { ctx.globalAlpha = shotFlash / .16; ctx.fillStyle = '#fff0b0'; ctx.fillRect(RW - w - 12, RH - h - 8, 12, 8); ctx.globalAlpha = 1; }
+    return;
+  }
+  // Existing placeholder prop remains until image URLs are supplied.
+  const scale = 1 + z * .34, ox = RW - 114 - z * 66, oy = RH - 68 - z * 8;
   ctx.save(); ctx.translate(ox, oy); ctx.scale(scale, scale);
   // sleeve and forearm
   rr(ctx, 54, 43, 57, 36, '#263746'); rr(ctx, 61, 38, 39, 28, '#344b5a');
@@ -733,18 +762,19 @@ function drawWeaponOverlay() {
 function draw() {
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, RW, RH);
   if (state === 'title') {
-    ctx.fillStyle = '#e8e8e8';
-    ctx.font = 'bold 25px Arial, Helvetica, sans-serif';
+    ctx.fillStyle = '#c4160a';
+    ctx.font = 'bold 27px Impact, "Arial Black", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('LARS SIMULATOR', RW / 2, 62);
-    ctx.fillStyle = '#777';
-    ctx.font = '10px Arial, Helvetica, sans-serif';
-    ctx.fillText('A quiet place. Keep it that way.', RW / 2, 88);
-    ctx.fillStyle = '#ffe14d';
-    if (Math.sin(t * 3) > -.2) ctx.fillText('PRESS SPACE OR CLICK TO START', RW / 2, 145);
-    ctx.fillStyle = '#999';
-    ctx.fillText('WASD  ·  SHIFT  ·  C  ·  SPACE  ·  Q  ·  Z  ·  RMB', RW / 2, 166);
+    ctx.shadowColor = '#600'; ctx.shadowBlur = 8;
+    ctx.fillText('LARS SIMULATOR', RW / 2, 67);
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#ffe14d'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(62, 82); ctx.quadraticCurveTo(160, 88, 258, 81); ctx.stroke();
+    ctx.fillStyle = '#222'; ctx.fillRect(80, 101, 160, 8);
+    ctx.fillStyle = '#c4160a'; ctx.fillRect(80, 101, 158, 8);
+    txt('Loading Lars... 99%', RW / 2, 123, 11, '#aaa');
+    if (Math.sin(t * 4) > -.2) txt('PRESS SPACE OR CLICK TO ENTER', RW / 2, 157, 12, '#ffe14d');
     return;
   }
   FL = torchPower * 4.3 + zoomAmount * (5.2 + zoomScale * 3.4); cam.dx = Math.cos(P.a); cam.dy = Math.sin(P.a); vk = RH * Math.pow(.66 / P.fov, .6);   // keeps wall height sensible at wide FOV
@@ -772,11 +802,6 @@ function draw() {
     ctx.globalAlpha = 1; }
   if (P.crouchAmount > .01) { ctx.globalAlpha = P.crouchAmount * .78; ctx.fillStyle = stealthVig; ctx.fillRect(0, 0, RW, RH); ctx.globalAlpha = 1; }
 
-
-  // eyelids (blink)
-  const c = closure();
-  const lidH = Math.max(c * RH * .52, zoomAmount * (9 + zoomScale * 10));
-  if (lidH > .5) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, RW, lidH); ctx.fillRect(0, RH - lidH, RW, lidH + 1); }
 
   drawTorchHud();
   if (shotgun) drawWeaponOverlay();
@@ -814,7 +839,10 @@ function draw() {
     txt('LARS HAS BEEN DEFEATED.', RW / 2, 86, 13, '#fff');
     txt('YOU FOUND THE VERY UNFAIR BUTTON.', RW / 2, 108, 8, '#aaa');
     if (endT > 1.5) txt('SPACE TO PLAY AGAIN', RW / 2, 158, 11, '#ffe14d');
-  }
+  }  // Final eyelid pass: deliberately above every HUD, panel and ending element.
+  const lidClosure = closure();
+  const lidH = Math.max(lidClosure * RH * .52, zoomAmount * (9 + zoomScale * 10));
+  if (lidH > .5) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, RW, lidH); ctx.fillRect(0, RH - lidH, RW, lidH + 1); }
 }
 
 /* ---------- Input ---------- */
@@ -859,6 +887,14 @@ cv.addEventListener('mousedown', e => {
 });
 addEventListener('mouseup', e => { if (e.button === 2) zoomHeld = false; });
 addEventListener('mousemove', e => { if (document.pointerLockElement === cv && state === 'play') P.a += e.movementX * .0024; });
+
+/* ---------- Gun images: paste your two image URLs here ---------- */
+const GUN_IMAGE_NORMAL_URL = ''; // image shown when RMB is NOT held
+const GUN_IMAGE_RMB_URL = '';    // image shown while RMB IS held
+const gunImageNormal = new Image();
+const gunImageRmb = new Image();
+if (GUN_IMAGE_NORMAL_URL) gunImageNormal.src = GUN_IMAGE_NORMAL_URL;
+if (GUN_IMAGE_RMB_URL) gunImageRmb.src = GUN_IMAGE_RMB_URL;
 
 /* ---------- Main loop ---------- */
 let last = performance.now();
