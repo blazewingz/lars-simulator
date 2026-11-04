@@ -3,37 +3,105 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Lars Simulator</title>
+<title>Lars Simulator v0.17</title>
 <style>
 :root{--yellow:#ffe14d;--red:#c4160a;--ink:#111;color-scheme:dark}
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%;background:#050403;color:#ddd;font-family:Arial,Helvetica,sans-serif}
 body{display:flex;flex-direction:column;align-items:center;gap:12px;padding:12px 12px calc(12px + env(safe-area-inset-bottom,0px))}
 h1{margin:6px 0 0;font-family:Arial,Helvetica,sans-serif;font-weight:700;letter-spacing:.16em;font-size:clamp(20px,4vw,30px);color:#e7e7e7;text-shadow:none;transform:none}
-#wrap{width:min(100%,960px);aspect-ratio:16/9;background:#000;border:4px solid #000;box-shadow:0 0 0 2px #3a1a14,8px 8px 0 #300}
+#gameLayout{width:min(100%,1370px);display:grid;grid-template-columns:205px minmax(0,960px) 145px;gap:14px;align-items:start}
+#controlsPanel,#fsSide{background:transparent;border:0;box-shadow:none;padding:0;min-width:0}
+#controlsTitle{display:none}
+.bind-row{display:grid;grid-template-columns:64px minmax(0,1fr);gap:8px;align-items:center;margin:0 0 5px;min-height:25px}
+.bind-row span{font:13px/1.35 Arial,Helvetica,sans-serif;color:#c9c3b7;overflow-wrap:anywhere}
+.key-button,.key-static{width:100%;min-height:22px;display:flex;align-items:center;justify-content:flex-start;padding:2px 0;border:0;border-radius:0;background:transparent;color:#e7e7e7;font:700 13px Arial,Helvetica,sans-serif;letter-spacing:0;text-decoration:underline;text-underline-offset:3px}
+.key-button{cursor:pointer}
+.key-button:hover{background:transparent;color:var(--yellow)}
+.key-button:focus-visible,#resetBinds:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.key-button.capturing{background:transparent;color:var(--yellow);animation:keyPulse .8s infinite alternate}
+.key-static{color:#888;text-decoration:none}
+@keyframes keyPulse{from{opacity:.72}to{opacity:1}}
+#bindStatus{font-size:11px;line-height:1.35;color:#888;margin:8px 0 6px;min-height:24px}
+#resetBinds{width:auto;font:12px Arial,Helvetica,sans-serif;color:#aaa;background:transparent;border:0;border-radius:0;padding:2px 0;text-decoration:underline;text-align:left;cursor:pointer}
+#resetBinds:hover{background:transparent;color:#fff}
+#gameColumn{min-width:0;width:100%}
+#wrap{width:100%;aspect-ratio:16/9;background:#000;border:4px solid #000;box-shadow:0 0 0 2px #3a1a14,8px 8px 0 #300}
 #wrap:fullscreen{width:100vw;height:100vh;aspect-ratio:auto;border:0;box-shadow:none}
 canvas{display:block;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;cursor:pointer}
 .btn{font:inherit;font-weight:700;color:var(--ink);background:var(--yellow);border:3px solid #000;box-shadow:3px 3px 0 #000;padding:8px 14px;border-radius:4px;cursor:pointer}
 .btn:hover{background:#fff}
 .btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000}
 .btn:focus-visible{outline:3px solid #fff;outline-offset:2px}
-#fsRow{width:min(100%,960px);display:flex;justify-content:flex-end;margin-top:0}
-#below{width:min(100%,960px);display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:4px}
+#fsSide{display:flex;flex-direction:column;align-items:stretch;gap:9px}
+#fsBtn{width:100%;text-align:center}
+#fsDescription{font-size:12px;line-height:1.45;color:#888;margin:0}
+#below{width:100%;display:flex;flex-direction:column;align-items:center;gap:9px;margin-top:12px}
 #objective{max-width:760px;margin:0;text-align:center;font-size:14px;line-height:1.5;color:#c9c3b7}
-#hint{max-width:680px;margin:0;text-align:center;font-size:14px;line-height:1.5;color:#aaa;opacity:.75}
+#hint{max-width:760px;margin:0;text-align:center;font-size:12px;line-height:1.5;color:#aaa;opacity:.75}
 #version{position:fixed;left:10px;bottom:7px;color:#666;font:11px Arial,Helvetica,sans-serif}
-@media(max-width:560px){#objective{font-size:13px}#hint{font-size:12px;line-height:1.5}#below{margin-top:2px}}
+#watermark{position:fixed;right:10px;bottom:7px;color:#777;font:11px Arial,Helvetica,sans-serif;text-decoration:none}
+#watermark:hover{color:#ddd;text-decoration:underline}
+@media(max-width:1120px){
+  #gameLayout{grid-template-columns:180px minmax(0,1fr) 125px;gap:10px}
+  #controlsPanel,#fsSide{padding:8px}
+  .bind-row{grid-template-columns:68px minmax(0,1fr);gap:5px}
+}
+@media(max-width:780px){
+  #gameLayout{grid-template-columns:minmax(0,1fr) 130px;grid-template-areas:"game side" "controls controls"}
+  #gameColumn{grid-area:game}
+  #fsSide{grid-area:side}
+  #controlsPanel{grid-area:controls;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:12px;align-items:center}
+  #bindStatus,#resetBinds{grid-column:1/-1}
+  .bind-row{margin-bottom:3px}
+}
+@media(max-width:540px){
+  body{padding:8px 8px calc(10px + env(safe-area-inset-bottom,0px));gap:9px}
+  #gameLayout{grid-template-columns:minmax(0,1fr);grid-template-areas:"game" "side" "controls";gap:9px}
+  #fsSide{flex-direction:row;align-items:center;gap:10px}
+  #fsBtn{width:auto;min-width:116px}
+  #fsDescription{flex:1}
+  #controlsPanel{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #objective{font-size:13px}
+  #hint{font-size:11px}
+}
 </style>
 </head>
 <body>
 <h1>LARS SIMULATOR</h1>
-<div id="wrap"><canvas id="game" aria-label="Lars Simulator"></canvas></div>
-<div id="fsRow"><button class="btn" id="fsBtn" type="button">Fullscreen</button></div>
-<div id="below">
-  <p id="objective">Restore power by repairing all four generators, then find the exit. Lars is somewhere in the building. Keep your eyes open.</p>
-  <p id="hint">WASD MOVE · MOUSE LOOK · SHIFT SPRINT · C CROUCH · SPACE JUMP · E INTERACT · Q BLINK / HOLD EYES SHUT · Z LOOK BEHIND · T TORCH · RMB FOCUS · [ ] FOV</p>
+<div id="gameLayout">
+  <aside id="controlsPanel" aria-label="Key bindings">
+    <div class="bind-row"><span class="key-static">WASD</span><span>Move</span></div>
+    <div class="bind-row"><span class="key-static">MOUSE</span><span>Look around</span></div>
+    <div class="bind-row"><span class="key-static">RMB</span><span>Focus / squint</span></div>
+    <div class="bind-row"><span class="key-static">WHEEL</span><span>Adjust focus zoom</span></div>
+    <div class="bind-row"><button class="key-button" type="button" data-bind="sprint">SHIFT</button><span>Sprint</span></div>
+    <div class="bind-row"><button class="key-button" type="button" data-bind="crouch">C</button><span>Crouch</span></div>
+    <div class="bind-row"><button class="key-button" type="button" data-bind="jump">SPACE</button><span>Jump / start / retry</span></div>
+    <div class="bind-row"><button class="key-button" type="button" data-bind="interact">E</button><span>Interact / repair</span></div>
+    <div class="bind-row"><button class="key-button" type="button" data-bind="blink">Q</button><span>Blink / hold eyes shut</span></div>
+    <div class="bind-row"><button class="key-button" type="button" data-bind="lookBehind">Z</button><span>Look behind</span></div>
+    <div class="bind-row"><button class="key-button" type="button" data-bind="torch">T</button><span>Toggle torch</span></div>
+    <div class="bind-row"><button class="key-button" type="button" data-bind="fullscreen">F</button><span>Toggle fullscreen</span></div>
+    <div class="bind-row"><button class="key-button" type="button" data-bind="fovDown">[</button><span>Decrease FOV</span></div>
+    <div class="bind-row"><button class="key-button" type="button" data-bind="fovUp">]</button><span>Increase FOV</span></div>
+    <p id="bindStatus">Click a key label to change it. Press Escape to cancel. WASD and mouse look stay fixed.</p>
+    <button id="resetBinds" type="button">Reset default keys</button>
+  </aside>
+  <main id="gameColumn">
+    <div id="wrap"><canvas id="game" aria-label="Lars Simulator"></canvas></div>
+    <div id="below">
+      <p id="objective">Restore power by repairing all four generators, then find the exit. Lars is somewhere in the building. Keep your eyes open.</p>
+      <p id="hint">WASD MOVE · MOUSE LOOK · CHANGE THE OTHER KEYBINDS IN THE PANEL</p>
+    </div>
+  </main>
+  <aside id="fsSide">
+    <button class="btn" id="fsBtn" type="button">fullscreen</button>
+    <p id="fsDescription">Expand the game to fill your screen.</p>
+  </aside>
 </div>
-<div id="version">v0.0.13</div>
+<div id="version">v0.17 · bugs included</div>
+<a id="watermark" href="https://sites.google.com/view/blazewingz/home" target="_blank" rel="noopener noreferrer">bit.ly/blazewingz</a>
 <script>
 /* =========================================================
    LARS SIMULATOR
@@ -268,6 +336,67 @@ let state = 'title', t = 0, light = 1, bob = 0, msg = '', msgT = 0, time = 0, en
 let wakeT = 30, clankT = 0, near = null, fixing = null, seenT = 0, routeT = 0, blackT = 0, blackIn = 30, shoutT = 8, hearT = 0, quip = '';
 let speechCaption = '', speechCaptionTimer = 0, speechCaptionToken = 0, ambientBreathT = 0, deathAside = ''; 
 const zbuf = new Float32Array(RW), keys = {}, cam = { dx: 1, dy: 0 };
+const DEFAULT_BINDS = {
+  sprint: 'ShiftLeft', crouch: 'KeyC', jump: 'Space', interact: 'KeyE', blink: 'KeyQ',
+  lookBehind: 'KeyZ', torch: 'KeyT', fullscreen: 'KeyF', fovDown: 'BracketLeft', fovUp: 'BracketRight'
+};
+const BIND_STORAGE_KEY = 'lars-simulator-keybinds-v17';
+const BLOCKED_BINDS = new Set(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Escape','Enter','Tab','F12','KeyX']);
+let keybinds = { ...DEFAULT_BINDS }, bindCapture = null;
+try {
+  const savedBinds = JSON.parse(localStorage.getItem(BIND_STORAGE_KEY) || 'null');
+  if (savedBinds && typeof savedBinds === 'object') {
+    const candidate = {}, used = new Set();
+    let valid = true;
+    for (const action of Object.keys(DEFAULT_BINDS)) {
+      const code = savedBinds[action];
+      if (typeof code !== 'string' || !code || BLOCKED_BINDS.has(code) || used.has(code)) { valid = false; break; }
+      candidate[action] = code; used.add(code);
+    }
+    if (valid) keybinds = candidate;
+  }
+} catch (e) {}
+const actionForCode = code => Object.keys(keybinds).find(action => keybinds[action] === code) || null;
+const actionDown = action => action === 'sprint' && keybinds.sprint === 'ShiftLeft'
+  ? !!(keys.ShiftLeft || (!Object.entries(keybinds).some(([name, code]) => name !== 'sprint' && code === 'ShiftRight') && keys.ShiftRight))
+  : !!keys[keybinds[action]];
+function keyLabel(code) {
+  const labels = { ShiftLeft:'SHIFT', ShiftRight:'R SHIFT', ControlLeft:'CTRL', ControlRight:'R CTRL', AltLeft:'ALT', AltRight:'R ALT', Space:'SPACE', BracketLeft:'[', BracketRight:']', Minus:'-', Equal:'=', Comma:',', Period:'.', Slash:'/', Backslash:'\\', Semicolon:';', Quote:"'", Backquote:'`' };
+  if (labels[code]) return labels[code];
+  if (code.startsWith('Key')) return code.slice(3);
+  if (code.startsWith('Digit')) return code.slice(5);
+  if (code.startsWith('Arrow')) return code.slice(5).toUpperCase();
+  if (code.startsWith('Numpad')) return 'NUM ' + code.slice(6).toUpperCase();
+  return code.replace(/([A-Z])/g, ' $1').trim().toUpperCase();
+}
+function renderKeybinds() {
+  document.querySelectorAll('[data-bind]').forEach(button => {
+    const action = button.dataset.bind;
+    button.textContent = bindCapture === action ? 'PRESS KEY…' : keyLabel(keybinds[action]);
+    button.classList.toggle('capturing', bindCapture === action);
+    button.setAttribute('aria-label', action + ': ' + (bindCapture === action ? 'press a key' : keyLabel(keybinds[action])));
+  });
+}
+function setBindStatus(message) {
+  const status = document.getElementById('bindStatus');
+  if (status) status.textContent = message;
+}
+function saveKeybinds() {
+  try { localStorage.setItem(BIND_STORAGE_KEY, JSON.stringify(keybinds)); } catch (e) {}
+}
+document.querySelectorAll('[data-bind]').forEach(button => {
+  button.addEventListener('click', () => {
+    const action = button.dataset.bind;
+    bindCapture = bindCapture === action ? null : action;
+    setBindStatus(bindCapture ? 'Press the new key for ' + button.nextElementSibling.textContent + '. Escape cancels.' : 'Click a key label to change it. WASD and mouse look stay fixed.');
+    renderKeybinds();
+  });
+});
+document.getElementById('resetBinds').addEventListener('click', () => {
+  keybinds = { ...DEFAULT_BINDS }; bindCapture = null; saveKeybinds(); renderKeybinds();
+  setBindStatus('Default keybinds restored.');
+});
+renderKeybinds();
 const cheatSign = document.createElement('canvas'); cheatSign.width = 128; cheatSign.height = 40; const cheatSignCtx = cheatSign.getContext('2d'); cheatSignCtx.fillStyle = '#241e17'; cheatSignCtx.fillRect(0,0,128,40); cheatSignCtx.strokeStyle = '#897b58'; cheatSignCtx.strokeRect(1,1,126,38); cheatSignCtx.fillStyle = '#d6c8a0'; cheatSignCtx.font = 'bold 15px monospace'; cheatSignCtx.textAlign = 'center'; cheatSignCtx.fillText('SSADAD',64,25);
 let baseFov = 1.1, vk = RH, cameraHeight = .5, zoomAmount = 0, zoomHeld = false, zoomScale = 1.0, shotgun = false, cheatBuffer = '', shotCooldown = 0, shotFlash = 0, ev = { dashT: -99, backT: -99, sprintT: -99, fixT: -99, blink: null, spot: '' };
 const say = (s, d = 2.5) => { if (String(s).startsWith('FOV')) { msg = s; msgT = d; } };   // on-screen text is mostly gone on purpose
@@ -367,7 +496,7 @@ function genLevel() {
 }
 const SWX = i => RW / 2 - 80 + i * 40;
 function initSwitches() { sw = [0, 1, 2, 3, 4].map(() => Math.random() < .4 ? 1 : 0); for (let k = 0; sw.filter(v => !v).length < 2 && k < 30; k++) sw[(Math.random() * 5) | 0] = 0; }
-function openPanel() { panelOpen = true; for (const k of ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ShiftLeft', 'ShiftRight']) keys[k] = false; if (document.exitPointerLock) document.exitPointerLock(); beep(700, .05, 'square', .06); }
+function openPanel() { panelOpen = true; for (const k of ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ...Object.values(keybinds)]) keys[k] = false; if (document.exitPointerLock) document.exitPointerLock(); beep(700, .05, 'square', .06); }
 function closePanel() { if (!panelOpen) return; panelOpen = false; lockMouse(); }
 function flick(i) { if (!panelOpen || i < 0 || i > 4) return; sw[i] ^= 1; beep(sw[i] ? 900 : 500, .05, 'square', .1, sw[i] ? 1100 : 300); noise(.05, .12); heard(P.x, P.y, 10); if (sw.every(v => v)) powerOn(); }   // every flick is loud
 function panelClick(e) {
@@ -515,9 +644,9 @@ function updateLars(dt) {
     else if (L.sees) { L.mom = Math.min(1, L.mom + 2 * dt); if (closure() < .5) ev.backT = time; }   // looked away: he winds up
     else L.mom = Math.max(0, L.mom - .5 * dt);
     sp *= L.watching ? .5 : 1 + .8 * L.mom;                                  // staring = crawl, looking away = up to 1.65x
-    if (dashing) sp *= 3.5;
+    if (dashing) sp *= 3.3;
     if ((routeT -= dt) <= 0) { if (L.sees) route(P.x, P.y); else route(L.lx, L.ly); routeT = .2; }   // no sight = goes to where he LAST saw you
-  } else if (dashing && L.st !== 'patrol') { sp *= 3.5; ev.dashT = time; }
+  } else if (dashing && L.st !== 'patrol') { sp *= 3.3; ev.dashT = time; }
   if (L.st === 'patrol' && L.pauseT > 0) { L.pauseT -= dt; sp = 0; }   // stops and looks around like a person
   const cx = L.x | 0, cy = L.y | 0; let tx = L.tx, ty = L.ty;
   if (cx !== (L.tx | 0) || cy !== (L.ty | 0)) {
@@ -573,7 +702,7 @@ function update(dt) {
   // Ordinary dry-eye blinking continues during normal gameplay (7-9 seconds).
   // RMB squinting makes the interval shorter (2-4 seconds).
   // Q starts one ordinary blink; holding it keeps that same blink closed, without a second blink.
-  const qHeld = keys.KeyQ && !panelOpen;
+  const qHeld = actionDown('blink') && !panelOpen;
   const blinkMode = zoomHeld ? 'squint' : 'normal';
   if (P.blinkMode !== blinkMode) {
     P.blinkMode = blinkMode;
@@ -596,28 +725,30 @@ function update(dt) {
   }
   if (speechCaptionTimer > 0) speechCaptionTimer = Math.max(0, speechCaptionTimer - dt);
   if ((ambientBreathT -= dt) <= 0) {
-    if (!(keys.ShiftLeft || keys.ShiftRight) && !P.crouching && P.eyeHold < .2) sh(.62, .022, 'bandpass', 760, 490, .85, 0, .16);
+    if (!actionDown('sprint') && !P.crouching && P.eyeHold < .2) sh(.62, .022, 'bandpass', 760, 490, .85, 0, .16);
     ambientBreathT = rand(5.5, 9.5);
   }
 
   // --- movement: momentum, sprint with stamina, FOV kick, head bob ---
   const turn = (keys.ArrowRight ? 1 : 0) - (keys.ArrowLeft ? 1 : 0);
   P.a += turn * 2.6 * dt;
-  P.lookBack += ((keys.KeyZ ? 1 : 0) - P.lookBack) * Math.min(1, dt * 15);
+  P.lookBack += (((actionDown('lookBehind') && !panelOpen) ? 1 : 0) - P.lookBack) * Math.min(1, dt * 15);
   P.lookFov = Math.sin(P.lookBack * Math.PI) * .075;
   const fwd = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0), str = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0);
   const len = Math.hypot(fwd, str);
   const wx = len ? (Math.cos(P.a) * fwd - Math.sin(P.a) * str) / len : 0, wy = len ? (Math.sin(P.a) * fwd + Math.cos(P.a) * str) / len : 0;
-  P.crouching = !!keys.KeyC;
+  P.crouching = !panelOpen && actionDown('crouch');
   P.crouchAmount += ((P.crouching ? 1 : 0) - P.crouchAmount) * Math.min(1, dt * 12);
-  const sprint = !P.crouching && !zoomHeld && (keys.ShiftLeft || keys.ShiftRight) && len > 0 && P.stam > 0 && !P.tired;
-  P.stam = clamp(P.stam + (sprint ? -30 : 16) * dt, 0, 100);
-  if (P.stam <= 0) P.tired = true; if (P.tired && P.stam > 30) P.tired = false;
+  const sprint = !panelOpen && !P.crouching && !zoomHeld && actionDown('sprint') && len > 0 && P.stam > 0 && !P.tired;
   const squintSlow = (zoomHeld ? .78 : 1) * (1 - P.eyeHold * .38);
   const v = (P.crouching ? 2.0 : sprint ? 6.2 : 4.15) * squintSlow * (fwd < 0 ? .76 : 1), k = Math.min(1, dt * (P.crouching ? 13 : 9)); P.vx += (wx * v - P.vx) * k; P.vy += (wy * v - P.vy) * k;
   if (free(P.x + P.vx * dt, P.y)) P.x += P.vx * dt;
   if (free(P.x, P.y + P.vy * dt)) P.y += P.vy * dt;
   const spd = Math.hypot(P.vx, P.vy);
+  const standingStill = spd < .18;
+  const regenMultiplier = P.crouching && standingStill ? 1.75 : (P.crouching || standingStill ? 1.5 : 1);
+  P.stam = clamp(P.stam + (sprint ? -30 : 16 * regenMultiplier) * dt, 0, 100);
+  if (P.stam <= 0) P.tired = true; if (P.tired && P.stam > 30) P.tired = false;
   const wasAirborne = P.jumpZ > 0;
   P.jumpV -= 30 * dt; P.jumpZ = Math.max(0, P.jumpZ + P.jumpV * dt);
   if (P.jumpZ === 0 && P.jumpV < 0) { P.jumpV = 0; if (wasAirborne) { thud(.14, 0); sh(.09, .045, 'lowpass', 190, 70, .7, 0, .006); } }
@@ -650,7 +781,7 @@ function update(dt) {
 
   // --- generators: hold E next to one (it's loud, and it also opens a shutter somewhere when done) ---
   near = fixing = null;
-  for (const g of gens) { if (g.done || Math.hypot(g.x - P.x, g.y - P.y) > 1.5) continue; near = g; if (keys.KeyE) fixing = g; }
+  for (const g of gens) { if (g.done || Math.hypot(g.x - P.x, g.y - P.y) > 1.5) continue; near = g; if (actionDown('interact') && !panelOpen) fixing = g; }
   nearBattery = BATTERY.active && Math.hypot(BATTERY.x - P.x, BATTERY.y - P.y) < 1.35;
   if (fixing) {
     ev.fixT = time; fixing.p += dt / FIX_TIME;
@@ -823,38 +954,28 @@ function drawTorchHud() {
   txt(`${Math.ceil(torchBattery)}s`, x + 44, y + 21, 6, torchOn ? '#ffe69a' : '#aeb6bb');
 }
 function drawWeaponOverlay() {
-  const z = zoomAmount;
   const chosenGunImage = zoomHeld ? gunImageRmb : gunImageNormal;
-  if (chosenGunImage.complete && chosenGunImage.naturalWidth > 0) {
-    const iw = chosenGunImage.naturalWidth, ih = chosenGunImage.naturalHeight;
-    const maxW = zoomHeld ? 150 : 126, maxH = zoomHeld ? 112 : 88;
-    const scale = Math.min(maxW / iw, maxH / ih);
-    const w = iw * scale, h = ih * scale;
-    ctx.drawImage(chosenGunImage, RW - w - 5 - z * 10, RH - h + 2);
-    if (shotFlash > 0) { ctx.globalAlpha = shotFlash / .16; ctx.fillStyle = '#fff0b0'; ctx.fillRect(RW - w - 12, RH - h - 8, 12, 8); ctx.globalAlpha = 1; }
-    return;
-  }
-  // Existing placeholder prop remains until image URLs are supplied.
-  const scale = 1 + z * .34, ox = RW - 114 - z * 66, oy = RH - 68 - z * 8;
-  ctx.save(); ctx.translate(ox, oy); ctx.scale(scale, scale);
-  // sleeve and forearm
-  rr(ctx, 54, 43, 57, 36, '#263746'); rr(ctx, 61, 38, 39, 28, '#344b5a');
-  rr(ctx, 58, 46, 10, 24, '#52616b'); rr(ctx, 102, 51, 13, 28, '#18232c');
-  // hand gripping the lower receiver
-  rr(ctx, 39, 26, 23, 20, '#9a7056'); rr(ctx, 46, 20, 23, 17, '#b78363');
-  rr(ctx, 61, 26, 15, 15, '#a8795b'); rr(ctx, 38, 31, 12, 12, '#805a46');
-  // receiver, barrel and front sight; simple, non-functional game art
-  rr(ctx, 18, 2, 39, 25, '#171c22'); rr(ctx, 22, 0, 32, 8, '#333d46');
-  rr(ctx, 26, 4, 24, 4, '#65717b'); rr(ctx, 21, 10, 34, 4, '#252d35');
-  rr(ctx, 13, 5, 12, 9, '#11171d'); rr(ctx, 9, 7, 8, 5, '#4a555e');
-  rr(ctx, 30, 19, 20, 11, '#222a31'); rr(ctx, 36, 23, 9, 17, '#151b20');
-  rr(ctx, 29, 34, 16, 22, '#303943'); rr(ctx, 32, 37, 10, 14, '#151b20');
-  rr(ctx, 29, 51, 20, 7, '#7a5943'); rr(ctx, 32, 55, 15, 8, '#a8795b');
-  // cool highlights keep the prop readable at the game's low resolution
-  rr(ctx, 20, 3, 2, 5, '#98a2a8'); rr(ctx, 48, 11, 4, 2, '#87939b');
-  if (shotFlash > 0) { ctx.globalAlpha = shotFlash / .16; rr(ctx, 4, -8, 21, 12, '#fff0b0'); rr(ctx, 8, -14, 12, 9, '#fff'); ctx.globalAlpha = 1; }
-  ctx.restore();
-  if (z > .75) { ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.fillRect(0, 0, 8, RH); ctx.fillRect(RW - 8, 0, 8, RH); }
+
+  if (!chosenGunImage.complete || chosenGunImage.naturalWidth === 0) return;
+
+  const maxW = zoomHeld ? 150 : 126;
+  const maxH = zoomHeld ? 112 : 88;
+
+  const scale = Math.min(
+    maxW / chosenGunImage.naturalWidth,
+    maxH / chosenGunImage.naturalHeight
+  );
+
+  const w = chosenGunImage.naturalWidth * scale;
+  const h = chosenGunImage.naturalHeight * scale;
+
+  ctx.drawImage(
+    chosenGunImage,
+    RW - w - 5 - zoomAmount * 10,
+    RH - h + 2,
+    w,
+    h
+  );
 }
 
 function draw() {
@@ -951,7 +1072,26 @@ function draw() {
 function lockMouse() { if (cv.requestPointerLock && document.pointerLockElement !== cv) { try { cv.requestPointerLock(); } catch (e) {} } }
 function act() { if (state === 'title' || (state === 'dead' && endT > 2.4) || (state === 'win' && endT > 1) || (state === 'secret' && endT > 1.5)) start(); }
 addEventListener('keydown', e => {
-  if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
+  if (bindCapture) {
+    e.preventDefault();
+    if (e.code === 'Escape') {
+      bindCapture = null; renderKeybinds(); setBindStatus('Key change cancelled.'); return;
+    }
+    if (BLOCKED_BINDS.has(e.code)) {
+      setBindStatus('That key is reserved. Choose another key.'); return;
+    }
+    const conflict = Object.entries(keybinds).find(([action, code]) => action !== bindCapture && code === e.code);
+    if (conflict) {
+      const otherButton = document.querySelector('[data-bind="' + conflict[0] + '"]');
+      setBindStatus('That key is already used for ' + (otherButton?.nextElementSibling?.textContent || conflict[0]) + '.'); return;
+    }
+    keybinds[bindCapture] = e.code;
+    bindCapture = null; saveKeybinds(); renderKeybinds(); setBindStatus('Keybind updated.');
+    return;
+  }
+
+  const action = actionForCode(e.code);
+  if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code) || action) e.preventDefault();
   if (e.repeat) return;
   if (state === 'play' && /^[a-z]$/i.test(e.key || '')) {
     cheatBuffer = (cheatBuffer + e.key.toLowerCase()).slice(-6);
@@ -960,21 +1100,31 @@ addEventListener('keydown', e => {
       beep(740, .12, 'square', .1, 1180); beep(980, .18, 'triangle', .08, 660);
     }
   }
-  if (panelOpen && ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ShiftLeft', 'ShiftRight'].includes(e.code)) return;   // you stand still at the panel
+  if (panelOpen && ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) return;
+  if (panelOpen && action && action !== 'interact') return;
   keys[e.code] = true;
-  if (e.code === 'KeyQ' && state === 'play' && !panelOpen && P.blinkT < 0) blink(false);
-  if (state === 'play') { if (e.code === 'KeyE' && nearFuse && !panelOpen) openPanel(); else if ((e.code === 'KeyE' || e.code === 'Escape') && panelOpen) closePanel(); else if (panelOpen && /^Digit[1-5]$/.test(e.code)) flick(+e.code[5] - 1); }
-  if (e.code === 'Space') { if (state === 'play') { if (P.jumpZ <= 0 && !P.crouching) { P.jumpV = 6.2; beep(115, .07, 'sine', .045, 75); thud(.055, 0); } } else act(); }
-  
-  if (e.code === 'KeyX' && state === 'play') fireShot();
+  if (action === 'blink' && state === 'play' && !panelOpen && P.blinkT < 0) blink(false);
+  if (state === 'play') {
+    if (action === 'interact' && nearFuse && !panelOpen) openPanel();
+    else if ((action === 'interact' || e.code === 'Escape') && panelOpen) closePanel();
+    else if (panelOpen && /^Digit[1-5]$/.test(e.code)) flick(+e.code[5] - 1);
+  }
+  if (action === 'jump') {
+    if (state === 'play') { if (P.jumpZ <= 0 && !P.crouching) { P.jumpV = 6.2; beep(115, .07, 'sine', .045, 75); thud(.055, 0); } }
+    else act();
+  }
   if (e.code === 'Enter') act();
-  if (e.code === 'BracketLeft' || e.code === 'BracketRight') { baseFov = clamp(baseFov + (e.code === 'BracketRight' ? .08 : -.08), .6, 1.7); say('FOV ' + Math.round(2 * Math.atan(baseFov) * 180 / Math.PI), 1.5); }
-  if (e.code === 'KeyF') document.getElementById('fsBtn').click();
-  if (e.code === 'KeyT' && state === 'play') {
+  if (e.code === 'KeyX' && state === 'play') fireShot();
+  if (action === 'fovDown' || action === 'fovUp') {
+    baseFov = clamp(baseFov + (action === 'fovUp' ? .08 : -.08), .6, 1.7);
+    say('FOV ' + Math.round(2 * Math.atan(baseFov) * 180 / Math.PI), 1.5);
+  }
+  if (action === 'fullscreen') document.getElementById('fsBtn').click();
+  if (action === 'torch' && state === 'play' && !panelOpen) {
     if (!torchOn && torchBattery <= 0) { say('NO TORCH BATTERY LEFT.', 1.8); beep(150, .08, 'square', .05); }
     else { torchOn = !torchOn; beep(torchOn ? 1200 : 420, .04, 'square', .055); }
   }
-  if (e.code === 'KeyE' && state === 'play' && nearBattery && BATTERY.active) {
+  if (action === 'interact' && state === 'play' && !panelOpen && nearBattery && BATTERY.active) {
     BATTERY.active = false; torchBattery = Math.min(torchBatteryMax, torchBattery + 10);
     msg = 'SPARE BATTERY +10 SECONDS'; msgT = 2.4; beep(760, .12, 'triangle', .09, 1180);
   }
@@ -991,6 +1141,7 @@ cv.addEventListener('mousedown', e => {
 addEventListener('mouseup', e => { if (e.button === 2) zoomHeld = false; });
 addEventListener('mousemove', e => { if (document.pointerLockElement === cv && state === 'play') P.a += e.movementX * .0024; });
 
+/* ---------- Gun images: paste your two image URLs here ---------- */
 const GUN_IMAGE_NORMAL_URL = 'https://raw.githubusercontent.com/blazewingz/lars-simulator/main/assets/gun.png'; // image shown when RMB is NOT held
 const GUN_IMAGE_RMB_URL = 'https://raw.githubusercontent.com/blazewingz/lars-simulator/main/assets/gun%20but%20aiming.png'; // image shown while RMB IS held
 const gunImageNormal = new Image();
