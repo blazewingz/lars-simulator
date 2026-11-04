@@ -24,7 +24,7 @@ funny 3d horror game where a guy named lars chases you around a procedurally gen
 * **`E`** - interact with the fusebox
 * **`T`** - toggle torch
 * **`[` / `]`** - adjust FOV
-* **`F11`** - fullscreen
+* **`F`** - fullscreen
 
 ## how to run
 
