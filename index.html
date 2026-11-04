@@ -8,11 +8,11 @@
 :root{--yellow:#ffe14d;--red:#c4160a;--ink:#111;color-scheme:dark}
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%;background:#050403;color:#ddd;
-  font-family:"Comic Sans MS","Chalkboard SE","Trebuchet MS",sans-serif}
+  font-family:Arial,Helvetica,sans-serif}
 body{display:flex;flex-direction:column;align-items:center;gap:12px;
   padding:12px 12px calc(12px + env(safe-area-inset-bottom,0px))}
-h1{margin:6px 0 0;font-family:Impact,"Arial Black",sans-serif;font-weight:400;
-  font-size:clamp(24px,5.5vw,44px);color:var(--red);text-shadow:2px 2px 0 #000,0 0 14px #600;transform:rotate(1deg)}
+h1{margin:6px 0 0;font-family:Arial,Helvetica,sans-serif;font-weight:700;
+  letter-spacing:.16em;font-size:clamp(20px,4vw,30px);color:#e7e7e7;text-shadow:none;transform:none}
 #wrap{width:min(100%,960px);aspect-ratio:16/9;background:#000;border:4px solid #000;
   box-shadow:0 0 0 2px #3a1a14,8px 8px 0 #300}
 #wrap:fullscreen{width:100vw;height:100vh;aspect-ratio:auto;border:0;box-shadow:none}
@@ -26,17 +26,14 @@ canvas{display:block;width:100%;height:100%;object-fit:contain;image-rendering:p
 </style>
 </head>
 <body>
-<h1>lars simulator lol</h1>
-<div id="wrap"><canvas id="game" aria-label="Lars Simulator 3D game"></canvas></div>
+<h1>LARS SIMULATOR</h1>
+<div id="wrap"><canvas id="game" aria-label="Lars Simulator"></canvas></div>
 <button class="btn" id="fsBtn" type="button">Fullscreen</button>
-<p id="hint">WASD move, mouse look (click the game to capture it), Shift sprint, E hold to fix generators.
-<b>Space blinks.</b> You have to blink every few seconds, and when your eyes are shut Lars dashes.
-Staring at him slows him down. If he SEES you he hunts you; break line of sight and he loses you.
-Fix all 4 generators, then reach the EXIT. Sound on, please.</p>
+<p id="hint">WASD move · mouse look · Shift sprint · hold C crouch · Space jump · hold RMB to focus · Q blink · E interact · T torch · [ ] FOV. Secret: type ssadad, then click or press X to fire.</p>
 
 <script>
 /* =========================================================
-   LARS SIMULATOR 3D: THE BACKROOMS (DEMO)
+   LARS SIMULATOR
    Tiny raycaster + a nextbot. One file, no libraries.
    Sections: setup > Lars frames > sound > map > Lars AI > update > render > input > loop
    ========================================================= */
@@ -67,46 +64,89 @@ const lc = larsC.getContext('2d');
 function larsFrame() {
   lc.clearRect(0, 0, 256, 256);
   const f = seenT > 0 ? 'flash' : (L.st === 'chase' && L.d < 9 ? 'near' : 'idle');
-  if (IMG[f]) lc.drawImage(IMG[f], 0, 0);
-  // rare glitch tears while he hunts (no constant spinning or tinting, stillness is scarier)
-  if (L.st === 'chase' && Math.random() < .06 && IMG[f]) for (let k = 0; k < 3; k++) {
-    const y = rand(20, 220), h = rand(4, 16); lc.drawImage(larsC, 0, y, 256, h, rand(-22, 22), y, 256, h);
+  if (L.knocked && IMG.idle) {
+    // The cheat-code hit is deliberately arcade-like: Lars tips over, with no graphic detail.
+    const fall = clamp(L.knockT / .42, 0, 1);
+    lc.save(); lc.translate(128, 128); lc.rotate(fall * Math.PI / 2);
+    lc.drawImage(IMG.idle, -128, -128, 256, 256); lc.restore();
+    return;
+  }
+  if (IMG[f]) {
+    const stride = Math.sin(L.gait);
+    lc.save();
+    lc.translate(128, 128 - Math.abs(stride) * 1.8);
+    lc.rotate(stride * .008);
+    lc.drawImage(IMG[f], -128, -128, 256, 256);
+    lc.restore();
   }
   if (L.st === 'sleep') { lc.font = 'bold 30px Impact, sans-serif'; lc.fillStyle = '#fff'; lc.strokeStyle = '#000'; lc.lineWidth = 5;
     lc.strokeText('z z z', 150, 36); lc.fillText('z z z', 150, 36); }
 }
 function mk(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return [c, c.getContext('2d')]; }
-let genBad, genOk, exitShut, exitOpen;
-(function buildStatic() {
-  for (const ok of [false, true]) {
-    const [cc, c] = mk(64, 64);
-    c.fillStyle = '#c99a12'; c.fillRect(6, 14, 52, 46); c.strokeStyle = '#000'; c.lineWidth = 4; c.strokeRect(6, 14, 52, 46);
-    c.fillStyle = '#333'; c.fillRect(14, 22, 36, 14); c.fillStyle = ok ? '#3f6' : '#f22';
-    c.beginPath(); c.arc(32, 46, 6, 0, 7); c.fill(); c.stroke();
-    c.font = '14px serif'; c.textAlign = 'center'; c.fillText(ok ? '✔' : '⚡', 32, 34);
-    if (ok) genOk = cc; else genBad = cc;
-  }
-  for (const open of [false, true]) {
-    const [cc, c] = mk(64, 128);
-    c.fillStyle = open ? '#0c4' : '#444'; c.fillRect(0, 0, 64, 128); c.strokeStyle = '#000'; c.lineWidth = 6; c.strokeRect(3, 3, 58, 122);
-    c.fillStyle = open ? '#fff' : '#999'; c.font = 'bold 18px Impact, sans-serif'; c.textAlign = 'center'; c.fillText('EXIT', 32, 40);
-    if (open) exitOpen = cc; else exitShut = cc;
-  }
-})();
+const rr = (c, x, y, w, h, col) => { c.fillStyle = col; c.fillRect(x, y, w, h); };
+function mkGen(ok, f) {
+  const [cc, c] = mk(64, 64); if (ok) c.translate(f ? .7 : -.7, 0);
+  rr(c, 4, 58, 56, 5, 'rgba(0,0,0,.55)'); rr(c, 7, 22, 50, 36, '#3b4046'); rr(c, 7, 22, 50, 4, '#6d747c'); rr(c, 7, 54, 50, 4, '#202328');
+  for (let i = 0; i < 6; i++) rr(c, 7 + i * 9, 50, 5, 4, '#d9a514');
+  rr(c, 12, 29, 24, 16, '#16181b'); for (let i = 0; i < 5; i++) rr(c, 12, 31 + i * 3, 24, 1, '#4b5158');
+  rr(c, 40, 14, 15, 11, '#a8231a'); rr(c, 42, 11, 4, 4, '#222'); rr(c, 48, 6, 5, 10, '#2a2a2a'); rr(c, 47, 5, 7, 2, '#444'); rr(c, 4, 40, 3, 14, '#b11');
+  c.fillStyle = '#ddd'; c.beginPath(); c.arc(46, 36, 6, 0, 7); c.fill(); c.strokeStyle = '#000'; c.lineWidth = 1.5; c.stroke();
+  c.beginPath(); c.moveTo(46, 36); c.lineTo(ok ? 49 : 42, ok ? 32 : 39); c.stroke();
+  c.fillStyle = ok ? '#3f6' : (f ? '#f33' : '#611'); c.beginPath(); c.arc(46, 46, 3, 0, 7); c.fill();
+  if (ok) { c.fillStyle = 'rgba(200,200,200,.35)'; c.beginPath(); c.arc(50, 3 - f * 2, 3 + f, 0, 7); c.fill(); }
+  else { c.strokeStyle = '#fd3'; c.lineWidth = 1.5; if (f) { c.beginPath(); c.moveTo(34, 24); c.lineTo(38, 18); c.lineTo(35, 17); c.lineTo(40, 9); c.stroke(); }
+    c.fillStyle = 'rgba(40,40,40,.5)'; c.beginPath(); c.arc(22, 18 - f * 3, 5, 0, 7); c.fill(); }
+  return cc;
+}
+const GENS = [[mkGen(0, 0), mkGen(0, 1)], [mkGen(1, 0), mkGen(1, 1)]];
+function mkExit(open) {
+  const [cc, c] = mk(64, 128); rr(c, 0, 0, 64, 128, '#2d2f33'); rr(c, 4, 12, 56, 116, '#17181a');
+  if (open) { const g = c.createLinearGradient(0, 12, 0, 128); g.addColorStop(0, '#eaffef'); g.addColorStop(1, '#4f9'); c.fillStyle = g; c.fillRect(8, 16, 48, 112); rr(c, 8, 16, 10, 112, '#2a2c30'); }
+  else { rr(c, 8, 16, 48, 112, '#4a4e54'); for (let i = 0; i < 5; i++) rr(c, 8, 24 + i * 22, 48, 2, '#2b2e32'); rr(c, 46, 66, 6, 10, '#999'); c.strokeStyle = '#b11'; c.lineWidth = 3; c.beginPath(); c.moveTo(8, 20); c.lineTo(56, 124); c.moveTo(56, 20); c.lineTo(8, 124); c.stroke(); }
+  rr(c, 10, 1, 44, 9, open ? '#0a4' : '#600'); rr(c, 14, 4, 18, 3, '#fff'); c.fillStyle = '#fff'; c.beginPath(); c.moveTo(42, 5.5); c.lineTo(33, 1.5); c.lineTo(33, 9.5); c.fill();
+  return cc;
+}
+const exitShut = mkExit(0), exitOpen = mkExit(1);
+const [batteryCv, batteryCx] = mk(40, 48);
+rr(batteryCx, 11, 5, 18, 38, '#252b32'); rr(batteryCx, 13, 2, 14, 5, '#aeb8be');
+rr(batteryCx, 8, 11, 24, 29, '#69747c'); rr(batteryCx, 11, 14, 18, 23, '#26343c');
+rr(batteryCx, 14, 17, 12, 17, '#86d77a'); rr(batteryCx, 16, 19, 8, 13, '#c5f7a0');
+rr(batteryCx, 15, 42, 10, 3, '#d8b84d');
+const [fuseCv, fuseCx] = mk(64, 80);
+function paintFuse() {
+  const c = fuseCx; c.clearRect(0, 0, 64, 80); rr(c, 4, 74, 56, 5, 'rgba(0,0,0,.5)');
+  rr(c, 8, 4, 48, 70, '#4d535a'); rr(c, 8, 4, 48, 6, '#7a828a'); rr(c, 8, 68, 48, 6, '#3a3f45'); for (let i = 0; i < 4; i++) rr(c, 8 + i * 12, 68, 6, 6, '#d9a514');
+  rr(c, 12, 14, 40, 50, '#16181b'); rr(c, 20, 0, 6, 6, '#2a2a2a'); rr(c, 38, 0, 6, 6, '#2a2a2a');
+  c.strokeStyle = '#c22'; c.lineWidth = 1.5; c.beginPath(); c.moveTo(22, 4); c.bezierCurveTo(10, 10, 4, 20, 8, 30); c.stroke();
+  c.fillStyle = '#e8c21a'; c.beginPath(); c.moveTo(32, 16); c.lineTo(38, 26); c.lineTo(26, 26); c.fill();
+  for (let i = 0; i < 5; i++) { const x = 15 + i * 7, up = power || sw[i]; c.fillStyle = up ? '#3f6' : (Math.sin(t * 8 + i) > 0 ? '#f33' : '#722'); c.beginPath(); c.arc(x + 2, 32, 1.8, 0, 7); c.fill(); rr(c, x, 36, 4, 20, '#080808'); rr(c, x - 1, up ? 37 : 47, 6, 9, up ? '#ddd' : '#c22'); }
+  rr(c, 18, 58, 28, 4, '#d8d070');
+}
 
 /* ---------- Sound (synthesized, plus the browser's own voice for Lars) ---------- */
-let ac, droneG, chaseG, chaseO, chaseP;
+let ac, masterG, droneG, chaseG, chaseO, chaseP, lbG, lbF, lbP, lbL, larsLoopToken = 0;
 function audio() {
   try {
-    if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
+    if (ac && ac.state !== 'closed') {
+      if (ac.state === 'suspended') ac.resume();
+      if (masterG) { masterG.gain.cancelScheduledValues(ac.currentTime); masterG.gain.setTargetAtTime(1, ac.currentTime, .025); }
+      return;
+    }
     ac = new (window.AudioContext || window.webkitAudioContext)();
-    droneG = ac.createGain(); droneG.gain.value = 0.05; droneG.connect(ac.destination);
+    masterG = ac.createGain(); masterG.gain.value = 1; masterG.connect(ac.destination);
+    droneG = ac.createGain(); droneG.gain.value = 0.05; droneG.connect(masterG);
     [55, 56.7].forEach(f => { const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f; o.connect(droneG); o.start(); });
-    chaseO = ac.createOscillator(); chaseO.type = 'sawtooth'; chaseO.frequency.value = 120;      // his scream, panned to where he is
-    const lfo = ac.createOscillator(), lg = ac.createGain(); lfo.frequency.value = 7; lg.gain.value = 25; lfo.connect(lg).connect(chaseO.frequency);
+    chaseO = ac.createOscillator(); chaseO.type = 'sawtooth'; chaseO.frequency.value = 70;                      // low throat growl while hunting, panned to him
+    const gf = ac.createBiquadFilter(); gf.type = 'bandpass'; gf.frequency.value = 520; gf.Q.value = 2.5;
+    const lfo = ac.createOscillator(), lg = ac.createGain(); lfo.frequency.value = 13; lg.gain.value = 9; lfo.connect(lg).connect(chaseO.frequency);
     chaseG = ac.createGain(); chaseG.gain.value = 0; chaseP = ac.createStereoPanner ? ac.createStereoPanner() : null;
-    chaseO.connect(chaseG); if (chaseP) chaseG.connect(chaseP).connect(ac.destination); else chaseG.connect(ac.destination);
+    chaseO.connect(gf).connect(chaseG); if (chaseP) chaseG.connect(chaseP).connect(masterG); else chaseG.connect(masterG);
     chaseO.start(); lfo.start();
+    const nb = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate), nd = nb.getChannelData(0); let ll = 0; for (let i = 0; i < nd.length; i++) { ll = .96 * ll + .04 * (Math.random() * 2 - 1); nd[i] = ll * 6; }
+    const ns = ac.createBufferSource(); ns.buffer = nb; ns.loop = true; lbF = ac.createBiquadFilter(); lbF.type = 'bandpass'; lbF.frequency.value = 600; lbF.Q.value = 1.1;   // Lars's breathing: always on, louder when close (snores asleep)
+    const lbM = ac.createGain(); lbM.gain.value = .5; lbL = ac.createOscillator(); lbL.frequency.value = .45; const lbA = ac.createGain(); lbA.gain.value = .5; lbL.connect(lbA).connect(lbM.gain);
+    lbG = ac.createGain(); lbG.gain.value = 0; lbP = ac.createStereoPanner ? ac.createStereoPanner() : null;
+    ns.connect(lbF).connect(lbM).connect(lbG); if (lbP) lbG.connect(lbP).connect(masterG); else lbG.connect(masterG); ns.start(); lbL.start();
   } catch (e) {}
 }
 function beep(f, d, type = 'sine', vol = .1, slide = 0) {
@@ -114,22 +154,83 @@ function beep(f, d, type = 'sine', vol = .1, slide = 0) {
     const o = ac.createOscillator(), g = ac.createGain(), n = ac.currentTime;
     o.type = type; o.frequency.setValueAtTime(f, n); if (slide) o.frequency.exponentialRampToValueAtTime(slide, n + d);
     g.gain.setValueAtTime(vol, n); g.gain.exponentialRampToValueAtTime(.001, n + d);
-    o.connect(g).connect(ac.destination); o.start(); o.stop(n + d);
+    o.connect(g).connect(masterG); o.start(); o.stop(n + d);
   } catch (e) {}
 }
 function noise(d, vol) {
   try {
     const b = ac.createBuffer(1, ac.sampleRate * d, ac.sampleRate), a = b.getChannelData(0);
     for (let i = 0; i < a.length; i++) a[i] = (Math.random() * 2 - 1) * (1 - i / a.length);
-    const s = ac.createBufferSource(), g = ac.createGain(); g.gain.value = vol; s.buffer = b; s.connect(g).connect(ac.destination); s.start();
+    const s = ac.createBufferSource(), g = ac.createGain(); g.gain.value = vol; s.buffer = b; s.connect(g).connect(masterG); s.start();
   } catch (e) {}
 }
-function shout(vol, words) {                  // Lars says his own name in a deep robot voice
+function sh(dur, vol, ft, f0, f1, q, pan, att) {          // soft filtered noise with a smooth envelope (breaths, shoe scuffs). not white-noise hiss
+  try {
+    const n = ac.currentTime, b = ac.createBuffer(1, Math.ceil(ac.sampleRate * dur), ac.sampleRate), a = b.getChannelData(0); let l = 0;
+    for (let i = 0; i < a.length; i++) { l = .94 * l + .06 * (Math.random() * 2 - 1); a[i] = l * 6; }
+    const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain(); s.buffer = b; f.type = ft; f.Q.value = q; f.frequency.setValueAtTime(f0, n); f.frequency.exponentialRampToValueAtTime(f1, n + dur);
+    g.gain.setValueAtTime(.0001, n); g.gain.linearRampToValueAtTime(vol, n + att); g.gain.exponentialRampToValueAtTime(.0001, n + dur);
+    s.connect(f).connect(g); if (pan && ac.createStereoPanner) { const p = ac.createStereoPanner(); p.pan.value = pan; g.connect(p).connect(masterG); } else g.connect(masterG); s.start();
+  } catch (e) {}
+}
+function thud(vol, pan) {
+  try {
+    const n = ac.currentTime, o = ac.createOscillator(), g = ac.createGain(); o.frequency.setValueAtTime(rand(75, 100), n); o.frequency.exponentialRampToValueAtTime(38, n + .11);
+    g.gain.setValueAtTime(vol, n); g.gain.exponentialRampToValueAtTime(.001, n + .15); o.connect(g);
+    if (ac.createStereoPanner) { const p = ac.createStereoPanner(); p.pan.value = pan; g.connect(p).connect(masterG); } else g.connect(masterG); o.start(); o.stop(n + .16);
+  } catch (e) {}
+}
+function lstep() {                                       // his shoes: heavier + louder close up, muffled through walls, panned to where he is
+  const v = Math.pow(clamp(1 - L.d / 17, 0, 1), 1.4), occ = (L.sees || L.d < 3) ? 1 : .5; if (v < .01) return;
+  const pan = Math.sin(Math.atan2(L.y - P.y, L.x - P.x) - P.a); sh(.14, .5 * v * occ, 'lowpass', 420 * occ + 120, 160, .7, pan, .004); thud(.55 * v * occ, pan);
+}
+function silencePersistentAudio() {
+  try {
+    larsLoopToken++;
+    if (ac) {
+      const n = ac.currentTime;
+      for (const g of [droneG, chaseG, lbG]) if (g) {
+        g.gain.cancelScheduledValues(n); g.gain.setTargetAtTime(0, n, .035);
+      }
+    }
+    if (window.speechSynthesis) speechSynthesis.cancel();
+  } catch (e) {}
+}
+function jumpscareSound() {
+  // Keep the ambience muted, but let the scare itself punch through at normal volume.
+  noise(.32, .34);
+  beep(82, .62, 'sawtooth', .24, 29);
+  beep(720, .24, 'square', .13, 95);
+  sh(.48, .20, 'bandpass', 1450, 260, .75, 0, .012);
+  thud(.32, 0);
+}
+function larsAudio() {                                   // runs every frame: you can always hear roughly where he is
+  if (!lbG || !L) return;
+  if (L.knocked) { lbG.gain.value = 0; if (chaseG) chaseG.gain.value = 0; return; }
+  const asleep = L.st === 'sleep', chase = L.st === 'chase', d = L.d, rel = Math.atan2(L.y - P.y, L.x - P.x) - P.a, v = clamp(1 - d / (asleep ? 9 : 17), 0, 1), occ = (L.sees || d < 3) ? 1 : .45;
+  lbG.gain.value = v * v * (asleep ? .2 : chase ? .4 : .3) * occ; lbF.frequency.value = (asleep ? 230 : chase ? 780 : 560) * (occ < 1 ? .65 : 1); lbL.frequency.value = asleep ? .22 : chase ? 1 : .5;
+  if (lbP) lbP.pan.value = Math.sin(rel);
+}
+function shout(vol, words) {                  // Lars's ordinary one-line comments
   try {
     if (!window.speechSynthesis) return;
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(pick(words || ['Lars', 'LARS!', 'Larrrrs', 'Lars is coming', 'Lars']));
-    u.pitch = rand(.05, .5); u.rate = rand(.7, 1.3); u.volume = vol; speechSynthesis.speak(u);
+    larsLoopToken++; speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(pick(words || ['I SEE YOU', 'dont run', 'come here', 'LARS', 'wait for me', 'where are you going']));
+    u.pitch = rand(.45, .8); u.rate = rand(.85, 1.05); u.volume = vol; speechSynthesis.speak(u);
+  } catch (e) {}
+}
+function shoutLarsLoop(vol) {                  // Four separate words, with a proper pause between them
+  try {
+    if (!window.speechSynthesis) return;
+    const token = ++larsLoopToken; speechSynthesis.cancel(); let count = 0;
+    const next = () => {
+      if (token !== larsLoopToken || count >= 4) return;
+      const u = new SpeechSynthesisUtterance('Lars');
+      u.pitch = .62; u.rate = .78; u.volume = vol;
+      u.onend = () => { count++; if (count < 4 && token === larsLoopToken) setTimeout(next, 950); };
+      speechSynthesis.speak(u);
+    };
+    next();
   } catch (e) {}
 }
 let musicT = 0, musicStep = 0;
@@ -141,74 +242,129 @@ function music(dt, prox) {                    // chase music: speeds up and gets
   if (musicStep % 2 === 0) beep(62, .12, 'sine', .22, 35);
 }
 
-/* ---------- Map ----------
-   '.' floor. Wall letters pick a colour: # yellow, B blue pool tiles, R red brick, G grey concrete, T teal.
-   D = hazard shutter: slides open when you fix a generator (opens a new shortcut). Keep the outer edge solid. */
-const MAP = [
-"##################BBBBBBBBBBBB",
-"##################BBBBBBBBBBBB",
-"##..........................BB",
-"##..........................BB",
-"##..####D#####..##BBBDBBBB..BB",
-"##..#......#......B......B..BB",
-"##..#...............B.B..B..BB",
-"##..........................BB",
-"##.........#......B.B.B.....BB",
-"##..#......GGG..GGG......B..BB",
-"##..#......GGG..GGG.B.B..B..BB",
-"RR..RRR..RG..............B..BB",
-"RR..R.....G........GB..BBB..BB",
-"RR..R.....G..GGGG..GB..BBB..BB",
-"RR...........GGGG...........##",
-"RR...........GGGG...........##",
-"RR..R.....G..GGGG..G######..##",
-"RR..R.....G........G######..##",
-"RR..RR..RRG........G######..##",
-"RR..RR..RRG..GGG..GGTTT..T..TT",
-"RR..R........GGG..GGTTT..T..TT",
-"RR..R...R....#T.......T.....TT",
-"RR..D...R....#T..T.T........TT",
-"RR..R...R....#T..........T..TT",
-"RR..R........#T.......T..T..TT",
-"RR..RRRR..RRR#TTTT..TTTTTT..TT",
-"RR..........................TT",
-"RR..........................TT",
-"RRRRRRRRRRRRR#TTTTTTTTTTTTTTTT",
-"RRRRRRRRRRRRR#TTTTTTTTTTTTTTTT"
-];
-const N = 30, map = MAP.map(r => r.split(''));
+/* ---------- Map: a larger procedural 40x40 layout ---------- */
+const N = 40, map = Array.from({ length: N }, () => Array(N).fill('#'));
 const WALL = { '#': [200, 176, 70], B: [70, 130, 205], R: [175, 62, 50], G: [150, 150, 160], T: [60, 160, 135], D: [190, 160, 20] };
 const GEN_POS = [[7.5, 7.5], [23.5, 8.5], [11.5, 22.5], [19.5, 23.5]];
 const SHUTTERS = [[21, 4], [8, 4], [4, 22]];            // opened in this order as generators get fixed
 const EXIT = { x: 24.5, y: 23.5 }, FIX_TIME = 6;
 const FLOORS = []; for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (map[y][x] === '.') FLOORS.push([x + .5, y + .5]);
 const solid = (x, y) => map[y | 0][x | 0] !== '.';
-const free = (x, y) => !(solid(x - .22, y - .22) || solid(x + .22, y - .22) || solid(x - .22, y + .22) || solid(x + .22, y + .22));
+const free = (x, y) => !(solid(x - .30, y - .30) || solid(x + .30, y - .30) || solid(x - .30, y + .30) || solid(x + .30, y + .30));
 function los(x1, y1, x2, y2) {                 // can these two points see each other?
   const d = Math.hypot(x2 - x1, y2 - y1), n = Math.ceil(d / .15);
   for (let i = 1; i < n; i++) if (solid(x1 + (x2 - x1) * i / n, y1 + (y2 - y1) * i / n)) return false;
   return true;
 }
 
+function jitter(x, y, r) {                      // a random nearby floor spot (so noises are never pinpoint)
+  for (let i = 0; i < 25; i++) { const a = x + rand(-r, r), b = y + rand(-r, r); if (a > 1 && b > 1 && a < N - 1 && b < N - 1 && !solid(a, b)) return [a, b]; }
+  return [x, y];
+}
+
 /* ---------- State ---------- */
-const P = { x: 3, y: 3, a: 0, vx: 0, vy: 0, stam: 100, tired: false, fov: .66, bobP: 0, bm: 0, blinkT: -1 };
+const P = { x: 3, y: 3, a: 0, vx: 0, vy: 0, stam: 100, tired: false, fov: 1.1, fv: 1.1, bobP: 0, bm: 0, blinkT: -1, crouching: false, crouchAmount: 0, jumpZ: 0, jumpV: 0, jumpFov: 0 };
 let L, gens, dist = new Int16Array(N * N);
 let state = 'title', t = 0, light = 1, bob = 0, msg = '', msgT = 0, time = 0, endT = 0, fixed = 0, fogD = 10;
 let wakeT = 30, clankT = 0, near = null, fixing = null, seenT = 0, routeT = 0, blackT = 0, blackIn = 30, shoutT = 8, hearT = 0, quip = '';
 const zbuf = new Float32Array(RW), keys = {}, cam = { dx: 1, dy: 0 };
-const say = (s, d = 2.5) => { msg = s; msgT = d; };
+let baseFov = 1.1, vk = RH, cameraHeight = .5, zoomAmount = 0, zoomHeld = false, shotgun = false, cheatBuffer = '', shotCooldown = 0, shotFlash = 0, ev = { dashT: -99, backT: -99, sprintT: -99, fixT: -99, blink: null, spot: '' }, why = ['HE OUTRAN YOU.', 'Break line of sight early.', ''];
+const say = (s, d = 2.5) => { if (String(s).startsWith('FOV')) { msg = s; msgT = d; } };   // on-screen text is mostly gone on purpose
 const SEEN = ['SEEN. skill issue.', 'LARS SPOTTED YOU. THIS IS NOT A DRILL.', 'he saw you. he is so excited.', 'lars wants to be friends (violently)', 'LARS.EXE HAS STARTED'];
 const QUIPS = ['You blinked. Classic.', 'Lars was only thirsty.', 'Lars would like a word. And also your face.', 'Have you tried not being caught?', 'Lars says hi.', 'Hydrate or diedrate.'];
 
 function start() {
-  audio(); P.x = 3; P.y = 3; P.a = 0; P.vx = P.vy = 0; P.stam = 100; P.tired = false; P.bm = 0; P.blinkT = -1;
+  audio(); genLevel(); buildFloor(); P.x = SPAWN[0]; P.y = SPAWN[1]; P.a = 0; P.vx = P.vy = 0; P.stam = 100; P.tired = false; P.bm = 0; P.blinkT = -1; P.crouching = false; P.crouchAmount = 0; P.jumpZ = P.jumpV = P.jumpFov = 0; cameraHeight = .5; zoomAmount = 0; zoomHeld = false; shotgun = false; cheatBuffer = ''; shotCooldown = shotFlash = 0;
+  torchOn = false; torchBattery = 20; torchPower = 0; torchFlicker = 1; nearBattery = false;
   gens = GEN_POS.map(([x, y]) => ({ x, y, p: 0, done: false }));
   for (const [x, y] of SHUTTERS) map[y][x] = 'D';
-  L = { x: 23.5, y: 20.5, st: 'sleep', tx: 0, ty: 0, lx: 0, ly: 0, lostT: 0, waitT: 0, stepT: 0, d: 99, sees: false };
-  fixed = 0; time = 0; light = 1; wakeT = 30; blackT = 0; blackIn = rand(25, 40); seenT = 0; shoutT = 8; state = 'play';
+  L = { x: LSPAWN[0], y: LSPAWN[1], a: 0, st: 'sleep', tx: 0, ty: 0, lx: 0, ly: 0, lostT: 0, waitT: 0, stepT: 0, d: 99, sees: false, mom: 0, watching: false, rel: 0, gait: 0, pauseT: 0, fuse: false, knocked: false, knockT: 0 };
+  ev = { dashT: -99, backT: -99, sprintT: -99, fixT: -99, blink: null, spot: '' }; P.fov = P.fv = baseFov;
+  fixed = 0; time = 0; light = 1; power = true; fuseP = 0; fxT = punch = pvel = slowT = snapT = 0; panelOpen = false; wakeT = 30; blackT = 0; blackIn = rand(55, 75); seenT = 0; shoutT = 8; state = 'play';
   say('Fix all 4 generators. Lars is asleep. DO NOT WAKE LARS.', 5);
   lockMouse();
 }
+
+/* ---------- Procedural level: rooms + wide corridors + pillars, new every run ---------- */
+const FUSE = { x: 5.5, y: 5.5 };
+const BATTERY = { x: 8.5, y: 8.5, active: true };
+let SPAWN = [3.5, 3.5], LSPAWN = [20.5, 20.5], power = true, fuseP = 0, nearFuse = false, nearBattery = false,
+  torchOn = false, torchBattery = 20, torchBatteryMax = 30, torchFlicker = 1, torchPower = 0, FL = 0, fxT = 0, snapA = 0, snapT = 0, punch = 0, pvel = 0, ts = 1, slowT = 0, breathT = 0, breathPh = 0, lastStep = 0, panelOpen = false, sw = [1, 1, 1, 1, 1];
+function bfsFrom(sx, sy) {
+  const d = new Int16Array(N * N).fill(-1), q = [[sx, sy]]; d[sy * N + sx] = 0;
+  for (let i = 0; i < q.length; i++) { const [x, y] = q[i]; for (const [a, b] of D4) { const nx = x + a, ny = y + b; if (map[ny][nx] === '.' && d[ny * N + nx] < 0) { d[ny * N + nx] = d[y * N + x] + 1; q.push([nx, ny]); } } }
+  return d;
+}
+function genLevel() {
+  for (let attempt = 0; attempt < 400; attempt++) {
+    for (let y = 0; y < N; y++) map[y].fill('#');
+    const rooms = [];
+    for (let i = 0; i < 110 && rooms.length < 15; i++) {
+      const w = 4 + (Math.random() * 5 | 0), h = 4 + (Math.random() * 5 | 0), x = 2 + (Math.random() * (N - w - 4) | 0), y = 2 + (Math.random() * (N - h - 4) | 0);
+      if (!rooms.some(r => x < r.x + r.w + 2 && x + w + 2 > r.x && y < r.y + r.h + 2 && y + h + 2 > r.y)) rooms.push({ x, y, w, h, cx: x + (w >> 1), cy: y + (h >> 1) });
+    }
+    if (rooms.length < 8) continue;
+    const carve = (x0, y0, x1, y1) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (x > 0 && y > 0 && x < N - 1 && y < N - 1) map[y][x] = '.'; };
+    for (const r of rooms) carve(r.x, r.y, r.x + r.w - 1, r.y + r.h - 1);
+    const link = (a, b) => { carve(Math.min(a.cx, b.cx), a.cy, Math.max(a.cx, b.cx) + 1, a.cy + 1); carve(b.cx, Math.min(a.cy, b.cy), b.cx + 1, Math.max(a.cy, b.cy) + 1); };
+    const nearest = (r, k) => rooms.filter(o => o !== r).sort((p, q) => Math.hypot(p.cx - r.cx, p.cy - r.cy) - Math.hypot(q.cx - r.cx, q.cy - r.cy))[k];
+    const byX = [...rooms].sort((a, b) => a.cx - b.cx); for (let i = 0; i + 1 < byX.length; i++) link(byX[i], byX[i + 1]);   // guarantees everything connects
+    rooms.forEach((r, i) => { link(r, nearest(r, 0)); if (i % 2 === 0) link(r, nearest(r, 1)); });                              // extra links = loops to run around
+    for (let i = 0; i < 3; i++) link(pick(rooms), pick(rooms));
+    for (const r of rooms) if (r.w >= 5 && r.h >= 5) for (let i = 0, n = (r.w * r.h / 12) | 0; i < n; i++) map[r.y + 1 + (Math.random() * (r.w > 0 ? r.h - 2 : 1) | 0)][r.x + 1 + (Math.random() * (r.w - 2) | 0)] = '#';   // pillars to hide behind
+    const fl = []; for (let y = 1; y < N - 1; y++) for (let x = 1; x < N - 1; x++) if (map[y][x] === '.') fl.push([x, y]);
+    const r0 = rooms[0], st = fl.reduce((b, c) => Math.hypot(c[0] - r0.cx, c[1] - r0.cy) < Math.hypot(b[0] - r0.cx, b[1] - r0.cy) ? c : b);
+    const d0 = bfsFrom(st[0], st[1]), dd = c => d0[c[1] * N + c[0]];
+    if (fl.length < 250 || fl.some(c => dd(c) < 0)) continue;
+    const seeds = ZCH.split('').map(ch => ({ ch, p: pick(fl) }));                                                                // each region gets its own look
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (map[y][x] !== '.') { let b = seeds[0], bd = 1e9; for (const q of seeds) { const d = Math.hypot(q.p[0] - x, q.p[1] - y); if (d < bd) { bd = d; b = q; } } map[y][x] = b.ch; }
+    const maxd = Math.max(...fl.map(dd)), shuf = a => [...a].sort(() => Math.random() - .5);
+    const picks = (cands, n, sep) => { const out = []; for (const c of shuf(cands)) { if (out.every(o => Math.hypot(o[0] - c[0], o[1] - c[1]) >= sep)) out.push(c); if (out.length === n) break; } return out; };
+    let gp = []; for (let sep = 10; sep >= 4 && gp.length < 4; sep--) gp = picks(fl.filter(c => dd(c) > 10), 4, sep);
+    if (gp.length < 4) continue;
+    const exc = fl.filter(c => dd(c) >= maxd * .8 && gp.every(g => Math.hypot(g[0] - c[0], g[1] - c[1]) > 4)); if (!exc.length) continue; const ex = pick(exc);
+    const fuc = fl.filter(c => dd(c) > 8 && gp.every(g => Math.hypot(g[0] - c[0], g[1] - c[1]) > 5) && Math.hypot(ex[0] - c[0], ex[1] - c[1]) > 5); if (!fuc.length) continue; const fu = pick(fuc);
+    const lcs = fl.filter(c => dd(c) >= maxd * .55 && Math.hypot(ex[0] - c[0], ex[1] - c[1]) > 2); if (!lcs.length) continue; const lc = pick(lcs);
+    const sh = [], dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];                                                                  // shutters = doors in thick walls that cut a long route short
+    for (let tries = 0; tries < 4000 && sh.length < 3; tries++) {
+      const a = pick(fl), [dx, dy] = pick(dirs); let k = 1, ok = false;
+      for (; k < 6; k++) { const x = a[0] + dx * k, y = a[1] + dy * k; if (x < 1 || y < 1 || x > N - 2 || y > N - 2) break; if (map[y][x] === '.') { ok = k >= 2; break; } }
+      if (!ok) continue;
+      const b = [a[0] + dx * k, a[1] + dy * k], dm = [a[0] + dx, a[1] + dy];
+      if (sh.some(q => Math.hypot(q[0] - dm[0], q[1] - dm[1]) < 7) || bfsFrom(a[0], a[1])[b[1] * N + b[0]] <= 11) continue;
+      sh.push([dm[0], dm[1], a, dx, dy, k]);
+    }
+    for (const q of sh) for (let i = 2; i < q[5]; i++) map[q[2][1] + q[4] * i][q[2][0] + q[3] * i] = '.';
+    FLOORS.length = 0; for (const [x, y] of fl) FLOORS.push([x + .5, y + .5]);
+    GEN_POS.splice(0, 9, ...gp.map(c => [c[0] + .5, c[1] + .5])); SHUTTERS.splice(0, 9, ...sh.map(c => [c[0], c[1]]));
+    EXIT.x = ex[0] + .5; EXIT.y = ex[1] + .5; FUSE.x = fu[0] + .5; FUSE.y = fu[1] + .5; SPAWN = [st[0] + .5, st[1] + .5]; LSPAWN = [lc[0] + .5, lc[1] + .5];
+    const bp = pick(fl.filter(c => dd(c) > maxd * .42 && Math.hypot(c[0] - st[0], c[1] - st[1]) > 8 &&
+      gp.every(g => Math.hypot(g[0] - c[0], g[1] - c[1]) > 4) && Math.hypot(ex[0] - c[0], ex[1] - c[1]) > 4));
+    const batteryFloor = bp || pick(fl); BATTERY.x = batteryFloor[0] + .5; BATTERY.y = batteryFloor[1] + .5; BATTERY.active = true;
+    return;
+  }
+}
+const SWX = i => RW / 2 - 80 + i * 40;
+function initSwitches() { sw = [0, 1, 2, 3, 4].map(() => Math.random() < .4 ? 1 : 0); for (let k = 0; sw.filter(v => !v).length < 2 && k < 30; k++) sw[(Math.random() * 5) | 0] = 0; }
+function openPanel() { panelOpen = true; for (const k of ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ShiftLeft', 'ShiftRight']) keys[k] = false; if (document.exitPointerLock) document.exitPointerLock(); beep(700, .05, 'square', .06); }
+function closePanel() { if (!panelOpen) return; panelOpen = false; lockMouse(); }
+function flick(i) { if (!panelOpen || i < 0 || i > 4) return; sw[i] ^= 1; beep(sw[i] ? 900 : 500, .05, 'square', .1, sw[i] ? 1100 : 300); noise(.05, .12); heard(P.x, P.y, 10); if (sw.every(v => v)) powerOn(); }   // every flick is loud
+function panelClick(e) {
+  const r = cv.getBoundingClientRect(), sc = Math.min(r.width / RW, r.height / RH), x = (e.clientX - r.left - (r.width - RW * sc) / 2) / sc, y = (e.clientY - r.top - (r.height - RH * sc) / 2) / sc;
+  for (let i = 0; i < 5; i++) if (Math.abs(x - SWX(i)) < 16 && y > 50 && y < 130) flick(i);
+}
+function drawPanel() {
+  ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(0, 0, RW, RH);
+  rr(ctx, RW / 2 - 100, 28, 200, 112, '#000'); rr(ctx, RW / 2 - 98, 30, 196, 108, '#5b6168'); rr(ctx, RW / 2 - 98, 30, 196, 6, '#8a9199');
+  for (const [dx, dy] of [[-92, 38], [92, 38], [-92, 130], [92, 130]]) { ctx.fillStyle = '#2b2e33'; ctx.beginPath(); ctx.arc(RW / 2 + dx, dy, 2.5, 0, 7); ctx.fill(); }
+  for (let i = 0; i < 5; i++) {
+    const x = SWX(i), on = sw[i]; ctx.fillStyle = on ? '#3f6' : (Math.sin(t * 8 + i) > 0 ? '#f33' : '#722'); ctx.beginPath(); ctx.arc(x, 46, 4, 0, 7); ctx.fill();
+    rr(ctx, x - 9, 56, 18, 64, '#111'); rr(ctx, x - 7, 58, 14, 60, '#25282c'); rr(ctx, x - 6, on ? 60 : 92, 12, 24, on ? '#d8d8d8' : '#c22'); rr(ctx, x - 6, on ? 60 : 92, 12, 5, 'rgba(255,255,255,.5)');
+    txt(String(i + 1), x, 132, 7, '#aaa');
+  }
+}
+function powerOff() { power = false; initSwitches(); light = .05; noise(.7, .35); beep(55, .8, 'sawtooth', .2, 25); shout(.8, ['lights out', 'oops', 'much better']); }
+function powerOn() { power = true; fuseP = 0; closePanel(); light = .15; noise(.5, .25); beep(400, .35, 'triangle', .2, 1100); heard(P.x, P.y, 9); }
 
 /* ---------- Lars AI: sleep > patrol > (hears you) search > (sees you) chase > (loses you) search > patrol ---------- */
 function route(tx, ty) {                       // path-finding: distance from the target to every tile
@@ -222,7 +378,7 @@ function route(tx, ty) {                       // path-finding: distance from th
   }
 }
 function patrol() {                            // wander, and like to guard unfixed generators
-  L.st = 'patrol'; const open = gens.filter(g => !g.done);
+  L.st = 'patrol'; L.fuse = false; const open = gens.filter(g => !g.done);
   const f = pick(FLOORS), p = Math.random() < .5 && open.length ? pick(open) : { x: f[0], y: f[1] };
   route(p.x, p.y);
 }
@@ -231,79 +387,158 @@ function wakeUp(why, x, y) {
 }
 function heard(x, y, r) {                      // noise draws him in (he only hears you, he does not know where you are)
   if (L.st === 'chase') return;
-  const d = Math.hypot(L.x - x, L.y - y);
+  const d = Math.hypot(L.x - x, L.y - y); [x, y] = jitter(x, y, 2.2);   // noise is never pinpoint
   if (L.st === 'sleep') { if (d < r + 4) wakeUp('LARS HEARD THAT. HE IS UP.', x, y); }
   else if (d < r) { L.st = 'search'; L.lx = x; L.ly = y; L.waitT = 0; route(x, y); if (msgT <= 0) say('he is coming to check the noise...', 2); }
 }
 function spotted() {                           // Evade-style SEEN moment: flash, sting, he locks on
-  L.st = 'chase'; L.lostT = 0; seenT = .5; routeT = 0;
-  noise(.5, .35); beep(880, .35, 'sawtooth', .12, 200); beep(1250, .3, 'square', .06, 150); shout(1, ['LARS', 'Lars!']);
+  ev.spot = fixing ? 'you kept fixing a generator with Lars nearby' : L.st === 'search' ? 'you stayed near the noise you made' : time - ev.sprintT < 1.5 ? 'you sprinted into his sight' : 'you walked into his line of sight';
+  L.mom = 0; L.st = 'chase'; L.lostT = 0; seenT = .25; routeT = 0;
+  punch = .3; pvel = 0; fxT = 1; beep(60, .6, 'sine', .4, 30); sh(.35, .2, 'bandpass', 1100, 1500, .9, 0, .08);   // FOV kick, red edge flash, a gasp. you keep control of the camera
+  noise(.5, .35); beep(880, .35, 'sawtooth', .12, 200); beep(1250, .3, 'square', .06, 150); shout(1, ['I SEE YOU', 'THERE you are', 'LARS', 'got you']);
   say(pick(SEEN), 3);
 }
 const closure = () => P.blinkT < 0 ? 0 : P.blinkT < .1 ? P.blinkT / .1 : P.blinkT < .24 ? 1 : clamp(1 - (P.blinkT - .24) / .1, 0, 1);
-function blink() { if (P.blinkT < 0) { P.blinkT = 0; P.bm = 0; beep(200, .06, 'sine', .04, 120); } }
+function blink(forced) { if (P.blinkT < 0) { P.blinkT = 0; P.bm = 0; ev.blink = { t: time, d: L ? L.d : 99, forced: !!forced }; beep(200, .06, 'sine', .04, 120); } }
+
+function fireShot() {
+  if (!shotgun || state !== 'play' || shotCooldown > 0) return;
+  shotCooldown = .62; shotFlash = .16;
+  // Stylised arcade sound and a short screen flash; this is a purely fictional game effect.
+  beep(105, .16, 'sawtooth', .19, 42); noise(.11, .16); thud(.09, 0);
+  if (!L || L.knocked) return;
+  const aim = Math.atan2(L.y - P.y, L.x - P.x);
+  const delta = Math.atan2(Math.sin(aim - P.a), Math.cos(aim - P.a));
+  if (L.d < 14 && Math.abs(delta) < .24 && los(P.x, P.y, L.x, L.y)) {
+    L.knocked = true; L.knockT = 0; L.st = 'knocked'; L.sees = false; L.fuse = false; L.mom = 0;
+    msg = 'LARS: "OW."'; msgT = 2.2;
+    shout(.62, ['ow']);
+  } else {
+    msg = 'MISSED. TRY GETTING HIM IN FRONT OF YOU.'; msgT = 1.5;
+  }
+}
 
 function updateLars(dt) {
   L.d = Math.hypot(L.x - P.x, L.y - P.y);
-  if (L.st === 'sleep') { if ((wakeT -= dt) <= 0) wakeUp('LARS WOKE UP ON HIS OWN', P.x, P.y); return; }
-  L.sees = L.d < 18 && los(L.x, L.y, P.x, P.y);
+  if (L.knocked) { L.knockT += dt; if (L.knockT > 1.15) { state = 'secret'; endT = 0; } return; }
+  if (L.st === 'sleep') { if ((wakeT -= dt) <= 0) { const j = jitter(P.x, P.y, 6); wakeUp('LARS WOKE UP ON HIS OWN', j[0], j[1]); } return; }
+  const toPlayer = Math.atan2(P.y - L.y, P.x - L.x);
+  const facing = Math.atan2(Math.sin(toPlayer - L.a), Math.cos(toPlayer - L.a));
+  const sightRange = (power ? 16 : (torchOn && torchBattery > 0 ? 12 : 8.5)) * (P.crouching ? .72 : 1);
+  const patrolCone = L.st === 'patrol' ? 1.52 : L.st === 'search' ? 1.38 : 1.22;
+  const inSightCone = Math.abs(facing) < patrolCone * (P.crouching ? .78 : 1);
+  L.sees = L.d < sightRange && inSightCone && los(L.x, L.y, P.x, P.y);
   if (L.sees) { if (L.st !== 'chase') spotted(); L.lx = P.x; L.ly = P.y; L.lostT = 0; }
-  else if (L.st === 'chase' && (L.lostT += dt) > 4) { L.st = 'search'; L.waitT = 0; route(L.lx, L.ly); say('he lost you... for now.', 2.5); beep(300, .5, 'sine', .08, 150); }
+  else if (L.st === 'chase' && (L.lostT += dt) > 3) { L.st = 'search'; L.waitT = 0; route(L.lx, L.ly); say('he lost you... for now.', 2.5); beep(300, .5, 'sine', .08, 150); }
   if (seenT > 0) { seenT -= dt; return; }                                    // he freezes for a split second when he spots you
-  const dashing = P.blinkT >= .1 && P.blinkT < .24;                          // eyes shut = he lunges
-  const rel = Math.atan2(L.y - P.y, L.x - P.x) - P.a, inView = Math.abs(Math.atan2(Math.sin(rel), Math.cos(rel))) < .6 && closure() < .5;
-  let sp = L.st === 'chase' ? Math.min(6.2, 4.2 + fixed * .4) : L.st === 'search' ? 2.9 + fixed * .2 : 1.9;
-  if (L.st !== 'patrol') { if (L.sees && inView) sp *= .55; if (dashing) sp *= 5; }   // staring slows him, blinking doesn't
-  if (L.st === 'chase') { if ((routeT -= dt) <= 0) { route(P.x, P.y); routeT = .2; } }
+  const dashing = P.blinkT >= .1 && P.blinkT < .26;                          // eyes shut = he lunges
+  const rel = Math.atan2(L.y - P.y, L.x - P.x) - P.a; L.rel = Math.atan2(Math.sin(rel), Math.cos(rel));
+  const inView = Math.abs(L.rel) < Math.atan(baseFov) * .8 && closure() < .5;
+  L.watching = L.st === 'chase' && L.sees && inView;                         // eye contact
+  let sp = L.st === 'chase' ? Math.min(7, 4.9 + fixed * .45) : L.st === 'search' ? 3.4 + fixed * .25 : 2.2;
+  if (L.st === 'chase') {
+    if (dashing) { L.mom = 1; ev.dashT = time; }
+    else if (L.watching) L.mom = Math.max(0, L.mom - 3 * dt);                 // watched: he loses momentum
+    else if (L.sees) { L.mom = Math.min(1, L.mom + 2 * dt); if (closure() < .5) ev.backT = time; }   // looked away: he winds up
+    else L.mom = Math.max(0, L.mom - .5 * dt);
+    sp *= L.watching ? .5 : 1 + .8 * L.mom;                                  // staring = crawl, looking away = up to 1.65x
+    if (dashing) sp *= 3.5;
+    if ((routeT -= dt) <= 0) { if (L.sees) route(P.x, P.y); else route(L.lx, L.ly); routeT = .2; }   // no sight = goes to where he LAST saw you
+  } else if (dashing && L.st !== 'patrol') { sp *= 3.5; ev.dashT = time; }
+  if (L.st === 'patrol' && L.pauseT > 0) { L.pauseT -= dt; sp = 0; }   // stops and looks around like a person
   const cx = L.x | 0, cy = L.y | 0; let tx = L.tx, ty = L.ty;
   if (cx !== (L.tx | 0) || cy !== (L.ty | 0)) {
     let best = 1e9;
     for (const [dx, dy] of D4) { const v = dist[(cy + dy) * N + cx + dx]; if (v >= 0 && v < best) { best = v; tx = cx + dx + .5; ty = cy + dy + .5; } }
   }
   const ddx = tx - L.x, ddy = ty - L.y, dd = Math.hypot(ddx, ddy);
-  if (dd > .05) { const s = Math.min(sp * dt, dd); L.x += ddx / dd * s; L.y += ddy / dd * s; }
+  if (dd > .05) { const s = Math.min(sp * dt, dd); L.a = Math.atan2(ddy, ddx); L.x += ddx / dd * s; L.y += ddy / dd * s; L.gait += s * 2.2; }
+  if (L.st === 'chase' && !L.sees && Math.hypot(L.x - L.lx, L.y - L.ly) < .6) { L.st = 'search'; L.waitT = 0; say('he lost you... for now.', 2.5); }
   if (Math.hypot(L.x - L.tx, L.y - L.ty) < .4) {                              // arrived
-    if (L.st === 'patrol') patrol(); else if (L.st === 'search' && (L.waitT += dt) > 2.5) { L.waitT = 0; patrol(); }
+    if (L.st === 'patrol') { if (L.fuse) { L.fuse = false; powerOff(); } L.pauseT = rand(.8, 2.2); patrol(); } else if (L.st === 'search' && (L.waitT += dt) > 2.5) { L.waitT = 0; patrol(); }
   }
-  if ((L.stepT -= dt * sp) <= 0) { beep(70, .09, 'sine', .3 * clamp(1 - L.d / 13, 0, 1), 40); L.stepT = 1.1; }   // footsteps you can hear coming
-  if (L.d < .6) { state = 'dead'; endT = 0; quip = pick(QUIPS); noise(1.2, .5); beep(300, 1, 'sawtooth', .2, 60); shout(1, ['LARS']); }
+  if ((L.stepT -= dt * sp) <= 0) { lstep(); L.stepT = 1.1; }   // footsteps you can hear coming
+  if (L.d < .6) { state = 'dead'; endT = 0; quip = pick(QUIPS); why = whyDead(); silencePersistentAudio(); jumpscareSound(); }
+}
+
+/* What did you do wrong? Looks at your last few seconds and names the mistake. */
+function whyDead() {
+  const n = Math.round(ev.blink ? ev.blink.d : 0); let a, b;
+  if (time - ev.dashT < .9 && ev.blink) {
+    if (ev.blink.forced) { a = 'YOUR EYES RAN DRY.'; b = 'Blink early, while he is far away or out of sight.'; }
+    else { a = 'YOU BLINKED. HE WAS ' + n + ' TILES AWAY.'; b = 'Every blink is a lunge. Only blink when he is far.'; }
+  } else if (L.mom > .4 && time - ev.backT < 1.2) { a = 'YOU LOOKED AWAY.'; b = 'He speeds up when you stop watching. Back away facing him.'; }
+  else if (time - ev.fixT < 1.5) { a = 'YOU STAYED ON THE GENERATOR.'; b = 'Fixing is loud. Check the area before you start.'; }
+  else if (time - ev.sprintT < 1.5) { a = 'YOU SPRINTED.'; b = 'Sprinting is loud and tires you out. He heard you.'; }
+  else if (Math.hypot(P.vx, P.vy) < 1) { a = 'YOU STOPPED MOVING.'; b = 'Standing still while he hunts you is a bad plan.'; }
+  else { a = 'YOU GOT OUTRUN.'; b = 'Break line of sight early. Avoid dead ends.'; }
+  return [a, b, ev.spot ? 'It started because ' + ev.spot + '.' : ''];
 }
 
 /* ---------- Update ---------- */
 function update(dt) {
-  t += dt; if (msgT > 0) msgT -= dt;
+  t += dt; if (msgT > 0) msgT -= dt; if (fxT > 0) fxT = Math.max(0, fxT - dt * 1.1);
   light += (1 - light) * Math.min(1, dt * 6);
-  if (Math.random() < dt * .3) light = rand(.1, .5);                   // flickering lights
-  if (state !== 'play') { endT += dt; if (droneG) droneG.gain.value = state === 'dead' ? .15 : .01; if (chaseG) chaseG.gain.value = 0; return; }
+  if (Math.random() < dt * .018) light = rand(.18, .48);                // rare electrical flicker
+  if (state !== 'play') { endT += dt; if (droneG) droneG.gain.value = 0; if (chaseG) chaseG.gain.value = 0; if (lbG) lbG.gain.value = 0; return; }
   time += dt;
+
+  // Torch battery: 20 seconds to start, plus one 10-second spare cell somewhere in the map.
+  if (torchOn) {
+    torchBattery = Math.max(0, torchBattery - dt);
+    const pulse = .91 + Math.sin(t * 13.2) * .045 + Math.sin(t * 31.7) * .025;
+    const dropout = Math.random() < dt * .28 ? rand(.42, .72) : 1;
+    torchFlicker = clamp(pulse * dropout, .38, 1);
+    torchPower = torchBattery > 0 ? (torchBattery < 5 ? torchFlicker * rand(.58, .88) : torchFlicker) : 0;
+    if (torchBattery <= 0) { torchOn = false; torchPower = 0; beep(180, .16, 'square', .06, 60); say('TORCH BATTERY EMPTY.', 2); }
+  } else { torchPower = 0; torchFlicker = 1; }
+  zoomAmount += ((zoomHeld ? 1 : 0) - zoomAmount) * Math.min(1, dt * 2.25);
 
   // --- blinking: your eyes dry out, you must blink; Lars lunges while they're shut ---
   const chasing = L.st === 'chase';
   if (P.blinkT >= 0) { P.blinkT += dt; if (P.blinkT > .34) { P.blinkT = -1; if (L.st !== 'sleep' && L.d < 7 && L.sees) { noise(.15, .3); beep(900, .14, 'sawtooth', .1, 300); } } }
-  else { P.bm += dt / 6.5 * (chasing ? 1.4 : 1); if (P.bm >= 1) blink(); }
+  else { P.bm += dt / 6.5 * (chasing ? 1.2 : 1) * (L.watching ? 1.15 : 1); if (P.bm >= 1) blink(true); }   // staring dries your eyes faster
 
   // --- movement: momentum, sprint with stamina, FOV kick, head bob ---
-  const turn = (keys.ArrowRight || keys.KeyE ? 1 : 0) - (keys.ArrowLeft || keys.KeyQ ? 1 : 0);
+  const turn = (keys.ArrowRight ? 1 : 0) - (keys.ArrowLeft ? 1 : 0);
   P.a += turn * 2.6 * dt;
   const fwd = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0), str = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0);
   const len = Math.hypot(fwd, str);
   const wx = len ? (Math.cos(P.a) * fwd - Math.sin(P.a) * str) / len : 0, wy = len ? (Math.sin(P.a) * fwd + Math.cos(P.a) * str) / len : 0;
-  const sprint = (keys.ShiftLeft || keys.ShiftRight) && len > 0 && P.stam > 0 && !P.tired;
+  P.crouching = !!keys.KeyC;
+  P.crouchAmount += ((P.crouching ? 1 : 0) - P.crouchAmount) * Math.min(1, dt * 12);
+  const sprint = !P.crouching && (keys.ShiftLeft || keys.ShiftRight) && len > 0 && P.stam > 0 && !P.tired;
   P.stam = clamp(P.stam + (sprint ? -30 : 16) * dt, 0, 100);
   if (P.stam <= 0) P.tired = true; if (P.tired && P.stam > 30) P.tired = false;
-  const v = sprint ? 6.6 : 4.4, k = Math.min(1, dt * 11); P.vx += (wx * v - P.vx) * k; P.vy += (wy * v - P.vy) * k;
+  const v = (P.crouching ? 2.0 : sprint ? 6.2 : 4.15) * (fwd < 0 ? .76 : 1), k = Math.min(1, dt * (P.crouching ? 13 : 9)); P.vx += (wx * v - P.vx) * k; P.vy += (wy * v - P.vy) * k;
   if (free(P.x + P.vx * dt, P.y)) P.x += P.vx * dt;
   if (free(P.x, P.y + P.vy * dt)) P.y += P.vy * dt;
   const spd = Math.hypot(P.vx, P.vy);
-  P.fov += ((sprint ? .84 : .66) - P.fov) * Math.min(1, dt * 9);
-  P.bobP += spd * dt * 1.6; bob = Math.sin(P.bobP) * Math.min(1, spd / 4) * (sprint ? 2.4 : 1.3);
-  if (sprint && (hearT -= dt) <= 0) { heard(P.x, P.y, 6); hearT = .5; }    // sprinting is noisy
+  const wasAirborne = P.jumpZ > 0;
+  P.jumpV -= 18 * dt; P.jumpZ = Math.max(0, P.jumpZ + P.jumpV * dt);
+  if (P.jumpZ === 0 && P.jumpV < 0) { P.jumpV = 0; if (wasAirborne) { thud(.14, 0); sh(.09, .045, 'lowpass', 190, 70, .7, 0, .006); } }
+  P.jumpFov += ((P.jumpZ > 0 ? Math.min(.085, P.jumpZ * .075) : 0) - P.jumpFov) * Math.min(1, dt * 10);
+  P.fv += ((sprint ? baseFov + .25 : baseFov) - P.fv) * Math.min(1, dt * 9); pvel += (-90 * punch - 9 * pvel) * dt; punch += pvel * dt; P.fov = clamp(P.fv + P.jumpFov + punch - zoomAmount * .42, .42, 2);
+  P.bobP += spd * dt * 1.6; bob = Math.sin(P.bobP) * Math.min(1, spd / 4) * (sprint ? 1.8 : .9) * (1 - P.crouchAmount * .65);
+  // Physical eye height feeds the floor rays, wall projection and sprite projection.
+  // Standing = .50, crouched = .28, jumping raises the camera with the player.
+  cameraHeight = clamp(.50 - P.crouchAmount * .22 + P.jumpZ * .17 + bob * .012, .22, .70);
+  if (shotCooldown > 0) shotCooldown = Math.max(0, shotCooldown - dt);
+  if (shotFlash > 0) shotFlash = Math.max(0, shotFlash - dt);
+  const stp = Math.floor(P.bobP / Math.PI); if (stp !== lastStep) { lastStep = stp; if (spd > 1.5) { thud(P.crouching ? .025 : sprint ? .2 : .1, 0); sh(.09, P.crouching ? .035 : sprint ? .22 : .12, 'lowpass', 520, 220, .7, 0, .004); } }   // your own footsteps
+  if ((P.tired || P.stam < 35) && (breathT -= dt) <= 0) { const k = clamp(1 - P.stam / 35, .3, 1) * (P.tired ? 1.2 : 1); breathPh ^= 1;   // in, then out
+    if (breathPh) sh(.42, .1 * k, 'bandpass', 800, 1250, .9, 0, .16); else sh(.6, .13 * k, 'bandpass', 700, 420, .8, 0, .12); breathT = breathPh ? .5 : .8; }                      // heavy breathing
+  if (Math.random() < dt * .12) beep(rand(40, 70), 1.4, 'sine', .04, 30);                                      // building creaks
+  if (sprint) ev.sprintT = time;
+  if (sprint && (hearT -= dt) <= 0) { heard(P.x, P.y, 4.5); hearT = .7; }
+  else if (P.crouching) hearT = Math.min(hearT, .15);    // sprinting is noisy
 
   // --- generators: hold E next to one (it's loud, and it also opens a shutter somewhere when done) ---
   near = fixing = null;
   for (const g of gens) { if (g.done || Math.hypot(g.x - P.x, g.y - P.y) > 1.5) continue; near = g; if (keys.KeyE) fixing = g; }
+  nearBattery = BATTERY.active && Math.hypot(BATTERY.x - P.x, BATTERY.y - P.y) < 1.35;
   if (fixing) {
-    fixing.p += dt / FIX_TIME;
+    ev.fixT = time; fixing.p += dt / FIX_TIME;
     if ((clankT -= dt) <= 0) { beep(rand(140, 240), .09, 'square', .12, 70); noise(.06, .12); clankT = .38; heard(P.x, P.y, 14); }
     if (fixing.p >= 1) {
       fixing.done = true; fixed++; light = .2; beep(660, .35, 'triangle', .18, 990);
@@ -316,20 +551,22 @@ function update(dt) {
     if (msgT <= 0) say('Exit is locked. Fix the generators first.', 2);
   }
 
-  // --- power surges: lights die and you can barely see ---
-  if (L.st !== 'sleep' && blackT <= 0 && (blackIn -= dt) <= 0) { blackT = rand(4, 6); blackIn = rand(28, 45); say('POWER SURGE', 2); noise(.6, .3); beep(300, .6, 'sawtooth', .1, 40); }
-  if (blackT > 0) blackT -= dt;
-  fogD += ((blackT > 0 ? 3.4 : 10) - fogD) * Math.min(1, dt * 5);
+  // --- power: Lars walks to the fuse box and kills the lights; you flip it back on ---
+  if (power && L.st === 'patrol' && !L.fuse && (blackIn -= dt) <= 0) { L.fuse = true; route(FUSE.x, FUSE.y); blackIn = rand(82, 108); }
+  blackT = power ? 0 : 1;
+  fogD += ((power ? 10 : 3.2) - fogD) * Math.min(1, dt * 5);
+  nearFuse = !power && Math.hypot(FUSE.x - P.x, FUSE.y - P.y) < 1.6;
+  if (panelOpen && !nearFuse) closePanel();
 
-  updateLars(dt); if (state !== 'play') return;
+  updateLars(dt); if (state !== 'play') return; larsAudio();
   const d = L.d, prox = clamp(1 - d / 14, 0, 1);
   if (L.st === 'chase') {
     music(dt, prox);
-    if (chaseG) { const rel = Math.atan2(L.y - P.y, L.x - P.x) - P.a; chaseG.gain.value = prox * prox * .14; chaseO.frequency.value = 110 + prox * 200; if (chaseP) chaseP.pan.value = Math.sin(rel); }
+    if (chaseG) { const rel = Math.atan2(L.y - P.y, L.x - P.x) - P.a; chaseG.gain.value = prox * prox * .22 * (1 + L.mom * .6); chaseO.frequency.value = 62 + prox * 46 + L.mom * 20; if (chaseP) chaseP.pan.value = Math.sin(rel); }
     if ((shoutT -= dt) <= 0) { shout(clamp(1.1 - d / 20, .15, 1)); shoutT = 1.8 + d * .12 + rand(0, 1.5); }
   } else {
     if (chaseG) chaseG.gain.value = 0;
-    if (L.st !== 'sleep' && (shoutT -= dt) <= 0) { shout(clamp(.7 - d / 30, .05, .5), ['Lars', 'Larrrs...', 'Lars?']); shoutT = rand(10, 18); }
+    if (L.st !== 'sleep' && (shoutT -= dt) <= 0) { const v = clamp(.7 - d / 30, .05, .5); if (Math.random() < .22) shoutLarsLoop(v); else shout(v, ['hello?', 'where are you', 'i just want to talk', 'come out', 'i can hear you', 'Lars?']); shoutT = rand(6, 11); }
     if (d < 8 && L.st !== 'sleep') { musicT -= dt; if (musicT <= 0) { beep(60, .14, 'sine', .3, 35); musicT = .4 + d * .1; } }   // heartbeat
   }
   if (droneG) droneG.gain.value = .04 + (L.st !== 'sleep' ? prox * .08 : 0);
@@ -339,12 +576,14 @@ function update(dt) {
 const sky = ctx.createLinearGradient(0, 0, 0, RH / 2); sky.addColorStop(0, '#2a2410'); sky.addColorStop(1, '#000');
 const flr = ctx.createLinearGradient(0, RH / 2, 0, RH); flr.addColorStop(0, '#000'); flr.addColorStop(1, '#3a3012');
 const vig = ctx.createRadialGradient(RW / 2, RH / 2, 40, RW / 2, RH / 2, 190); vig.addColorStop(0, 'rgba(120,0,0,0)'); vig.addColorStop(1, 'rgba(150,0,0,.7)');
+const stealthVig = ctx.createRadialGradient(RW / 2, RH / 2, 34, RW / 2, RH / 2, 150); stealthVig.addColorStop(0, 'rgba(0,0,0,0)'); stealthVig.addColorStop(.55, 'rgba(0,0,0,.08)'); stealthVig.addColorStop(1, 'rgba(0,0,0,.78)');
 
 function txt(s, x, y, size, fill = '#fff', align = 'center') {
   ctx.font = `${size}px Impact, "Arial Black", sans-serif`; ctx.textAlign = align; ctx.textBaseline = 'alphabetic';
   ctx.lineWidth = Math.max(2, size / 5); ctx.strokeStyle = '#000'; ctx.lineJoin = 'round';
   ctx.strokeText(s, x, y); ctx.fillStyle = fill; ctx.fillText(s, x, y);
 }
+/* Wall rendering */
 function castWalls() {
   const { dx, dy } = cam, plX = -dy * P.fov, plY = dx * P.fov;
   for (let x = 0; x < RW; x++) {
@@ -357,13 +596,14 @@ function castWalls() {
     const ch = map[my][mx], pd = Math.max(.05, side === 0 ? sdx - ddx : sdy - ddy);
     zbuf[x] = pd;
     let wx = side === 0 ? P.y + pd * rdy : P.x + pd * rdx; wx -= Math.floor(wx);
-    let col = WALL[ch]; const lh = RH / pd, top = (RH - lh) / 2;
-    let fog = Math.max(0, 1 - pd / fogD) * (side ? .72 : 1);
+    let col = WALL[ch]; const lh = vk / pd, top = RH / 2 - lh * (1 - cameraHeight);
+    let fog = Math.max(0, 1 - pd / (fogD + FL * Math.max(0, 1 - Math.abs(cx) * 1.6))) * (side ? .72 : 1);
     if (ch === 'D') col = ((wx * 10) | 0) % 2 ? [200, 170, 20] : [35, 35, 40];                  // hazard stripes
     else if (ch === 'B') fog *= ((wx * 8) | 0) % 2 ? .85 : 1; else fog *= wx < .04 ? .6 : (((wx * 6) | 0) % 2 ? .93 : 1);
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
     ctx.fillStyle = `rgb(${col[0] * fog | 0},${col[1] * fog | 0},${col[2] * fog | 0})`; ctx.fillRect(x, top, 1, lh);
     ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(x, top + lh * .88, 1, lh * .12);              // baseboard
-    if (ch === 'R') ctx.fillRect(x, top + lh * .5, 1, Math.max(1, lh * .03));                     // brick line
+    if (ch === 'R') ctx.fillRect(x, top + lh * .5, 1, Math.max(1, lh * .03)); // subtle brick seam
   }
 }
 /* Draw a flat picture as a billboard in the 3D world (hidden behind walls via zbuf) */
@@ -372,9 +612,9 @@ function sprite(o, c, hScale, lift) {
   const ex = o.x - P.x, ey = o.y - P.y, inv = 1 / (plX * dy - dx * plY);
   const tx = inv * (dy * ex - dx * ey), ty = inv * (-plY * ex + plX * ey);
   if (ty < .15) return;
-  const sx = (RW / 2) * (1 + tx / ty), lh = RH / ty, size = lh * hScale, w = size * c.width / c.height;
-  const top = (RH + lh) / 2 - size - lh * lift;
-  ctx.globalAlpha = clamp(1.3 - ty / fogD, .08, 1);
+  const sx = (RW / 2) * (1 + tx / ty), lh = vk / ty, size = lh * hScale, w = size * c.width / c.height * (RW / (2 * P.fov)) / vk;
+  const top = RH / 2 + lh * cameraHeight - size - lh * lift;
+  ctx.globalAlpha = clamp(1.3 - ty / (fogD + FL * .5), .08, 1);
   for (let x = Math.max(0, Math.floor(sx - w / 2)); x < Math.min(RW, sx + w / 2); x++) {
     if (ty >= zbuf[x]) continue;
     ctx.drawImage(c, Math.min(c.width - 1, (x - (sx - w / 2)) / w * c.width), 0, Math.max(1, c.width / w), c.height, x, top, 1, size);
@@ -383,85 +623,243 @@ function sprite(o, c, hScale, lift) {
 }
 function bar(x, y, w, h, f, col) { ctx.fillStyle = '#000'; ctx.fillRect(x - 1, y - 1, w + 2, h + 2); ctx.fillStyle = col; ctx.fillRect(x, y, w * clamp(f, 0, 1), h); }
 
+/* ---------- Floor + ceiling: textured per zone, with ceiling lights that light the floor ---------- */
+function rng(s) { return () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const hh = (a, b) => { let h = Math.imul(a, 374761393) + Math.imul(b, 668265263) | 0; h = Math.imul(h ^ h >>> 13, 1274126177); return ((h ^ h >>> 16) >>> 0) / 4294967296; };
+function lowNoise(r, g) {
+  const a = []; for (let i = 0; i < g * g; i++) a.push(r());
+  return (x, y) => { const fx = x / 64 * g, fy = y / 64 * g, x0 = Math.floor(fx), y0 = Math.floor(fy), u = fx - x0, v = fy - y0;
+    const q = (i, j) => a[((j % g + g) % g) * g + ((i % g + g) % g)], m = (p, w, k) => p + (w - p) * (k * k * (3 - 2 * k));
+    return m(m(q(x0, y0), q(x0 + 1, y0), u), m(q(x0, y0 + 1), q(x0 + 1, y0 + 1), u), v); };
+}
+function makeTex(seed, fn) {
+  const r = rng(seed), n1 = lowNoise(r, 6), n2 = lowNoise(r, 12), d = new Uint8ClampedArray(64 * 64 * 3);
+  for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) { const c = fn(x, y, r, n1(x, y), n2(x, y)), i = (y * 64 + x) * 3; d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; }
+  return d;
+}
+const ZCH = '#BRGT';
+const TX = [
+  makeTex(1, (x, y, r, n1, n2) => { let k = 1 + (r() - .5) * .22; if ((x + y) % 16 < 2 || (x - y + 64) % 16 < 1) k *= .9; if (n1 > .6) k *= 1 - (n1 - .6) * 1.3; if (n2 > .68) k *= .82; return [152 * k | 0, 128 * k | 0, 52 * k | 0]; }),   // damp yellow carpet
+  makeTex(2, (x, y, r, n1) => { const tx = x >> 4, ty = y >> 4, gx = x & 15, gy = y & 15; if (!gx || !gy) return [48, 72, 86];                                          // pool tiles
+    let k = (.88 + hh(tx, ty) * .24) * (1 + (r() - .5) * .08) * (1 + (15 - gx - gy) * .006) * (1 - n1 * .18); if (hh(tx + 9, ty + 3) > .9 && Math.abs(gx - gy) < 1) k *= .55; return [105 * k | 0, 158 * k | 0, 196 * k | 0]; }),
+  makeTex(3, (x, y, r, n1) => { const row = y >> 3, ox = (row & 1) * 8, bx = (x + ox) & 15, by = y & 7; if (!bx || !by) return [78, 70, 66];                                // red bricks
+    const k = (.8 + hh((x + ox) >> 4, row) * .4) * (1 + (r() - .5) * .14) * (1 - n1 * .2); return [150 * k | 0, 58 * k | 0, 46 * k | 0]; }),
+  makeTex(4, (x, y, r, n1, n2) => { let k = 1 + (r() - .5) * .14 + (n1 - .5) * .3, c = [128, 128, 136]; if (n2 > .7) { k *= .7; c = [112, 100, 92]; }                    // cracked concrete + oil
+    if (!x || !y) k *= .6; if (Math.abs(Math.sin(x * .21 + Math.sin(y * .13) * 3)) < .04 && y > 10 && y < 54) k *= .45; return [c[0] * k | 0, c[1] * k | 0, c[2] * k | 0]; }),
+  makeTex(5, (x, y, r, n1) => { if (!(x & 31) || !(y & 31)) return [30, 60, 56]; let k = (((x >> 5) + (y >> 5)) & 1 ? .78 : 1) * (1 + (r() - .5) * .1) * (1 - n1 * .2); if (r() < .004) k *= 1.5; return [62 * k | 0, 158 * k | 0, 136 * k | 0]; })  // teal tile
+];
+const CE = makeTex(6, (x, y, r) => { if (x < 2 || y < 2) return [96, 92, 76]; const k = (1 + (r() - .5) * .16) * (r() < .05 ? .7 : 1); return [196 * k | 0, 190 * k | 0, 162 * k | 0]; });
+const CL = makeTex(7, (x, y, r) => { if (x < 2 || y < 2) return [96, 92, 76]; if (x > 8 && x < 56 && y > 20 && y < 44) return (x < 11 || x > 53 || y < 23 || y > 41) ? [220, 215, 170] : [255, 252, 214]; const k = 1 + (r() - .5) * .16; return [196 * k | 0, 190 * k | 0, 162 * k | 0]; });
+const ZONE = new Uint8Array(N * N), VAR = new Float32Array(N * N), POOL = new Float32Array(N * N), NL = new Int16Array(N * N), LITT = new Uint8Array(N * N), LF = new Float32Array(N * N), SH = new Float32Array(N * N), TN = [];
+function buildFloor() {
+  TN.length = 0; LITT.fill(0);
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const i = y * N + x, cnt = [0, 0, 0, 0, 0]; VAR[i] = .82 + hh(x, y) * .26; NL[i] = i;
+    for (let b = -3; b <= 3; b++) for (let a = -3; a <= 3; a++) { const xx = x + a, yy = y + b; if (xx < 0 || yy < 0 || xx >= N || yy >= N) continue; const z = ZCH.indexOf(map[yy][xx]); if (z >= 0) cnt[z] += 1 / (1 + Math.hypot(a, b)); }
+    let best = 0; for (let z = 1; z < 5; z++) if (cnt[z] > cnt[best]) best = z; ZONE[i] = best;
+    if (x % 3 === 1 && y % 3 === 1) { const h = hh(x + 5, y + 7); LITT[i] = h < .15 ? 3 : h < .45 ? 2 : 1; }
+  }
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    let bp = 0, bi = y * N + x;
+    for (let b = -3; b <= 3; b++) for (let a = -3; a <= 3; a++) { const xx = x + a, yy = y + b; if (xx < 0 || yy < 0 || xx >= N || yy >= N) continue; const j = yy * N + xx; if (LITT[j] && LITT[j] < 3) { const f = 1 - Math.hypot(a, b) / 3.3; if (f > bp) { bp = f; bi = j; } } }
+    POOL[y * N + x] = bp; NL[y * N + x] = bi;
+  }
+  for (const ch of ZCH) { const c = WALL[ch], m = Math.max(...c); TN.push(.6 + .4 * c[0] / m, .6 + .4 * c[1] / m, .6 + .4 * c[2] / m); }
+}
+const FW = RW + 16, FH = RH + 24, FOX = 8, FOY = 12;
+const [fcv, fcx] = mk(FW, FH), fimg = fcx.createImageData(FW, FH), f32 = new Uint32Array(fimg.data.buffer);
+function drawFloor() {
+  for (let i = 0; i < N * N; i++) { if (LITT[i]) LF[i] = !power ? 0 : LITT[i] === 2 ? (Math.sin(t * 9 + i * 3.7) * Math.sin(t * 5.3 + i) > .55 ? .25 : 1) : LITT[i] === 1 ? 1 : 0; SH[i] = VAR[i] * ((power ? .58 : .22) + .6 * POOL[i] * LF[NL[i]]); }
+  const { dx, dy } = cam, plX = -dy * P.fov, plY = dx * P.fov;
+  for (let y = 0; y < FH; y++) {
+    const p = y - FOY - RH / 2 + .5, ceil = p < 0, ap = Math.abs(p), eye = ceil ? 1 - cameraHeight : cameraHeight, rd = vk * eye / Math.max(ap, .5), fog = Math.max(0, 1 - rd / (fogD + FL)), row = y * FW;
+    if (fog < .02 || ap < .6) { f32.fill(0xFF000000, row, row + FW); continue; }
+    for (let x = 0; x < FW; x++) {
+      const cx = 2 * (x - FOX) / RW - 1, fg = Math.max(0, 1 - rd / (fogD + FL * Math.max(0, 1 - Math.abs(cx) * 1.6))), fx = P.x + rd * (dx + plX * cx), fy = P.y + rd * (dy + plY * cx), flx = Math.floor(fx), fly = Math.floor(fy);
+      const ix = flx < 0 ? 0 : flx > N - 1 ? N - 1 : flx, iy = fly < 0 ? 0 : fly > N - 1 ? N - 1 : fly, ti = iy * N + ix, z = ZONE[ti];
+      const k = ((((fy - fly) * 64) | 0) << 6 | (((fx - flx) * 64) | 0)) * 3, lt = LITT[ti];
+      let T, m;
+      if (ceil) { const lit = lt && lt < 3; T = lit ? CL : CE; m = (lit ? (power ? .55 : .15) + .8 * LF[ti] : .4 + .35 * POOL[ti]) * fg; } else { T = TX[z]; m = SH[ti] * fg; }
+      let r = T[k] * m, g = T[k + 1] * m, b = T[k + 2] * m;
+      if (ceil) { r *= TN[z * 3]; g *= TN[z * 3 + 1]; b *= TN[z * 3 + 2]; }
+      f32[row + x] = 0xFF000000 | (b > 255 ? 255 : b) << 16 | (g > 255 ? 255 : g) << 8 | (r > 255 ? 255 : r);
+    }
+  }
+  fcx.putImageData(fimg, 0, 0); ctx.drawImage(fcv, -FOX, -FOY);
+}
+
+function drawTorchHud() {
+  const x = RW - 77, y = 7, ratio = torchBattery / torchBatteryMax;
+  ctx.fillStyle = 'rgba(0,0,0,.72)'; ctx.fillRect(x - 4, y - 3, 74, 25);
+  // Pixel flashlight icon, top-right.
+  ctx.fillStyle = '#222a31'; ctx.fillRect(x, y + 4, 18, 8); ctx.fillRect(x + 3, y + 2, 10, 12);
+  ctx.fillStyle = '#75838b'; ctx.fillRect(x + 2, y + 3, 10, 10); ctx.fillStyle = '#d9e3e5'; ctx.fillRect(x + 5, y + 4, 5, 8);
+  ctx.fillStyle = torchOn && torchBattery > 0 ? '#ffe69a' : '#56616a'; ctx.fillRect(x + 13, y + 5, 5, 6);
+  ctx.fillStyle = '#101417'; ctx.fillRect(x + 23, y + 4, 42, 7);
+  ctx.fillStyle = torchBattery > 7 ? '#8cce80' : torchBattery > 2 ? '#e6bd57' : '#d65b52';
+  ctx.fillRect(x + 24, y + 5, 40 * ratio, 5);
+  txt(`${Math.ceil(torchBattery)}s`, x + 44, y + 21, 6, torchOn ? '#ffe69a' : '#aeb6bb');
+}
+function drawWeaponOverlay() {
+  // Fictional, blocky first-person prop, drawn directly on the pixel canvas.
+  // RMB raises and steadies it while the camera eases into the zoom.
+  const z = zoomAmount, scale = 1 + z * .34, ox = RW - 114 - z * 66, oy = RH - 68 - z * 8;
+  ctx.save(); ctx.translate(ox, oy); ctx.scale(scale, scale);
+  // sleeve and forearm
+  rr(ctx, 54, 43, 57, 36, '#263746'); rr(ctx, 61, 38, 39, 28, '#344b5a');
+  rr(ctx, 58, 46, 10, 24, '#52616b'); rr(ctx, 102, 51, 13, 28, '#18232c');
+  // hand gripping the lower receiver
+  rr(ctx, 39, 26, 23, 20, '#9a7056'); rr(ctx, 46, 20, 23, 17, '#b78363');
+  rr(ctx, 61, 26, 15, 15, '#a8795b'); rr(ctx, 38, 31, 12, 12, '#805a46');
+  // receiver, barrel and front sight; simple, non-functional game art
+  rr(ctx, 18, 2, 39, 25, '#171c22'); rr(ctx, 22, 0, 32, 8, '#333d46');
+  rr(ctx, 26, 4, 24, 4, '#65717b'); rr(ctx, 21, 10, 34, 4, '#252d35');
+  rr(ctx, 13, 5, 12, 9, '#11171d'); rr(ctx, 9, 7, 8, 5, '#4a555e');
+  rr(ctx, 30, 19, 20, 11, '#222a31'); rr(ctx, 36, 23, 9, 17, '#151b20');
+  rr(ctx, 29, 34, 16, 22, '#303943'); rr(ctx, 32, 37, 10, 14, '#151b20');
+  rr(ctx, 29, 51, 20, 7, '#7a5943'); rr(ctx, 32, 55, 15, 8, '#a8795b');
+  // cool highlights keep the prop readable at the game's low resolution
+  rr(ctx, 20, 3, 2, 5, '#98a2a8'); rr(ctx, 48, 11, 4, 2, '#87939b');
+  if (shotFlash > 0) { ctx.globalAlpha = shotFlash / .16; rr(ctx, 4, -8, 21, 12, '#fff0b0'); rr(ctx, 8, -14, 12, 9, '#fff'); ctx.globalAlpha = 1; }
+  ctx.restore();
+  if (z > .75) { ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.fillRect(0, 0, 8, RH); ctx.fillRect(RW - 8, 0, 8, RH); }
+}
+
 function draw() {
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, RW, RH);
   if (state === 'title') {
-    txt('LARS SIMULATOR 3D', RW / 2, 50, 28, '#c4160a'); txt('THE BACKROOMS (DEMO)', RW / 2, 72, 15, '#ffe14d');
-    ctx.fillStyle = '#222'; ctx.fillRect(80, 86, 160, 8); ctx.fillStyle = '#c4160a'; ctx.fillRect(80, 86, 158, 8);
-    txt('Loading Lars... 99%', RW / 2, 108, 11, '#aaa');
-    txt('WASD move   Mouse look   Shift sprint   E fix', RW / 2, 128, 9, '#ddd');
-    txt('SPACE = BLINK. When you blink, Lars dashes.', RW / 2, 141, 10, '#ffe14d');
-    if (Math.sin(t * 4) > -.2) txt('PRESS SPACE OR CLICK TO ENTER', RW / 2, 162, 13, '#ffe14d');
-    txt('v0.0.2 alpha. do not share', 4, 176, 8, '#666', 'left');
+    ctx.fillStyle = '#e8e8e8';
+    ctx.font = 'bold 25px Arial, Helvetica, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('LARS SIMULATOR', RW / 2, 62);
+    ctx.fillStyle = '#777';
+    ctx.font = '10px Arial, Helvetica, sans-serif';
+    ctx.fillText('A quiet place. Keep it that way.', RW / 2, 88);
+    ctx.fillStyle = '#ffe14d';
+    if (Math.sin(t * 3) > -.2) ctx.fillText('PRESS SPACE OR CLICK TO START', RW / 2, 145);
+    ctx.fillStyle = '#999';
+    ctx.fillText('WASD MOVE   C CROUCH   SPACE JUMP   Q BLINK   RMB FOCUS', RW / 2, 166);
     return;
   }
-  cam.dx = Math.cos(P.a); cam.dy = Math.sin(P.a);
+  FL = torchPower * 4.3 + zoomAmount * 3.6; cam.dx = Math.cos(P.a); cam.dy = Math.sin(P.a); vk = RH * Math.pow(.66 / P.fov, .6);   // keeps wall height sensible at wide FOV
   const prox = L.st === 'sleep' ? 0 : clamp(1 - L.d / 10, 0, 1);
-  ctx.save(); ctx.translate(rand(-1, 1) * prox * 2 + (seenT > 0 ? rand(-3, 3) : 0), bob + rand(-1, 1) * prox * 2);
-  ctx.fillStyle = sky; ctx.fillRect(-8, -12, RW + 16, RH / 2 + 12); ctx.fillStyle = flr; ctx.fillRect(-8, RH / 2, RW + 16, RH / 2 + 12);
+  const shakeX = rand(-1, 1) * prox * 1.4 + rand(-1, 1) * fxT * 2 + Math.cos(P.bobP * .5) * Math.min(1, Math.hypot(P.vx, P.vy) / 4) * .45;
+  ctx.save(); ctx.translate(shakeX, 0);
+  drawFloor();
   castWalls();
   larsFrame();
   const things = [{ x: EXIT.x, y: EXIT.y, c: fixed === gens.length ? exitOpen : exitShut, h: .95, l: 0 },
-                  { x: L.x, y: L.y, c: larsC, h: .95, l: .04 }];
-  for (const g of gens) things.push({ x: g.x, y: g.y, c: g.done ? genOk : genBad, h: .5, l: 0 });
+                  { x: L.x, y: L.y, c: larsC, h: L.knocked ? .54 : .95, l: .04 }];
+  for (const g of gens) things.push({ x: g.x, y: g.y, c: GENS[g.done ? 1 : 0][Math.floor(t * (g.done ? 3 : 8)) & 1], h: .5, l: 0 });
+  paintFuse(); things.push({ x: FUSE.x, y: FUSE.y, c: fuseCv, h: .75, l: 0 });
+  if (BATTERY.active) things.push({ x: BATTERY.x, y: BATTERY.y, c: batteryCv, h: .42, l: 0 });
   things.sort((a, b) => Math.hypot(b.x - P.x, b.y - P.y) - Math.hypot(a.x - P.x, a.y - P.y));
   for (const o of things) sprite(o, o.c, o.h, o.l);
   ctx.restore();
 
   ctx.fillStyle = `rgba(0,0,0,${(1 - light) * (blackT > 0 ? 1 : .7)})`; ctx.fillRect(0, 0, RW, RH);   // flicker overlay
   if (L.st === 'chase' && L.d < 8) { ctx.globalAlpha = (1 - L.d / 8) * .8; ctx.fillStyle = vig; ctx.fillRect(0, 0, RW, RH); ctx.globalAlpha = 1; }
-  if (seenT > 0) { ctx.fillStyle = `rgba(255,255,255,${seenT})`; ctx.fillRect(0, 0, RW, RH); }
+  { const ca = clamp((L.st === 'chase' ? 1 - L.d / 9 : 0) + fxT * .7, 0, 1);               // Evade-style: colour bleeds at the edges and the screen pulses as he closes in
+    if (ca > .04) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = ca * .2; ctx.drawImage(cv, -ca * 3, 0); ctx.drawImage(cv, ca * 3, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
+    if (L.st === 'chase') { ctx.globalAlpha = clamp(.18 + .22 * Math.sin(t * (8 + ca * 10)), 0, 1) * (.4 + ca); ctx.fillStyle = vig; ctx.fillRect(0, 0, RW, RH); }
+    if (fxT > 0) { ctx.globalAlpha = fxT * .85; ctx.fillStyle = vig; ctx.fillRect(0, 0, RW, RH); }
+    ctx.globalAlpha = 1; }
+  if (P.crouchAmount > .01) { ctx.globalAlpha = P.crouchAmount * .78; ctx.fillStyle = stealthVig; ctx.fillRect(0, 0, RW, RH); ctx.globalAlpha = 1; }
+
 
   // eyelids (blink)
   const c = closure();
   if (c > 0) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, RW, c * RH * .52); ctx.fillRect(0, RH - c * RH * .52, RW, c * RH * .52 + 1); }
 
+  drawTorchHud();
+  if (shotgun) drawWeaponOverlay();
   // HUD
-  txt('GENERATORS ' + fixed + '/' + gens.length, 6, 14, 12, '#ffe14d', 'left');
-  txt('STAMINA', 6, 156, 7, '#9c9', 'left'); bar(6, 159, 70, 4, P.stam / 100, P.tired ? '#c22' : '#4c6');
-  txt('EYES', 6, 173, 7, '#9cf', 'left'); bar(30, 169, 46, 4, 1 - P.bm, P.bm > .8 ? '#e33' : '#6af');
-  if (L.st === 'chase' && Math.sin(t * 14) > -.4) txt('SEEN', RW / 2, 30, 18, '#ff3030');
-  if (near && !fixing) txt('HOLD E TO FIX', RW / 2, 130, 12, '#fff');
-  if (fixing) { bar(RW / 2 - 40, 122, 80, 8, fixing.p, '#ffe14d'); txt('FIXING... (LARS CAN HEAR THIS)', RW / 2, 142, 9, '#fff'); }
+  for (let i = 0; i < gens.length; i++) { ctx.fillStyle = '#000'; ctx.fillRect(5 + i * 12, 5, 10, 8); ctx.fillStyle = i < fixed ? '#4f6' : '#733'; ctx.fillRect(6 + i * 12, 6, 8, 6); }
+  bar(6, 163, 70, 3, P.stam / 100, P.tired ? '#c22' : '#4c6'); bar(6, 170, 70, 3, 1 - P.bm, P.bm > .8 ? '#e33' : '#6af');
+  ctx.fillStyle = '#9cf'; ctx.beginPath(); ctx.ellipse(84, 171.5, 4, 2.6, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#000'; ctx.fillRect(83, 170.5, 2, 2);
+  if (L.st === 'chase' && L.sees && !L.watching && closure() < .5 && Math.abs(L.rel) > Math.atan(P.fov) * .9) { const sd = L.rel > 0 ? 1 : -1, ax = sd > 0 ? RW - 6 : 6; ctx.fillStyle = '#e22'; ctx.beginPath(); ctx.moveTo(ax, RH / 2); ctx.lineTo(ax - sd * 12, RH / 2 - 9); ctx.lineTo(ax - sd * 12, RH / 2 + 9); ctx.fill(); }
+  if ((near && !fixing) || (nearFuse && !panelOpen) || nearBattery) {
+    ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(RW / 2, 130, 8, 0, 7); ctx.fill(); txt('E', RW / 2, 134, 11, '#ffe14d');
+    if (nearBattery) txt('BATTERY  +10s', RW / 2, 145, 7, '#aaf2a0');
+  }
+  if (fixing) bar(RW / 2 - 40, 114, 80, 5, fixing.p, '#ffe14d');
   if (msgT > 0) txt(msg, RW / 2, 165, 10, '#fff');
 
+  if (panelOpen) drawPanel();
   if (state === 'dead') {                       // JUMPSCARE: the close-up zooms in, flashes negative, tears
     const z = Math.min(1, endT * 6), j = endT < 1.3 ? rand(-7, 7) : 0, s = 80 + z * 330;
     ctx.fillStyle = endT < .25 ? '#fff' : '#000'; ctx.fillRect(0, 0, RW, RH);
     const f = IMG[(endT < 1.3 && Math.sin(endT * 40) > .5) ? 'flash' : 'near'];
     if (f) ctx.drawImage(f, RW / 2 - s / 2 + j, RH / 2 - s / 2 + j, s, s);
     if (endT > .5) txt('LARS GOT YOU', RW / 2, 40, 30, '#fff');
-    if (endT > 1.2) txt(quip, RW / 2, 150, 12, '#fff');
-    if (endT > 1.8) txt('SPACE OR CLICK TO TRY AGAIN', RW / 2, 170, 12, '#ffe14d');
+    
+    if (endT > 1.0) txt('MISTAKE: ' + why[0], RW / 2, 118, 10, '#ff5a4a');
+    if (endT > 1.6) txt(why[1], RW / 2, 134, 8, '#ddd');
+    if (endT > 2.4) txt('SPACE TO RETRY', RW / 2, 170, 12, '#ffe14d');
   }
   if (state === 'win') {
     ctx.fillStyle = 'rgba(0,30,0,.8)'; ctx.fillRect(0, 0, RW, RH);
     txt('YOU ESCAPED', RW / 2, 70, 30, '#7dff9a'); txt('Lars is sad now.', RW / 2, 96, 14); txt('Time: ' + time.toFixed(1) + 's', RW / 2, 118, 14, '#ffe14d');
-    if (endT > 1) txt('SPACE OR CLICK TO PLAY AGAIN', RW / 2, 160, 12, '#ffe14d');
+    if (endT > 1) txt('SPACE TO PLAY AGAIN', RW / 2, 160, 12, '#ffe14d');
+  }
+  if (state === 'secret') {
+    ctx.fillStyle = 'rgba(0,0,0,.88)'; ctx.fillRect(0, 0, RW, RH);
+    txt('SECRET ENDING', RW / 2, 52, 24, '#ffe14d');
+    txt('LARS HAS BEEN DEFEATED.', RW / 2, 86, 13, '#fff');
+    txt('YOU FOUND THE VERY UNFAIR BUTTON.', RW / 2, 108, 8, '#aaa');
+    if (endT > 1.5) txt('SPACE TO PLAY AGAIN', RW / 2, 158, 11, '#ffe14d');
   }
 }
 
 /* ---------- Input ---------- */
 function lockMouse() { if (cv.requestPointerLock && document.pointerLockElement !== cv) { try { cv.requestPointerLock(); } catch (e) {} } }
-function act() { if (state === 'title' || (state === 'dead' && endT > 1.8) || (state === 'win' && endT > 1)) start(); }
+function act() { if (state === 'title' || (state === 'dead' && endT > 2.4) || (state === 'win' && endT > 1) || (state === 'secret' && endT > 1.5)) start(); }
 addEventListener('keydown', e => {
   if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
   if (e.repeat) return;
+  if (state === 'play' && /^[a-z]$/i.test(e.key || '')) {
+    cheatBuffer = (cheatBuffer + e.key.toLowerCase()).slice(-6);
+    if (cheatBuffer === 'ssadad' && !shotgun) {
+      shotgun = true; msg = 'CHEAT CODE ACCEPTED — SHOTGUN UNLOCKED'; msgT = 3;
+      beep(740, .12, 'square', .1, 1180); beep(980, .18, 'triangle', .08, 660);
+    }
+  }
+  if (panelOpen && ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ShiftLeft', 'ShiftRight'].includes(e.code)) return;   // you stand still at the panel
   keys[e.code] = true;
-  if (e.code === 'Space' || e.code === 'KeyB') { if (state === 'play') blink(); else act(); }
+  if (state === 'play') { if (e.code === 'KeyE' && nearFuse && !panelOpen) openPanel(); else if ((e.code === 'KeyE' || e.code === 'Escape') && panelOpen) closePanel(); else if (panelOpen && /^Digit[1-5]$/.test(e.code)) flick(+e.code[5] - 1); }
+  if (e.code === 'Space') { if (state === 'play') { if (P.jumpZ <= 0 && !P.crouching) { P.jumpV = 6.2; beep(175, .12, 'triangle', .105, 85); thud(.055, 0); } } else act(); }
+  if (e.code === 'KeyQ' && state === 'play') blink();
+  if (e.code === 'KeyX' && state === 'play') fireShot();
   if (e.code === 'Enter') act();
+  if (e.code === 'BracketLeft' || e.code === 'BracketRight') { baseFov = clamp(baseFov + (e.code === 'BracketRight' ? .08 : -.08), .6, 1.7); say('FOV ' + Math.round(2 * Math.atan(baseFov) * 180 / Math.PI), 1.5); }
   if (e.code === 'KeyF') document.getElementById('fsBtn').click();
+  if (e.code === 'KeyT' && state === 'play') {
+    if (!torchOn && torchBattery <= 0) { say('NO TORCH BATTERY LEFT.', 1.8); beep(150, .08, 'square', .05); }
+    else { torchOn = !torchOn; beep(torchOn ? 1200 : 420, .04, 'square', .055); }
+  }
+  if (e.code === 'KeyE' && state === 'play' && nearBattery && BATTERY.active) {
+    BATTERY.active = false; torchBattery = Math.min(torchBatteryMax, torchBattery + 10);
+    msg = 'SPARE BATTERY +10 SECONDS'; msgT = 2.4; beep(760, .12, 'triangle', .09, 1180);
+  }
 });
 addEventListener('keyup', e => keys[e.code] = false);
-addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
-cv.addEventListener('click', () => { act(); if (state === 'play') lockMouse(); });
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; zoomHeld = false; });
+cv.addEventListener('click', e => { if (panelOpen) { panelClick(e); return; } act(); if (state === 'play') lockMouse(); });
+cv.addEventListener('contextmenu', e => e.preventDefault());
+cv.addEventListener('mousedown', e => {
+  if (e.button === 2) { if (state === 'play') { zoomHeld = true; lockMouse(); } e.preventDefault(); return; }
+  if (state === 'play' && shotgun && e.button === 0) fireShot();
+});
+addEventListener('mouseup', e => { if (e.button === 2) zoomHeld = false; });
 addEventListener('mousemove', e => { if (document.pointerLockElement === cv && state === 'play') P.a += e.movementX * .0024; });
 
 /* ---------- Main loop ---------- */
 let last = performance.now();
 function frame(now) {
   const dt = Math.min(.05, (now - last) / 1000); last = now;
-  update(dt); draw(); requestAnimationFrame(frame);
+  if (slowT > 0) { slowT -= dt; ts = .2 + .8 * Math.pow(1 - Math.max(0, slowT) / .7, 2); } else ts = 1;
+  update(dt * ts); draw(); requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
 </script>
