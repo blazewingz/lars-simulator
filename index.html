@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Lars Simulator v0.17</title>
+<title>Lars Simulator v0.31</title>
 <style>
 :root{--yellow:#ffe14d;--red:#c4160a;--ink:#111;color-scheme:dark}
 *{box-sizing:border-box}
@@ -11,21 +11,31 @@ html,body{margin:0;min-height:100%;background:#050403;color:#ddd;font-family:Ari
 body{display:flex;flex-direction:column;align-items:center;gap:12px;padding:12px 12px calc(12px + env(safe-area-inset-bottom,0px))}
 h1{margin:6px 0 0;font-family:Arial,Helvetica,sans-serif;font-weight:700;letter-spacing:.16em;font-size:clamp(20px,4vw,30px);color:#e7e7e7;text-shadow:none;transform:none}
 #gameLayout{width:min(100%,1370px);display:grid;grid-template-columns:205px minmax(0,960px) 145px;gap:14px;align-items:start}
-#controlsPanel,#fsSide{background:transparent;border:0;box-shadow:none;padding:0;min-width:0}
+#controlsPanel{background:linear-gradient(145deg,#171411,#0b0a09);border:1px solid #332a22;box-shadow:4px 4px 0 #000;padding:12px;min-width:0;border-radius:5px}
+#fsSide{background:transparent;border:0;box-shadow:none;padding:0;min-width:0}
 #controlsTitle{display:none}
-.bind-row{display:grid;grid-template-columns:64px minmax(0,1fr);gap:8px;align-items:center;margin:0 0 5px;min-height:25px}
+.bind-row{display:grid;grid-template-columns:64px minmax(0,1fr);gap:8px;align-items:center;margin:0 0 6px;min-height:27px;padding-bottom:4px;border-bottom:1px solid #29231e}
 .bind-row span{font:13px/1.35 Arial,Helvetica,sans-serif;color:#c9c3b7;overflow-wrap:anywhere}
-.key-button,.key-static{width:100%;min-height:22px;display:flex;align-items:center;justify-content:flex-start;padding:2px 0;border:0;border-radius:0;background:transparent;color:#e7e7e7;font:700 13px Arial,Helvetica,sans-serif;letter-spacing:0;text-decoration:underline;text-underline-offset:3px}
+.bind-row .key-static{background:transparent;border:0;box-shadow:none;color:#555;font-weight:700}
+#fovControl{margin:10px 0 8px;padding-top:8px;border-top:1px solid #29231e}
+#fovControl label{display:flex;justify-content:space-between;color:#c9c3b7;font:12px Arial,sans-serif;margin-bottom:7px}
+#fovSlider{width:100%;accent-color:#ffe14d;cursor:pointer}
+#resetData{position:absolute;left:0;right:0;bottom:-38px;display:block;width:100%;font:11px Arial,sans-serif;color:#e0a3a3;background:#241313;border:1px solid #693535;border-radius:4px;padding:7px 5px;cursor:pointer}
+#resetData:hover{background:#421b1b;color:#fff}
+.key-button,.key-static{width:100%;min-height:25px;display:flex;align-items:center;justify-content:center;padding:3px 5px;border:1px solid #55483a;border-radius:4px;background:linear-gradient(#29231d,#17130f);color:#f0dfbd;font:700 12px Arial,Helvetica,sans-serif;letter-spacing:.04em;text-decoration:none;box-shadow:0 2px 0 #050403}
 .key-button{cursor:pointer}
-.key-button:hover{background:transparent;color:var(--yellow)}
+.key-button:hover{background:#403326;color:var(--yellow);border-color:#a88a5c}
 .key-button:focus-visible,#resetBinds:focus-visible{outline:2px solid #fff;outline-offset:2px}
-.key-button.capturing{background:transparent;color:var(--yellow);animation:keyPulse .8s infinite alternate}
+.key-button.capturing{background:#554019;color:var(--yellow);border-color:var(--yellow);animation:keyPulse .8s infinite alternate}
 .key-static{color:#888;text-decoration:none}
 @keyframes keyPulse{from{opacity:.72}to{opacity:1}}
 #bindStatus{font-size:11px;line-height:1.35;color:#888;margin:8px 0 6px;min-height:24px}
-#resetBinds{width:auto;font:12px Arial,Helvetica,sans-serif;color:#aaa;background:transparent;border:0;border-radius:0;padding:2px 0;text-decoration:underline;text-align:left;cursor:pointer}
-#resetBinds:hover{background:transparent;color:#fff}
-#gameColumn{min-width:0;width:100%}
+#resetBinds{width:auto;font:12px Arial,Helvetica,sans-serif;color:#d2b98d;background:#211b15;border:1px solid #514332;border-radius:4px;padding:6px 9px;text-decoration:none;text-align:left;cursor:pointer}
+#resetBinds:hover{background:#382d20;color:#fff}
+#gameColumn{min-width:0;width:100%;position:relative}
+#endRunBtn{position:absolute;z-index:5;top:10px;right:10px;padding:5px 9px;font:700 9px Arial,sans-serif;letter-spacing:.08em;color:#f2d9d9;background:rgba(38,10,10,.82);border:1px solid rgba(194,70,70,.7);border-radius:3px;cursor:pointer;opacity:.78}
+#endRunBtn:hover{opacity:1;background:#641b1b;color:#fff}
+#endRunBtn[hidden]{display:none}
 #wrap{width:100%;aspect-ratio:16/9;background:#000;border:4px solid #000;box-shadow:0 0 0 2px #3a1a14,8px 8px 0 #300}
 #wrap:fullscreen{width:100vw;height:100vh;aspect-ratio:auto;border:0;box-shadow:none}
 canvas{display:block;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;cursor:pointer}
@@ -33,9 +43,28 @@ canvas{display:block;width:100%;height:100%;object-fit:contain;image-rendering:p
 .btn:hover{background:#fff}
 .btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 #000}
 .btn:focus-visible{outline:3px solid #fff;outline-offset:2px}
-#fsSide{display:flex;flex-direction:column;align-items:stretch;gap:9px}
-#fsBtn{width:100%;text-align:center}
-#fsDescription{font-size:12px;line-height:1.45;color:#888;margin:0}
+#fsSide{position:relative;display:flex;flex-direction:column;align-items:stretch;gap:10px;min-height:100%;height:100%;align-self:stretch;padding:0}
+#fsBtn{width:100%;max-width:140px;align-self:center;text-align:center;margin:0 auto}
+#modeSelector{width:100%;flex:1;min-height:0;display:flex;flex-direction:column;gap:7px}
+.mode-button{position:relative;width:100%;flex:1;min-height:0;padding:8px 7px;border:2px solid #393939;background:#171717;color:#eee;text-align:left;cursor:pointer;overflow:hidden;box-shadow:3px 3px 0 #000;display:flex;flex-direction:column;justify-content:center;gap:5px}
+.mode-button .mode-name{display:block;font-size:14px;font-weight:900;letter-spacing:.08em;line-height:1.1}
+.mode-button .mode-stats{display:block;margin-top:0;font:10px/1.35 Arial,sans-serif;color:#c5c5c5}
+.mode-unlock-note{display:none;font:8px/1.2 Arial,sans-serif;letter-spacing:.05em;color:#ddd}
+.mode-button.locked .mode-unlock-note{display:block}
+.mode-button.normal{background:linear-gradient(135deg,#65110d,#260b0b);border-color:#a52b24;font-family:Georgia,serif}
+.mode-button.extreme{background:linear-gradient(135deg,#54205f,#25102f);border-color:#8d4aa0;font-family:Arial,Helvetica,sans-serif;letter-spacing:.04em}
+.mode-button.extreme .mode-name{font-family:'Arial Narrow',Arial,sans-serif;font-weight:500;font-style:italic;letter-spacing:.12em;transform:none;text-shadow:0 1px 0 #17091b}
+.mode-button.lore{background:linear-gradient(135deg,#15152e,#080817);border-color:#34345f;color:#777;font-family:'Courier New',monospace;letter-spacing:.12em}
+.mode-button.selected{outline:2px solid #fff;outline-offset:2px;filter:brightness(1.22)}
+.mode-button:disabled{pointer-events:none}
+.mode-button.unlocking{animation:modeColourIn 1s ease forwards}
+.mode-button.unlocking .lock{animation:lockDrop .85s cubic-bezier(.55,.05,.85,.3) forwards}
+@keyframes lockDrop{0%{opacity:1;transform:translateY(0) rotate(0)}55%{opacity:1;transform:translateY(28px) rotate(18deg)}100%{opacity:0;transform:translateY(95px) rotate(55deg)}}
+@keyframes modeColourIn{from{filter:grayscale(1) brightness(.65)}to{filter:grayscale(0) brightness(1)}}
+.mode-button.locked{filter:grayscale(1);opacity:.48;cursor:not-allowed}
+.mode-button .lock{position:absolute;right:8px;top:8px;font-size:19px;color:#fff;text-shadow:0 1px 4px #000}
+#modeExplanation{min-height:42px;margin:0;color:#aaa;font:10px/1.4 Arial,sans-serif;text-align:center}
+#modeSelectorTitle{margin:0;color:#aaa;text-align:center;font:10px/1 Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase}
 #below{width:100%;display:flex;flex-direction:column;align-items:center;gap:9px;margin-top:12px}
 #objective{max-width:760px;margin:0;text-align:center;font-size:14px;line-height:1.5;color:#c9c3b7}
 #hint{max-width:760px;margin:0;text-align:center;font-size:12px;line-height:1.5;color:#aaa;opacity:.75}
@@ -43,28 +72,39 @@ canvas{display:block;width:100%;height:100%;object-fit:contain;image-rendering:p
 #watermark{position:fixed;right:10px;bottom:7px;color:#777;font:11px Arial,Helvetica,sans-serif;text-decoration:none}
 #watermark:hover{color:#ddd;text-decoration:underline}
 @media(max-width:1120px){
-  #gameLayout{grid-template-columns:180px minmax(0,1fr) 125px;gap:10px}
-  #controlsPanel,#fsSide{padding:8px}
+  #gameLayout{grid-template-columns:180px minmax(0,1fr) 145px;gap:10px}
+  #controlsPanel{padding:8px}
   .bind-row{grid-template-columns:68px minmax(0,1fr);gap:5px}
 }
 @media(max-width:780px){
   #gameLayout{grid-template-columns:minmax(0,1fr) 130px;grid-template-areas:"game side" "controls controls"}
   #gameColumn{grid-area:game}
-  #fsSide{grid-area:side}
+  #fsSide{grid-area:side;min-height:100%;}
   #controlsPanel{grid-area:controls;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:12px;align-items:center}
   #bindStatus,#resetBinds{grid-column:1/-1}
   .bind-row{margin-bottom:3px}
 }
+@media(max-width:780px){
+  #resetData{position:static;margin-top:0}
+}
 @media(max-width:540px){
   body{padding:8px 8px calc(10px + env(safe-area-inset-bottom,0px));gap:9px}
   #gameLayout{grid-template-columns:minmax(0,1fr);grid-template-areas:"game" "side" "controls";gap:9px}
-  #fsSide{flex-direction:row;align-items:center;gap:10px}
-  #fsBtn{width:auto;min-width:116px}
-  #fsDescription{flex:1}
+  #fsSide{flex-direction:column;align-items:stretch;gap:10px}
+  #fsBtn{width:100%;max-width:220px;align-self:center}
+  #modeSelector{display:flex;flex-direction:column;max-width:none}
+  .mode-button{min-height:66px}
+  #modeExplanation{max-width:520px}
   #controlsPanel{grid-template-columns:repeat(2,minmax(0,1fr))}
   #objective{font-size:13px}
   #hint{font-size:11px}
 }
+
+/* v0.25: compact, full-width horizontal mode cards. */
+#fsSide{height:auto;min-height:0;align-self:start}
+#modeSelector{width:100%;flex:0 0 auto}
+.mode-button{width:100%;flex:0 0 82px;height:82px;min-height:82px}
+#resetData{position:static;margin-top:0}
 </style>
 </head>
 <body>
@@ -83,13 +123,13 @@ canvas{display:block;width:100%;height:100%;object-fit:contain;image-rendering:p
     <div class="bind-row"><button class="key-button" type="button" data-bind="lookBehind">Z</button><span>Look behind</span></div>
     <div class="bind-row"><button class="key-button" type="button" data-bind="torch">T</button><span>Toggle torch</span></div>
     <div class="bind-row"><button class="key-button" type="button" data-bind="fullscreen">F</button><span>Toggle fullscreen</span></div>
-    <div class="bind-row"><button class="key-button" type="button" data-bind="fovDown">[</button><span>Decrease FOV</span></div>
-    <div class="bind-row"><button class="key-button" type="button" data-bind="fovUp">]</button><span>Increase FOV</span></div>
+    <div id="fovControl"><label for="fovSlider"><span>Field of view</span><output id="fovValue">63°</output></label><input id="fovSlider" type="range" min="0.6" max="1.7" step="0.01" value="1.1"></div>
     <p id="bindStatus">Click a key label to change it. Press Escape to cancel. WASD and mouse look stay fixed.</p>
     <button id="resetBinds" type="button">Reset default keys</button>
   </aside>
   <main id="gameColumn">
     <div id="wrap"><canvas id="game" aria-label="Lars Simulator"></canvas></div>
+    <button id="endRunBtn" type="button" hidden>END RUN</button>
     <div id="below">
       <p id="objective">Restore power by repairing all four generators, then find the exit. Lars is somewhere in the building. Keep your eyes open.</p>
       <p id="hint">WASD MOVE · MOUSE LOOK · CHANGE THE OTHER KEYBINDS IN THE PANEL</p>
@@ -97,15 +137,21 @@ canvas{display:block;width:100%;height:100%;object-fit:contain;image-rendering:p
   </main>
   <aside id="fsSide">
     <button class="btn" id="fsBtn" type="button">fullscreen</button>
-    <p id="fsDescription">Expand the game to fill your screen.</p>
+    <div id="modeSelector" aria-label="Game mode">
+      <p id="modeSelectorTitle" style="grid-column:1/-1">Game mode</p>
+      <button class="mode-button normal selected" data-mode="normal" type="button"><span class="mode-name">NORMAL</span><span class="mode-stats" id="normalStats">0 wins · Best --</span></button>
+      <button class="mode-button extreme locked" data-mode="extreme" type="button" aria-label="Extreme locked" title="Win a Normal run to unlock Extreme."><span class="mode-name">EXTREME</span><span class="mode-stats" id="extremeStats">0 wins · Best --</span><span class="mode-unlock-note">WIN NORMAL TO UNLOCK</span><span class="lock" aria-hidden="true">🔒</span></button>
+      <button class="mode-button lore locked" data-mode="lore" type="button" aria-label="Lore Accurate unreleased" title="Not released yet. This is a placeholder."><span class="mode-name">LORE ACCURATE</span><span class="mode-stats" id="loreStats">0 wins · Best --</span><span class="mode-unlock-note">TYPE LORE TO UNLOCK</span><span class="lock" aria-hidden="true">🔒</span></button>
+    </div>
+    <button id="resetData" type="button">Reset all data</button>
   </aside>
 </div>
-<div id="version">v0.17 · bugs included</div>
+<div id="version">v0.31 · bugs included</div>
 <a id="watermark" href="https://sites.google.com/view/blazewingz/home" target="_blank" rel="noopener noreferrer">bit.ly/blazewingz</a>
 <script>
 /* =========================================================
    LARS SIMULATOR
-   Tiny raycaster + a nextbot. One file, no libraries.
+   Tiny raycaster + a nextbot. One file, no libraries. Vending machines use projected 3D geometry.
    Sections: setup > Lars frames > sound > map > Lars AI > update > render > input > loop
    ========================================================= */
 const cv = document.getElementById('game'), ctx = cv.getContext('2d');
@@ -178,11 +224,109 @@ function mkExit(open) {
   return cc;
 }
 const exitShut = mkExit(0), exitOpen = mkExit(1);
-const [batteryCv, batteryCx] = mk(40, 48);
-rr(batteryCx, 11, 5, 18, 38, '#252b32'); rr(batteryCx, 13, 2, 14, 5, '#aeb8be');
-rr(batteryCx, 8, 11, 24, 29, '#69747c'); rr(batteryCx, 11, 14, 18, 23, '#26343c');
-rr(batteryCx, 14, 17, 12, 17, '#86d77a'); rr(batteryCx, 16, 19, 8, 13, '#c5f7a0');
-rr(batteryCx, 15, 42, 10, 3, '#d8b84d');
+// Hand-drawn canvas product art. These are actual image canvases used by both
+// the inventory and the vending machine display (not text substitutes).
+const [batteryCv, batteryCx] = mk(64, 76);
+batteryCx.fillStyle = 'rgba(0,0,0,.28)'; batteryCx.beginPath(); batteryCx.ellipse(32, 69, 20, 4, 0, 0, Math.PI*2); batteryCx.fill();
+let grad = batteryCx.createLinearGradient(12, 0, 52, 0); grad.addColorStop(0, '#252c32'); grad.addColorStop(.22, '#87939a'); grad.addColorStop(.5, '#d2d9d7'); grad.addColorStop(.8, '#647078'); grad.addColorStop(1, '#20272d');
+batteryCx.fillStyle = grad; batteryCx.beginPath(); batteryCx.roundRect(13, 10, 38, 56, 8); batteryCx.fill();
+batteryCx.fillStyle = '#171e24'; batteryCx.fillRect(22, 4, 20, 9); batteryCx.fillStyle = '#c7d0d2'; batteryCx.fillRect(25, 2, 14, 5);
+batteryCx.fillStyle = '#15252a'; batteryCx.beginPath(); batteryCx.roundRect(18, 19, 28, 39, 4); batteryCx.fill();
+grad = batteryCx.createLinearGradient(18, 0, 46, 0); grad.addColorStop(0, '#3e9a60'); grad.addColorStop(.5, '#b6f18b'); grad.addColorStop(1, '#3a9b5d');
+batteryCx.fillStyle = grad; batteryCx.beginPath(); batteryCx.roundRect(21, 23, 22, 31, 3); batteryCx.fill();
+batteryCx.fillStyle = 'rgba(255,255,255,.45)'; batteryCx.fillRect(24, 25, 3, 26);
+batteryCx.fillStyle = '#f0ffd0'; batteryCx.beginPath(); batteryCx.moveTo(34, 27); batteryCx.lineTo(27, 40); batteryCx.lineTo(33, 40); batteryCx.lineTo(29, 50); batteryCx.lineTo(40, 36); batteryCx.lineTo(34, 36); batteryCx.closePath(); batteryCx.fill();
+
+const [quarterCv, quarterCx] = mk(64, 64);
+quarterCx.fillStyle = 'rgba(0,0,0,.28)'; quarterCx.beginPath(); quarterCx.ellipse(32, 55, 20, 5, 0, 0, Math.PI*2); quarterCx.fill();
+grad = quarterCx.createRadialGradient(22, 18, 2, 32, 32, 30); grad.addColorStop(0, '#fff0a7'); grad.addColorStop(.5, '#d8a64c'); grad.addColorStop(1, '#70431a');
+quarterCx.fillStyle = grad; quarterCx.beginPath(); quarterCx.arc(32, 30, 25, 0, Math.PI*2); quarterCx.fill();
+quarterCx.strokeStyle = '#f5d68b'; quarterCx.lineWidth = 3; quarterCx.beginPath(); quarterCx.arc(32, 30, 21, 0, Math.PI*2); quarterCx.stroke();
+quarterCx.strokeStyle = '#986a2c'; quarterCx.lineWidth = 2; quarterCx.beginPath(); quarterCx.arc(32, 30, 15, 0, Math.PI*2); quarterCx.stroke();
+quarterCx.fillStyle = '#fff0bd'; quarterCx.font = 'bold 26px Georgia'; quarterCx.textAlign = 'center'; quarterCx.textBaseline = 'middle'; quarterCx.fillText('¢', 32, 29);
+quarterCx.fillStyle = 'rgba(255,255,255,.42)'; quarterCx.beginPath(); quarterCx.ellipse(23, 17, 8, 3, -.6, 0, Math.PI*2); quarterCx.fill();
+
+const [energyCv, energyCx] = mk(80, 56);
+energyCx.fillStyle = 'rgba(0,0,0,.25)'; energyCx.beginPath(); energyCx.ellipse(40, 49, 34, 4, 0, 0, Math.PI*2); energyCx.fill();
+energyCx.fillStyle = '#d4b777'; energyCx.beginPath(); energyCx.roundRect(4, 12, 72, 32, 7); energyCx.fill();
+energyCx.fillStyle = '#b58a4e'; energyCx.fillRect(3, 17, 6, 22); energyCx.fillRect(71, 17, 6, 22);
+grad = energyCx.createLinearGradient(0, 13, 0, 44); grad.addColorStop(0, '#6a3b32'); grad.addColorStop(.45, '#2c1e27'); grad.addColorStop(1, '#151c2e');
+energyCx.fillStyle = grad; energyCx.beginPath(); energyCx.roundRect(8, 14, 64, 28, 4); energyCx.fill();
+energyCx.fillStyle = '#b94a36'; energyCx.beginPath(); energyCx.moveTo(13, 19); energyCx.lineTo(67, 19); energyCx.lineTo(62, 37); energyCx.lineTo(18, 37); energyCx.closePath(); energyCx.fill();
+energyCx.fillStyle = '#f1d39a'; energyCx.font = 'bold 9px Arial'; energyCx.textAlign = 'center'; energyCx.textBaseline = 'middle'; energyCx.fillText('ENERGY', 40, 28);
+energyCx.fillStyle = '#6d3328'; energyCx.fillRect(13, 39, 54, 2); energyCx.fillStyle = 'rgba(255,255,255,.35)'; energyCx.fillRect(12, 16, 48, 2);
+
+const [eyedropsCv, eyedropsCx] = mk(64, 76);
+eyedropsCx.fillStyle = 'rgba(0,0,0,.22)'; eyedropsCx.beginPath(); eyedropsCx.ellipse(32, 68, 17, 4, 0, 0, Math.PI*2); eyedropsCx.fill();
+eyedropsCx.fillStyle = '#273d50'; eyedropsCx.beginPath(); eyedropsCx.roundRect(20, 5, 24, 14, 3); eyedropsCx.fill();
+eyedropsCx.fillStyle = '#d9e9ee'; eyedropsCx.fillRect(23, 2, 18, 5); eyedropsCx.fillStyle = '#8ba9b8'; eyedropsCx.fillRect(22, 12, 20, 8);
+grad = eyedropsCx.createLinearGradient(10, 0, 53, 0); grad.addColorStop(0, '#4a839b'); grad.addColorStop(.28, '#e1f4f3'); grad.addColorStop(.62, '#91cddd'); grad.addColorStop(1, '#37647e');
+eyedropsCx.fillStyle = grad; eyedropsCx.beginPath(); eyedropsCx.roundRect(12, 19, 40, 46, 8); eyedropsCx.fill();
+eyedropsCx.fillStyle = 'rgba(255,255,255,.48)'; eyedropsCx.fillRect(17, 25, 4, 30); eyedropsCx.fillStyle = '#e7f8f7'; eyedropsCx.beginPath(); eyedropsCx.roundRect(21, 30, 22, 25, 3); eyedropsCx.fill();
+eyedropsCx.fillStyle = '#5baccb'; eyedropsCx.beginPath(); eyedropsCx.moveTo(32, 33); eyedropsCx.bezierCurveTo(43, 45, 39, 52, 32, 53); eyedropsCx.bezierCurveTo(24, 52, 21, 45, 32, 33); eyedropsCx.fill();
+eyedropsCx.fillStyle = '#e8fbff'; eyedropsCx.beginPath(); eyedropsCx.arc(29, 43, 3, 0, Math.PI*2); eyedropsCx.fill();
+
+const [bsodaCv, bsodaCx] = mk(72, 72);
+bsodaCx.fillStyle = 'rgba(0,0,0,.25)'; bsodaCx.beginPath(); bsodaCx.ellipse(36, 64, 24, 4, 0, 0, Math.PI*2); bsodaCx.fill();
+// Clearly recognisable little blue chair: back, seat, frame and four legs.
+grad = bsodaCx.createLinearGradient(16, 9, 49, 36); grad.addColorStop(0, '#8ad6f5'); grad.addColorStop(.45, '#348fc5'); grad.addColorStop(1, '#14567f');
+bsodaCx.fillStyle = grad; bsodaCx.beginPath(); bsodaCx.roundRect(17, 7, 38, 29, 7); bsodaCx.fill();
+bsodaCx.fillStyle = '#1d638e'; bsodaCx.fillRect(21, 30, 30, 9); bsodaCx.fillStyle = '#63b8e5'; bsodaCx.beginPath(); bsodaCx.roundRect(13, 33, 46, 12, 4); bsodaCx.fill();
+bsodaCx.strokeStyle = '#d5f4ff'; bsodaCx.lineWidth = 4; bsodaCx.lineCap = 'round'; bsodaCx.beginPath(); bsodaCx.moveTo(18, 43); bsodaCx.lineTo(15, 62); bsodaCx.moveTo(54, 43); bsodaCx.lineTo(57, 62); bsodaCx.moveTo(25, 44); bsodaCx.lineTo(27, 61); bsodaCx.moveTo(47, 44); bsodaCx.lineTo(45, 61); bsodaCx.stroke();
+bsodaCx.strokeStyle = '#17476a'; bsodaCx.lineWidth = 2; bsodaCx.beginPath(); bsodaCx.moveTo(24, 11); bsodaCx.lineTo(24, 28); bsodaCx.moveTo(33, 11); bsodaCx.lineTo(33, 28); bsodaCx.moveTo(42, 11); bsodaCx.lineTo(42, 28); bsodaCx.stroke();
+bsodaCx.fillStyle = 'rgba(255,255,255,.65)'; bsodaCx.fillRect(20, 10, 3, 17); bsodaCx.fillRect(17, 35, 18, 2);
+
+// A deliberately fantastical arcade ray-prop, not a realistic firearm.
+const [pewpewCv, pewpewCx] = mk(80, 56);
+pewpewCx.fillStyle = 'rgba(0,0,0,.3)'; pewpewCx.beginPath(); pewpewCx.ellipse(40, 48, 30, 4, 0, 0, Math.PI*2); pewpewCx.fill();
+pewpewCx.fillStyle = '#272044'; pewpewCx.beginPath(); pewpewCx.moveTo(9, 20); pewpewCx.lineTo(57, 20); pewpewCx.lineTo(71, 26); pewpewCx.lineTo(69, 36); pewpewCx.lineTo(49, 39); pewpewCx.lineTo(42, 46); pewpewCx.lineTo(28, 43); pewpewCx.lineTo(27, 35); pewpewCx.lineTo(10, 34); pewpewCx.closePath(); pewpewCx.fill();
+grad = pewpewCx.createLinearGradient(10, 14, 65, 40); grad.addColorStop(0, '#b7a5ff'); grad.addColorStop(.5, '#6653b0'); grad.addColorStop(1, '#31275f');
+pewpewCx.fillStyle = grad; pewpewCx.beginPath(); pewpewCx.roundRect(8, 14, 54, 24, 7); pewpewCx.fill();
+pewpewCx.fillStyle = '#201b42'; pewpewCx.beginPath(); pewpewCx.roundRect(20, 33, 17, 17, 4); pewpewCx.fill();
+pewpewCx.fillStyle = '#9d8cff'; pewpewCx.beginPath(); pewpewCx.roundRect(12, 19, 41, 14, 4); pewpewCx.fill();
+pewpewCx.fillStyle = '#63f0ff'; pewpewCx.beginPath(); pewpewCx.arc(60, 26, 9, 0, Math.PI*2); pewpewCx.fill();
+pewpewCx.fillStyle = '#e5ffff'; pewpewCx.beginPath(); pewpewCx.arc(58, 23, 3, 0, Math.PI*2); pewpewCx.fill();
+pewpewCx.fillStyle = '#c8bcff'; pewpewCx.fillRect(15, 17, 18, 3); pewpewCx.fillStyle = '#f5eaff'; pewpewCx.font = 'bold 7px Arial'; pewpewCx.textAlign = 'center'; pewpewCx.fillText('PEW', 36, 29);
+const VENDING_FALLBACK_ART = { battery: batteryCv, energy: energyCv, eyedrops: eyedropsCv, bsoda: bsodaCv, pewpew: pewpewCv, quarter: quarterCv };
+const VENDING_ART = { ...VENDING_FALLBACK_ART };
+// The supplied product illustrations load from the project's public assets.
+// Hand-drawn canvases remain as a fallback if a remote image is unavailable.
+const VENDING_ART_URLS = {
+  battery: 'https://raw.githubusercontent.com/blazewingz/lars-simulator/main/assets/battery.png',
+  bsoda: 'https://raw.githubusercontent.com/blazewingz/lars-simulator/main/assets/chair.png',
+  eyedrops: 'https://raw.githubusercontent.com/blazewingz/lars-simulator/main/assets/eye%20drops.png'
+};
+for (const [type, url] of Object.entries(VENDING_ART_URLS)) {
+  const image = new Image();
+  image.crossOrigin = 'anonymous';
+  image.onload = () => { VENDING_ART[type] = image; };
+  image.onerror = () => { VENDING_ART[type] = VENDING_FALLBACK_ART[type]; };
+  image.src = url;
+}
+function getVendingArt(type) {
+  const art = VENDING_ART[type] || VENDING_FALLBACK_ART[type] || batteryCv;
+  if (art instanceof HTMLImageElement && (!art.complete || !art.naturalWidth)) return VENDING_FALLBACK_ART[type] || batteryCv;
+  return art;
+}
+function getWorldPickupArt(type) {
+  if (type === 'battery') return getVendingArt('battery'); // Use the supplied battery.png everywhere.
+  if (type === 'pewpew') return pewpewCv; // its supplied image is reserved for the machine and inventory.
+  return getVendingArt(type);
+}
+// The machine's prize reel cycles through the standard supplies. It never
+// changes the separately existing special-ending item or its behaviour.
+const VENDING_PRIZES = ['battery','energy','eyedrops','bsoda'];
+let vendingPrizeBag = [];
+function rollVendingPrize() {
+  if (!vendingPrizeBag.length) {
+    vendingPrizeBag = VENDING_PRIZES.slice();
+    for (let i = vendingPrizeBag.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [vendingPrizeBag[i], vendingPrizeBag[j]] = [vendingPrizeBag[j], vendingPrizeBag[i]];
+    }
+  }
+  return vendingPrizeBag.pop();
+}
 const [fuseCv, fuseCx] = mk(64, 80);
 function paintFuse() {
   const c = fuseCx; c.clearRect(0, 0, 64, 80); rr(c, 4, 74, 56, 5, 'rgba(0,0,0,.5)');
@@ -314,11 +458,19 @@ function music(dt, prox) {                    // chase music: speeds up and gets
 const N = 40, map = Array.from({ length: N }, () => Array(N).fill('#'));
 const WALL = { '#': [200, 176, 70], B: [70, 130, 205], R: [175, 62, 50], G: [150, 150, 160], T: [60, 160, 135], D: [190, 160, 20] };
 const GEN_POS = [[7.5, 7.5], [23.5, 8.5], [11.5, 22.5], [19.5, 23.5]];
+let vendingMachines = [], quarterPickups = [], nearQuarterPickup = null, nearBatteryPickup = null, nearVendingMachine = null;
 const SHUTTERS = [[21, 4], [8, 4], [4, 22]];            // opened in this order as generators get fixed
 const EXIT = { x: 24.5, y: 23.5 }, FIX_TIME = 6;
 const FLOORS = []; for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (map[y][x] === '.') FLOORS.push([x + .5, y + .5]);
 const solid = (x, y) => map[y | 0][x | 0] !== '.';
-const free = (x, y) => !(solid(x - .30, y - .30) || solid(x + .30, y - .30) || solid(x - .30, y + .30) || solid(x + .30, y + .30));
+function vendingBlocked(x, y) {
+  return vendingMachines.some(vm => {
+    const dx = x - vm.x, dy = y - vm.y;
+    const side = dx * vm.rx + dy * vm.ry, front = dx * vm.fx + dy * vm.fy;
+    return Math.abs(side) < vm.hw + .28 && Math.abs(front) < vm.hd + .28;
+  });
+}
+const free = (x, y) => !(solid(x - .30, y - .30) || solid(x + .30, y - .30) || solid(x - .30, y + .30) || solid(x + .30, y + .30) || vendingBlocked(x, y));
 function los(x1, y1, x2, y2) {                 // can these two points see each other?
   const d = Math.hypot(x2 - x1, y2 - y1), n = Math.ceil(d / .15);
   for (let i = 1; i < n; i++) if (solid(x1 + (x2 - x1) * i / n, y1 + (y2 - y1) * i / n)) return false;
@@ -330,7 +482,7 @@ function jitter(x, y, r) {                      // a random nearby floor spot (s
 }
 
 /* ---------- State ---------- */
-const P = { x: 3, y: 3, a: 0, vx: 0, vy: 0, stam: 100, tired: false, fov: 1.1, fv: 1.1, bobP: 0, bm: 0, blinkT: -1, blinkInterval: 3, crouching: false, crouchAmount: 0, jumpZ: 0, jumpV: 0, jumpFov: 0, eyeHold: 0, lookBack: 0, lookFov: 0 };
+const P = { x: 3, y: 3, a: 0, vx: 0, vy: 0, stam: 100, tired: false, fov: 1.1, fv: 1.1, bobP: 0, bm: 0, blinkT: -1, blinkInterval: 3, crouching: false, crouchAmount: 0, jumpZ: 0, jumpV: 0, jumpFov: 0, eyeHold: 0, lookBack: 0, lookFov: 0, energyBonus: 0, eyeBonus: 0 };
 let L, gens, dist = new Int16Array(N * N), cheatWall = null;
 let state = 'title', t = 0, light = 1, bob = 0, msg = '', msgT = 0, time = 0, endT = 0, fixed = 0, fogD = 10;
 let wakeT = 30, clankT = 0, near = null, fixing = null, seenT = 0, routeT = 0, blackT = 0, blackIn = 30, shoutT = 8, hearT = 0, quip = '';
@@ -338,10 +490,93 @@ let speechCaption = '', speechCaptionTimer = 0, speechCaptionToken = 0, ambientB
 const zbuf = new Float32Array(RW), keys = {}, cam = { dx: 1, dy: 0 };
 const DEFAULT_BINDS = {
   sprint: 'ShiftLeft', crouch: 'KeyC', jump: 'Space', interact: 'KeyE', blink: 'KeyQ',
-  lookBehind: 'KeyZ', torch: 'KeyT', fullscreen: 'KeyF', fovDown: 'BracketLeft', fovUp: 'BracketRight'
+  lookBehind: 'KeyZ', torch: 'KeyT', fullscreen: 'KeyF'
 };
 const BIND_STORAGE_KEY = 'lars-simulator-keybinds-v17';
-const BLOCKED_BINDS = new Set(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Escape','Enter','Tab','F12','KeyX']);
+const FOV_STORAGE_KEY = 'lars-simulator-fov-v1';
+const PROGRESS_STORAGE_KEY = 'lars-simulator-progress-v1';
+let extremeUnlocked = false, loreUnlocked = false;
+let selectedMode = 'normal';
+try {
+  const savedProgress = JSON.parse(localStorage.getItem(PROGRESS_STORAGE_KEY) || 'null');
+  extremeUnlocked = !!(savedProgress && savedProgress.extremeUnlocked === true);
+  loreUnlocked = !!(savedProgress && savedProgress.loreUnlocked === true);
+  if (savedProgress && ['normal','extreme','lore'].includes(savedProgress.selectedMode)) selectedMode = savedProgress.selectedMode;
+} catch (e) {}
+function unlockExtreme() {
+  if (extremeUnlocked) return false;
+  extremeUnlocked = true;
+  try {
+    const savedProgress = JSON.parse(localStorage.getItem(PROGRESS_STORAGE_KEY) || '{}');
+    localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify({ ...savedProgress, version: 1, extremeUnlocked: true }));
+  } catch (e) {}
+  if (typeof renderModeSelector === 'function') { renderModeSelector(); animateModeUnlock('extreme'); }
+  return true;
+}
+let modeProgress = { normal: { wins: 0, best: null }, extreme: { wins: 0, best: null }, lore: { wins: 0, best: null } };
+try {
+  const saved = JSON.parse(localStorage.getItem(PROGRESS_STORAGE_KEY) || '{}');
+  if (saved.modes && typeof saved.modes === 'object') {
+    for (const mode of Object.keys(modeProgress)) {
+      const entry = saved.modes[mode];
+      if (entry && Number.isFinite(entry.wins) && entry.wins >= 0) modeProgress[mode].wins = entry.wins;
+      if (entry && Number.isFinite(entry.best) && entry.best > 0) modeProgress[mode].best = entry.best;
+    }
+  }
+} catch (e) {}
+function saveModeProgress() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(PROGRESS_STORAGE_KEY) || '{}');
+    localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify({ ...saved, version: 1, extremeUnlocked, loreUnlocked, selectedMode, modes: modeProgress }));
+  } catch (e) {}
+}
+function renderModeSelector() {
+  for (const mode of ['normal', 'extreme', 'lore']) {
+    const button = document.querySelector('[data-mode="' + mode + '"]');
+    const entry = modeProgress[mode];
+    document.getElementById(mode + 'Stats').textContent = entry.wins + ' wins · Best ' + (entry.best == null ? '--' : entry.best.toFixed(1) + 's');
+    button.classList.toggle('selected', selectedMode === mode);
+    const locked = (mode === 'extreme' && !extremeUnlocked) || (mode === 'lore' && !loreUnlocked);
+    button.classList.toggle('locked', locked);
+    button.disabled = locked || state === 'play';
+    const lock = button.querySelector('.lock');
+    if (lock) { lock.textContent = (locked || button.classList.contains('unlocking')) ? '🔒' : ''; lock.style.display = (locked || button.classList.contains('unlocking')) ? 'block' : 'none'; }
+    button.title = mode === 'extreme' && locked ? 'Win a Normal run, or type EXTREME.' : mode === 'lore' && locked ? 'Type LORE to reveal this unreleased placeholder.' : mode === 'lore' ? 'Unreleased placeholder. Gameplay is not available.' : mode === 'extreme' ? 'Five generators. Reduced visibility and faster pressure.' : 'Standard difficulty.';
+  }
+  document.getElementById('objective').textContent = selectedMode === 'extreme' ? 'EXTREME · Repair five generators. Visibility is reduced and Lars is more aggressive.' : selectedMode === 'lore' ? 'LORE ACCURATE · UNRELEASED PLACEHOLDER' : 'Restore power by repairing all four generators, then find the exit. Lars is somewhere in the building. Keep your eyes open.';
+}
+function recordModeWin() {
+  const entry = modeProgress[selectedMode];
+  entry.wins++;
+  if (entry.best == null || time < entry.best) entry.best = time;
+  if (selectedMode === 'normal') unlockExtreme();
+  saveModeProgress(); renderModeSelector();
+}
+function animateModeUnlock(mode) {
+  const button = document.querySelector('[data-mode="' + mode + '"]');
+  if (!button) return;
+  const lock = button.querySelector('.lock');
+  if (lock) { lock.textContent = '🔒'; lock.style.display = 'block'; }
+  button.classList.add('unlocking');
+  setTimeout(() => { button.classList.remove('unlocking'); if (lock) lock.style.display = 'none'; }, 1100);
+}
+document.querySelectorAll('[data-mode]').forEach(button => button.addEventListener('click', () => {
+  if (!['title','dead','win','secret'].includes(state)) return;
+  const mode = button.dataset.mode;
+  if ((mode === 'extreme' && !extremeUnlocked) || (mode === 'lore' && !loreUnlocked)) return;
+  if (mode === 'lore') { selectedMode = mode; saveModeProgress(); renderModeSelector(); return; }
+  selectedMode = mode; saveModeProgress(); renderModeSelector();
+}));
+document.getElementById('endRunBtn').addEventListener('click', () => {
+  if (state !== 'play') return;
+  if (!window.confirm('End this run and return to the game mode menu?')) return;
+  state = 'title'; endT = 0; panelOpen = false; zoomHeld = false;
+  for (const code in keys) keys[code] = false;
+  if (document.exitPointerLock) document.exitPointerLock();
+  silencePersistentAudio(); renderModeSelector();
+});
+renderModeSelector();
+const BLOCKED_BINDS = new Set(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Escape','Enter','Tab','F12']);
 let keybinds = { ...DEFAULT_BINDS }, bindCapture = null;
 try {
   const savedBinds = JSON.parse(localStorage.getItem(BIND_STORAGE_KEY) || 'null');
@@ -388,8 +623,10 @@ document.querySelectorAll('[data-bind]').forEach(button => {
   button.addEventListener('click', () => {
     const action = button.dataset.bind;
     bindCapture = bindCapture === action ? null : action;
-    setBindStatus(bindCapture ? 'Press the new key for ' + button.nextElementSibling.textContent + '. Escape cancels.' : 'Click a key label to change it. WASD and mouse look stay fixed.');
+    const label = button.nextElementSibling ? button.nextElementSibling.textContent : action;
+    setBindStatus(bindCapture ? 'Press a key for ' + label + '. Escape cancels.' : 'Click a key label to change it. WASD and mouse look stay fixed.');
     renderKeybinds();
+    button.blur();
   });
 });
 document.getElementById('resetBinds').addEventListener('click', () => {
@@ -397,8 +634,38 @@ document.getElementById('resetBinds').addEventListener('click', () => {
   setBindStatus('Default keybinds restored.');
 });
 renderKeybinds();
+// Keep the original FOV (1.1) unless this browser has a saved slider value.
+let baseFov = 1.1;
+try {
+  const rawSavedFov = localStorage.getItem(FOV_STORAGE_KEY);
+  if (rawSavedFov !== null) {
+    const savedFov = Number(rawSavedFov);
+    if (Number.isFinite(savedFov) && savedFov >= .6 && savedFov <= 1.7) baseFov = savedFov;
+  }
+} catch(e) {}
+const fovSlider = document.getElementById('fovSlider'), fovValue = document.getElementById('fovValue');
+function syncFovControl() {
+  fovSlider.value = String(baseFov);
+  fovValue.value = Math.round(2 * Math.atan(baseFov) * 180 / Math.PI) + '°';
+  fovValue.textContent = fovValue.value;
+}
+fovSlider.addEventListener('input', () => {
+  baseFov = Number(fovSlider.value);
+  syncFovControl();
+  try { localStorage.setItem(FOV_STORAGE_KEY, String(baseFov)); } catch(e) {}
+});
+syncFovControl();
+document.getElementById('resetData').addEventListener('click', () => {
+  if (!window.confirm('Are you sure? This will erase all wins, fastest times, unlocks, selected mode, keybinds and FOV settings. This cannot be undone.')) return;
+  try {
+    localStorage.removeItem(PROGRESS_STORAGE_KEY);
+    localStorage.removeItem(BIND_STORAGE_KEY);
+    localStorage.removeItem(FOV_STORAGE_KEY);
+  } catch(e) {}
+  window.location.reload();
+});
 const cheatSign = document.createElement('canvas'); cheatSign.width = 128; cheatSign.height = 40; const cheatSignCtx = cheatSign.getContext('2d'); cheatSignCtx.fillStyle = '#241e17'; cheatSignCtx.fillRect(0,0,128,40); cheatSignCtx.strokeStyle = '#897b58'; cheatSignCtx.strokeRect(1,1,126,38); cheatSignCtx.fillStyle = '#d6c8a0'; cheatSignCtx.font = 'bold 15px monospace'; cheatSignCtx.textAlign = 'center'; cheatSignCtx.fillText('SSADAD',64,25);
-let baseFov = 1.1, vk = RH, cameraHeight = .5, zoomAmount = 0, zoomHeld = false, zoomScale = 1.0, shotgun = false, cheatBuffer = '', shotCooldown = 0, shotFlash = 0, ev = { dashT: -99, backT: -99, sprintT: -99, fixT: -99, blink: null, spot: '' };
+let vk = RH, cameraHeight = .5, zoomAmount = 0, zoomHeld = false, zoomScale = 1.0, shotgun = false, cheatBuffer = '', shotCooldown = 0, shotFlash = 0, ev = { dashT: -99, backT: -99, sprintT: -99, fixT: -99, blink: null, spot: '' };
 const say = (s, d = 2.5) => { if (String(s).startsWith('FOV')) { msg = s; msgT = d; } };   // on-screen text is mostly gone on purpose
 const SEEN = ['SEEN. skill issue.', 'LARS SPOTTED YOU. THIS IS NOT A DRILL.', 'he saw you. he is so excited.', 'lars wants to be friends (violently)', 'LARS.EXE HAS STARTED'];
 const QUIPS = [
@@ -424,22 +691,25 @@ const QUIPS = [
 ];
 
 function start() {
-  audio(); genLevel(); buildFloor(); cheatWall = null; if (Math.random() < .1) { const options = FLOORS.filter(([x,y]) => Math.hypot(x - SPAWN[0], y - SPAWN[1]) > 5 && Math.hypot(x - EXIT.x, y - EXIT.y) > 3 && GEN_POS.every(([gx,gy]) => Math.hypot(x-gx,y-gy) > 2) && [[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy]) => map[(y|0)+dy]?.[(x|0)+dx] !== '.')); if (options.length) { const [sx,sy] = pick(options); const sides = [[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy]) => map[(sy|0)+dy]?.[(sx|0)+dx] !== '.'); const [dx,dy] = pick(sides); cheatWall = [sx + dx*.38, sy + dy*.38]; } } P.x = SPAWN[0]; P.y = SPAWN[1]; P.a = 0; P.vx = P.vy = 0; P.stam = 100; P.tired = false; P.bm = 0; P.blinkT = -1; P.crouching = false; P.crouchAmount = 0; P.jumpZ = P.jumpV = P.jumpFov = 0; P.eyeHold = 0; P.lookBack = 0; P.lookFov = 0; P.blinkInterval = rand(7, 9); P.blinkMode = 'normal'; speechCaption = ''; speechCaptionTimer = 0; ambientBreathT = rand(5, 9); cameraHeight = .5; zoomAmount = 0; zoomHeld = false; zoomScale = 1.0; shotgun = false; cheatBuffer = ''; shotCooldown = shotFlash = 0;
-  torchOn = false; torchBattery = 20; torchPower = 0; torchFlicker = 1; nearBattery = false;
-  gens = GEN_POS.map(([x, y]) => ({ x, y, p: 0, done: false }));
+  if (selectedMode === 'lore') { msg = 'LORE ACCURATE IS NOT RELEASED YET'; msgT = 3; return; }
+  audio(); genLevel(); buildFloor(); cheatWall = null; if (Math.random() < .1) { const options = FLOORS.filter(([x,y]) => Math.hypot(x - SPAWN[0], y - SPAWN[1]) > 5 && Math.hypot(x - EXIT.x, y - EXIT.y) > 3 && GEN_POS.every(([gx,gy]) => Math.hypot(x-gx,y-gy) > 2) && [[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy]) => map[(y|0)+dy]?.[(x|0)+dx] !== '.')); if (options.length) { const [sx,sy] = pick(options); const sides = [[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy]) => map[(sy|0)+dy]?.[(sx|0)+dx] !== '.'); const [dx,dy] = pick(sides); cheatWall = [sx + dx*.38, sy + dy*.38]; } } P.x = SPAWN[0]; P.y = SPAWN[1]; P.a = 0; P.vx = P.vy = 0; P.stam = 100; P.tired = false; P.bm = 0; P.blinkT = -1; P.crouching = false; P.crouchAmount = 0; P.jumpZ = P.jumpV = P.jumpFov = 0; P.eyeHold = 0; P.lookBack = 0; P.lookFov = 0; P.energyBonus = 0; P.eyeBonus = 0; P.blinkInterval = selectedMode === 'extreme' ? rand(5, 7) : rand(7, 9); P.blinkMode = 'normal'; speechCaption = ''; speechCaptionTimer = 0; ambientBreathT = rand(5, 9); cameraHeight = .5; zoomAmount = 0; zoomHeld = false; zoomScale = 1.0; shotgun = false; cheatBuffer = ''; shotCooldown = shotFlash = 0;
+  torchOn = false; torchBaseBattery = 20; torchBonusBattery = 0; torchBattery = 20; torchPower = 0; torchFlicker = 1; nearBattery = false; inventory = [null, null, null]; selectedInventorySlot = 0;
+  gens = GEN_POS.slice(0, selectedMode === 'extreme' ? 5 : 4).map(([x, y]) => ({ x, y, p: 0, done: false }));
   for (const [x, y] of SHUTTERS) map[y][x] = 'D';
   L = { x: LSPAWN[0], y: LSPAWN[1], a: 0, st: 'sleep', tx: 0, ty: 0, lx: 0, ly: 0, lostT: 0, waitT: 0, searchPasses: 0, stepT: 0, d: 99, sees: false, mom: 0, watching: false, rel: 0, gait: 0, pauseT: 0, fuse: false, knocked: false, knockT: 0, flashStun: 0, flashDaze: 0, flashTagged: false, flashStunUsed: false };
   ev = { dashT: -99, backT: -99, sprintT: -99, fixT: -99, blink: null, spot: '' }; P.fov = P.fv = baseFov;
-  fixed = 0; time = 0; light = 1; power = true; fuseP = 0; fxT = punch = pvel = slowT = snapT = 0; panelOpen = false; wakeT = 30; blackT = 0; blackIn = rand(55, 75); seenT = 0; shoutT = 8; deathAside = ''; state = 'play';
-  say('Fix all 4 generators. Lars is asleep. DO NOT WAKE LARS.', 5);
+  fixed = 0; time = 0; light = 1; power = true; fuseP = 0; fxT = punch = pvel = slowT = snapT = 0; panelOpen = false; wakeT = selectedMode === 'extreme' ? 22 : 30; blackT = 0; blackIn = selectedMode === 'extreme' ? rand(38, 55) : rand(55, 75); seenT = 0; shoutT = 8; deathAside = ''; state = 'play';
+  say(selectedMode === 'extreme' ? 'EXTREME: FIX ALL 5 GENERATORS. LARS IS ALREADY CLOSER.' : 'Fix all 4 generators. Lars is asleep. DO NOT WAKE LARS.', 5);
+  renderModeSelector();
   lockMouse();
 }
 
 /* ---------- Procedural level: rooms + wide corridors + pillars, new every run ---------- */
 const FUSE = { x: 5.5, y: 5.5 };
 const BATTERY = { x: 8.5, y: 8.5, active: true };
+let inventory = [null, null, null], selectedInventorySlot = 0;
 let SPAWN = [3.5, 3.5], LSPAWN = [20.5, 20.5], power = true, fuseP = 0, nearFuse = false, nearBattery = false,
-  torchOn = false, torchBattery = 20, torchBatteryMax = 30, torchFlicker = 1, torchPower = 0, FL = 0, fxT = 0, snapA = 0, snapT = 0, punch = 0, pvel = 0, ts = 1, slowT = 0, breathT = 0, breathPh = 0, lastStep = 0, panelOpen = false, sw = [1, 1, 1, 1, 1];
+  torchOn = false, torchBattery = 20, torchBatteryMax = 30, torchBaseBattery = 20, torchBonusBattery = 0, torchFlicker = 1, torchPower = 0, FL = 0, fxT = 0, snapA = 0, snapT = 0, punch = 0, pvel = 0, ts = 1, slowT = 0, breathT = 0, breathPh = 0, lastStep = 0, panelOpen = false, sw = [1, 1, 1, 1, 1];
 function bfsFrom(sx, sy) {
   const d = new Int16Array(N * N).fill(-1), q = [[sx, sy]]; d[sy * N + sx] = 0;
   for (let i = 0; i < q.length; i++) { const [x, y] = q[i]; for (const [a, b] of D4) { const nx = x + a, ny = y + b; if (map[ny][nx] === '.' && d[ny * N + nx] < 0) { d[ny * N + nx] = d[y * N + x] + 1; q.push([nx, ny]); } } }
@@ -470,8 +740,9 @@ function genLevel() {
     for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (map[y][x] !== '.') { let b = seeds[0], bd = 1e9; for (const q of seeds) { const d = Math.hypot(q.p[0] - x, q.p[1] - y); if (d < bd) { bd = d; b = q; } } map[y][x] = b.ch; }
     const maxd = Math.max(...fl.map(dd)), shuf = a => [...a].sort(() => Math.random() - .5);
     const picks = (cands, n, sep) => { const out = []; for (const c of shuf(cands)) { if (out.every(o => Math.hypot(o[0] - c[0], o[1] - c[1]) >= sep)) out.push(c); if (out.length === n) break; } return out; };
-    let gp = []; for (let sep = 10; sep >= 4 && gp.length < 4; sep--) gp = picks(fl.filter(c => dd(c) > 10), 4, sep);
-    if (gp.length < 4) continue;
+    const genCount = selectedMode === 'extreme' ? 5 : 4;
+    let gp = []; for (let sep = 10; sep >= 3 && gp.length < genCount; sep--) gp = picks(fl.filter(c => dd(c) > 10), genCount, sep);
+    if (gp.length < genCount) continue;
     const exc = fl.filter(c => dd(c) >= maxd * .8 && gp.every(g => Math.hypot(g[0] - c[0], g[1] - c[1]) > 4)); if (!exc.length) continue; const ex = pick(exc);
     const fuc = fl.filter(c => dd(c) > 8 && gp.every(g => Math.hypot(g[0] - c[0], g[1] - c[1]) > 5) && Math.hypot(ex[0] - c[0], ex[1] - c[1]) > 5); if (!fuc.length) continue; const fu = pick(fuc);
     const lcs = fl.filter(c => dd(c) >= maxd * .55 && Math.hypot(ex[0] - c[0], ex[1] - c[1]) > 2); if (!lcs.length) continue; const lc = pick(lcs);
@@ -491,7 +762,195 @@ function genLevel() {
     const bp = pick(fl.filter(c => dd(c) > maxd * .42 && Math.hypot(c[0] - st[0], c[1] - st[1]) > 8 &&
       gp.every(g => Math.hypot(g[0] - c[0], g[1] - c[1]) > 4) && Math.hypot(ex[0] - c[0], ex[1] - c[1]) > 4));
     const batteryFloor = bp || pick(fl); BATTERY.x = batteryFloor[0] + .5; BATTERY.y = batteryFloor[1] + .5; BATTERY.active = true;
+
+    // Every map gets one physical vending machine; a second appears on 25% of maps.
+    vendingMachines = []; quarterPickups = [];
+    const machineCount = Math.random() < .25 ? 2 : 1;
+    const machineCandidates = fl.filter(c => {
+      const x = c[0] + .5, y = c[1] + .5;
+      const openSides = D4.filter(([dx,dy]) => map[c[1] + dy]?.[c[0] + dx] === '.').length;
+      return openSides >= 2 && dd(c) > 6 && Math.hypot(x - st[0], y - st[1]) > 5 &&
+        Math.hypot(x - ex[0], y - ex[1]) > 3 && Math.hypot(x - fu[0], y - fu[1]) > 3 &&
+        Math.hypot(x - batteryFloor[0], y - batteryFloor[1]) > 3 &&
+        gp.every(g => Math.hypot(x - g[0], y - g[1]) > 2.2) &&
+        lc && Math.hypot(x - lc[0], y - lc[1]) > 3;
+    });
+    let machineSpots = picks(machineCandidates, machineCount, 7);
+    if (!machineSpots.length) {
+      const fallback = fl.filter(c => dd(c) > 4 && D4.some(([dx,dy]) => map[c[1] + dy]?.[c[0] + dx] === '.') &&
+        Math.hypot(c[0] + .5 - st[0], c[1] + .5 - st[1]) > 3 &&
+        Math.hypot(c[0] + .5 - ex[0], c[1] + .5 - ex[1]) > 2.5 &&
+        gp.every(g => Math.hypot(c[0] + .5 - g[0], c[1] + .5 - g[1]) > 1.5));
+      if (fallback.length) machineSpots = [pick(fallback)];
+    }
+    // If the stricter spacing filter could not place the requested second machine,
+    // relax the spacing slightly rather than silently losing the 25% second-machine roll.
+    if (machineSpots.length < machineCount) {
+      const extra = fl.filter(c => {
+        const x = c[0] + .5, y = c[1] + .5;
+        return D4.some(([dx,dy]) => map[c[1] + dy]?.[c[0] + dx] === '.') && dd(c) > 3 &&
+          Math.hypot(x - st[0], y - st[1]) > 2.5 && Math.hypot(x - ex[0], y - ex[1]) > 2 &&
+          Math.hypot(x - fu[0], y - fu[1]) > 2 && Math.hypot(x - batteryFloor[0], y - batteryFloor[1]) > 1.8 &&
+          gp.every(g => Math.hypot(x - g[0], y - g[1]) > 1.5) &&
+          machineSpots.every(q => Math.hypot(c[0] - q[0], c[1] - q[1]) >= 2.5);
+      });
+      machineSpots = machineSpots.concat(picks(extra, machineCount - machineSpots.length, 2.5));
+    }
+    for (const c of machineSpots) {
+      const openDirs = D4.filter(([dx,dy]) => map[c[1] + dy]?.[c[0] + dx] === '.')
+        .sort((a,b) => {
+          const score = ([dx,dy]) => D4.filter(([ax,ay]) => map[c[1] + dy + ay]?.[c[0] + dx + ax] === '.').length;
+          return score(b) - score(a);
+        });
+      const [fx, fy] = openDirs[0] || [1,0];
+      const facing = Math.atan2(fy, fx);
+      vendingMachines.push({ x: c[0] + .5, y: c[1] + .5, facing, fx, fy, rx: -fy, ry: fx,
+        hw: .34, hd: .25, height: 1.37, state: 'ready', used: false, glitchT: 0, spinT: 0, ejectT: 0, prize: null, stock: VENDING_PRIZES.slice().sort(() => Math.random() - .5).slice(0, 3), drop: null });
+    }
+    // A quarter is placed for each machine, separate from the naturally spawning spare battery.
+    let coinCandidates = fl.filter(c => {
+      const x = c[0] + .5, y = c[1] + .5;
+      return dd(c) > 4 && Math.hypot(x - st[0], y - st[1]) > 3 &&
+        Math.hypot(x - batteryFloor[0], y - batteryFloor[1]) > 2.4 &&
+        Math.hypot(x - ex[0], y - ex[1]) > 2.5 &&
+        gp.every(g => Math.hypot(x - g[0], y - g[1]) > 1.8) &&
+        vendingMachines.every(vm => Math.hypot(x - vm.x, y - vm.y) > 3.5);
+    });
+    const coinCount = Math.min(6, 3 + vendingMachines.length * 2);
+    let coinSpots = picks(coinCandidates, coinCount, 2.8);
+    if (coinSpots.length < coinCount) {
+      const fallbackCoins = fl.filter(c => dd(c) > 3 &&
+        vendingMachines.every(vm => Math.hypot(c[0] + .5 - vm.x, c[1] + .5 - vm.y) > 2.5) &&
+        coinSpots.every(q => Math.hypot(c[0] - q[0], c[1] - q[1]) > 2));
+      coinSpots = coinSpots.concat(picks(fallbackCoins, coinCount - coinSpots.length, 1.8));
+    }
+    for (const c of coinSpots) quarterPickups.push({ type: 'quarter', x: c[0] + .5, y: c[1] + .5, active: true });
     return;
+  }
+}
+function addInventoryItem(type) {
+  const existing = inventory.find(slot => slot && slot.type === type);
+  if (existing) { existing.count++; return true; }
+  const empty = inventory.findIndex(slot => !slot);
+  if (empty < 0) return false;
+  inventory[empty] = { type, count: 1 };
+  return true;
+}
+function consumeInventoryItem() {
+  const slot = inventory[selectedInventorySlot];
+  if (!slot) return;
+  slot.count--;
+  if (slot.count <= 0) inventory[selectedInventorySlot] = null;
+}
+function collectWorldItem(item, label) {
+  if (!item || !item.active) return false;
+  if (!addInventoryItem(item.type || 'battery')) { say('INVENTORY FULL. USE OR CLEAR A SLOT.', 2); beep(170, .08, 'square', .04); return false; }
+  item.active = false;
+  say(label + ' ADDED TO INVENTORY.', 1.8);
+  beep(760, .10, 'triangle', .08, 1120);
+  return true;
+}
+function startVendingMachine(vm) {
+  if (!vm || vm.used || vm.state !== 'ready') { say('THIS MACHINE HAS ALREADY BEEN USED.', 1.8); return false; }
+  const slot = inventory[selectedInventorySlot];
+  if (!slot || slot.type !== 'quarter') { say('SELECT A QUARTER TO USE THIS MACHINE.', 2); beep(170, .08, 'square', .05); return false; }
+  consumeInventoryItem();
+  vm.used = true; vm.state = 'glitch'; vm.glitchT = 0; vm.spinT = 0; vm.reelPosition = 0;
+  vm.reelStopIndex = 20; vm.reelVelocity = 18.37; vm.reelFriction = .9;
+  vm.prize = rollVendingPrize();
+  vm.reelSymbols = Array.from({ length: 28 }, () => pick(VENDING_PRIZES));
+  vm.reelSymbols[vm.reelStopIndex] = vm.prize;
+  vm.landT = 0; vm.ejectT = 0;
+  say('QUARTER ACCEPTED.', 1.2);
+  beep(920, .055, 'square', .10, 180); noise(.16, .12); beep(170, .24, 'sawtooth', .055, 760);
+  return true;
+}
+function useSelectedInventoryItem() {
+  if (state !== 'play' || panelOpen) return false;
+  const slot = inventory[selectedInventorySlot];
+  if (!slot) return false;
+  if (slot.type === 'battery') {
+    const current = torchBaseBattery + torchBonusBattery;
+    const room = torchBatteryMax - current;
+    const added = Math.min(10, room, 10 - torchBonusBattery);
+    if (added <= .01) { say('TORCH BATTERY IS FULL.', 1.5); beep(180, .08, 'square', .04); return true; }
+    torchBonusBattery += added;
+    torchBattery = torchBaseBattery + torchBonusBattery;
+    consumeInventoryItem();
+    say('BATTERY INSTALLED.', 1.5);
+    beep(760, .12, 'triangle', .08, 1180);
+    return true;
+  }
+  if (slot.type === 'energy') {
+    P.energyBonus = 30;
+    P.stam = 130; P.tired = false;
+    consumeInventoryItem();
+    say('ENERGY RESTORED.', 1.5); beep(480, .12, 'triangle', .09, 980); beep(720, .16, 'sine', .07, 1240);
+    return true;
+  }
+  if (slot.type === 'eyedrops') {
+    P.bm = 0; P.eyeHold = 0; P.blinkT = -1; P.eyeBonus = 5;
+    P.blinkInterval = rand(7, 9) + P.eyeBonus;
+    consumeInventoryItem();
+    say('YOUR EYES FEEL CLEARER.', 1.5); beep(680, .10, 'sine', .07, 1080);
+    return true;
+  }
+  if (slot.type === 'pewpew') {
+    shotgun = true;
+    consumeInventoryItem();
+    say('PEW PEW ACQUIRED. A SECRET ENDING IS NOW POSSIBLE.', 2.6);
+    beep(620, .10, 'square', .08, 1240); beep(980, .16, 'triangle', .07, 1560);
+    return true;
+  }
+  if (slot.type === 'bsoda') {
+    if (L && L.d < 9 && los(P.x, P.y, L.x, L.y) && !L.knocked) {
+      const away = Math.atan2(L.y - P.y, L.x - P.x);
+      L.knockback = { dx: Math.cos(away), dy: Math.sin(away), speed: 8.5, distance: 0, maxDistance: 12 };
+      L.st = 'stunned'; L.sees = false; L.fuse = false; L.mom = 0;
+      L.flashStun = Math.max(L.flashStun, 1.0); L.lx = L.x; L.ly = L.y;
+      say('CHAIR BLAST. LARS IS FLYING BACK!', 2); noise(.22, .2); beep(240, .22, 'sawtooth', .09, 70); thud(.22, 0);
+    } else { say('NO ONE TO PUSH BACK.', 1.5); beep(180, .08, 'square', .04); }
+    consumeInventoryItem();
+    return true;
+  }
+  if (slot.type === 'quarter') {
+    if (nearVendingMachine) startVendingMachine(nearVendingMachine);
+    else { say('FIND A VENDING MACHINE FIRST.', 1.8); beep(170, .08, 'square', .04); }
+    return true;
+  }
+  return false;
+}
+function updateVendingMachines(dt) {
+  for (const vm of vendingMachines) {
+    if (vm.state === 'glitch') {
+      vm.glitchT += dt;
+      if (Math.random() < dt * 15) { beep(rand(90, 900), rand(.025, .07), 'square', rand(.025,.07)); noise(.025, .045); }
+      if (vm.glitchT >= .88) { vm.state = 'spin'; vm.spinT = 0; beep(180, .18, 'sawtooth', .09, 1120); }
+    } else if (vm.state === 'spin') {
+      vm.spinT += dt;
+      // Integrate a spinning reel with friction: it keeps its momentum, then
+      // naturally loses speed instead of jumping because elapsed time is
+      // multiplied by a changing speed value.
+      vm.reelPosition = (vm.reelPosition || 0) + (vm.reelVelocity || 0) * dt;
+      vm.reelVelocity = (vm.reelVelocity || 0) * Math.exp(-(vm.reelFriction || .9) * dt);
+      if (vm.spinT >= 4.4) {
+        vm.reelPosition = vm.reelStopIndex || 20;
+        vm.reelVelocity = 0;
+        vm.state = 'land'; vm.landT = 0; fxT = Math.max(fxT, .42);
+        beep(520, .12, 'triangle', .12, 980); beep(1040, .16, 'sine', .10, 1560); noise(.12, .13); thud(.20, 0);
+      }
+    } else if (vm.state === 'land') {
+      vm.landT += dt;
+      if (vm.landT > .58) { vm.state = 'eject'; vm.ejectT = 0; fxT = Math.max(fxT, .3); beep(920, .09, 'triangle', .13, 1540); beep(480, .22, 'sawtooth', .09, 90); noise(.22, .18); thud(.25, 0); }
+    } else if (vm.state === 'eject') {
+      vm.ejectT += dt;
+      if (vm.ejectT >= .72) {
+        vm.state = 'done';
+        vm.drop = { type: vm.prize || 'battery', x: vm.x + vm.fx * .74, y: vm.y + vm.fy * .74, active: true };
+        beep(280, .12, 'square', .10, 150); beep(620, .16, 'triangle', .07, 1040); thud(.18, 0);
+        say('YOUR ITEM IS READY. PICK IT UP.', 2.2);
+      }
+    }
   }
 }
 const SWX = i => RW / 2 - 80 + i * 40;
@@ -557,7 +1016,7 @@ function blink(forced) {
   if (P.blinkT < 0) {
     P.blinkT = 0;
     P.bm = 0;
-    P.blinkInterval = zoomHeld ? rand(2, 4) : rand(7, 9);
+    P.blinkInterval = (selectedMode === 'extreme' ? rand(5, 7) : rand(7, 9)) + P.eyeBonus;
     ev.blink = { t: time, d: L ? L.d : 99, forced: !!forced };
     beep(200, .06, 'sine', .04, 120);
   }
@@ -614,6 +1073,25 @@ function fireShot() {
 function updateLars(dt) {
   L.d = Math.hypot(L.x - P.x, L.y - P.y);
   if (L.knocked) { L.knockT += dt; if (L.knockT > 1.15) { state = 'secret'; endT = 0; } return; }
+  if (L.knockback) {
+    const kb = L.knockback;
+    let remaining = Math.min(kb.speed * dt, kb.maxDistance - kb.distance);
+    let blocked = false;
+    while (remaining > .0001) {
+      const step = Math.min(.075, remaining);
+      const nx = L.x + kb.dx * step, ny = L.y + kb.dy * step;
+      const r = .17;
+      if (solid(nx-r, ny-r) || solid(nx+r, ny-r) || solid(nx-r, ny+r) || solid(nx+r, ny+r) || vendingBlocked(nx, ny)) { blocked = true; break; }
+      L.x = nx; L.y = ny; kb.distance += step; remaining -= step;
+    }
+    L.a = Math.atan2(kb.dy, kb.dx); L.gait += kb.speed * dt * 2.4;
+    L.d = Math.hypot(L.x - P.x, L.y - P.y); L.lx = L.x; L.ly = L.y;
+    if (blocked || kb.distance >= kb.maxDistance) {
+      L.knockback = null; L.flashStun = Math.max(L.flashStun, 1.0);
+      if (L.st === 'stunned') L.st = 'search';
+    }
+    return;
+  }
   if (L.st === 'sleep') { if ((wakeT -= dt) <= 0) { const j = jitter(P.x, P.y, 6); wakeUp('LARS WOKE UP ON HIS OWN', j[0], j[1]); } return; }
   const toPlayer = Math.atan2(P.y - L.y, P.x - L.x);
   const facing = Math.atan2(Math.sin(toPlayer - L.a), Math.cos(toPlayer - L.a));
@@ -637,6 +1115,7 @@ function updateLars(dt) {
   const inView = Math.abs(L.rel) < Math.atan(baseFov) * .8 && closure() < .5;
   L.watching = L.st === 'chase' && L.sees && inView;                         // eye contact
   let sp = L.st === 'chase' ? Math.min(7, 4.9 + fixed * .45) : L.st === 'search' ? 3.4 + fixed * .25 : 2.2;
+  if (selectedMode === 'extreme') sp *= 1.08;
   sp *= 1 - L.flashDaze * .16; if (L.flashStun > 0) sp = 0;
   if (L.st === 'chase') {
     if (dashing) { L.mom = 1; ev.dashT = time; }
@@ -688,27 +1167,25 @@ function update(dt) {
   if (Math.random() < dt * .045) { light = rand(.18, .48); sh(.16, .018, 'bandpass', 520, 180, .8, 0, .004); } // rare electrical flicker and soft ballast buzz
   if (state !== 'play') { endT += dt; if (droneG) droneG.gain.value = 0; if (chaseG) chaseG.gain.value = 0; if (lbG) lbG.gain.value = 0; return; }
   time += dt;
+  updateVendingMachines(dt);
+  P.energyBonus = Math.max(0, P.energyBonus - dt * 1.5);
+  P.eyeBonus = Math.max(0, P.eyeBonus - dt * .20);
 
   // Torch battery: 20 seconds to start, plus one 10-second spare cell somewhere in the map.
   if (torchOn) {
-    torchBattery = Math.max(0, torchBattery - dt);
+    if (torchBonusBattery > 0) torchBonusBattery = Math.max(0, torchBonusBattery - dt);
+    else torchBaseBattery = Math.max(0, torchBaseBattery - dt);
+    torchBattery = torchBaseBattery + torchBonusBattery;
     const pulse = .91 + Math.sin(t * 13.2) * .045 + Math.sin(t * 31.7) * .025;
     const dropout = Math.random() < dt * .28 ? rand(.42, .72) : 1;
     torchFlicker = clamp(pulse * dropout, .38, 1);
     torchPower = torchBattery > 0 ? (torchBattery < 5 ? torchFlicker * rand(.58, .88) : torchFlicker) : 0;
     if (torchBattery <= 0) { torchOn = false; torchPower = 0; beep(180, .16, 'square', .06, 60); say('TORCH BATTERY EMPTY.', 2); }
-  } else { torchPower = 0; torchFlicker = 1; }
+  } else { torchBattery = torchBaseBattery + torchBonusBattery; torchPower = 0; torchFlicker = 1; }
   zoomAmount += ((zoomHeld ? 1 : 0) - zoomAmount) * Math.min(1, dt * 5.5);
-  // Ordinary dry-eye blinking continues during normal gameplay (7-9 seconds).
-  // RMB squinting makes the interval shorter (2-4 seconds).
+  // Dry-eye blinking keeps the same interval whether focused or not.
   // Q starts one ordinary blink; holding it keeps that same blink closed, without a second blink.
   const qHeld = actionDown('blink') && !panelOpen;
-  const blinkMode = zoomHeld ? 'squint' : 'normal';
-  if (P.blinkMode !== blinkMode) {
-    P.blinkMode = blinkMode;
-    P.bm = 0;
-    P.blinkInterval = zoomHeld ? rand(2, 4) : rand(7, 9);
-  }
   if (qHeld) P.eyeHold = Math.min(1, P.eyeHold + dt * 20);
   else P.eyeHold = Math.max(0, P.eyeHold - dt * 24);
   if (P.blinkT >= 0) {
@@ -716,7 +1193,7 @@ function update(dt) {
     if (P.blinkT > .34) {
       P.blinkT = -1;
       P.bm = 0;
-      P.blinkInterval = zoomHeld ? rand(2, 4) : rand(7, 9);
+      P.blinkInterval = (selectedMode === 'extreme' ? rand(5, 7) : rand(7, 9)) + P.eyeBonus;
       if (L.st !== 'sleep' && L.d < 7 && L.sees) { noise(.15, .3); beep(900, .14, 'sawtooth', .1, 300); }
     }
   } else if (!qHeld && P.eyeHold < .08 && !panelOpen) {
@@ -747,7 +1224,8 @@ function update(dt) {
   const spd = Math.hypot(P.vx, P.vy);
   const standingStill = spd < .18;
   const regenMultiplier = P.crouching && standingStill ? 1.75 : (P.crouching || standingStill ? 1.5 : 1);
-  P.stam = clamp(P.stam + (sprint ? -30 : 16 * regenMultiplier) * dt, 0, 100);
+  const staminaMax = 100 + P.energyBonus;
+  P.stam = clamp(P.stam + (sprint ? -30 : 16 * regenMultiplier) * dt, 0, staminaMax);
   if (P.stam <= 0) P.tired = true; if (P.tired && P.stam > 30) P.tired = false;
   const wasAirborne = P.jumpZ > 0;
   P.jumpV -= 30 * dt; P.jumpZ = Math.max(0, P.jumpZ + P.jumpV * dt);
@@ -782,7 +1260,23 @@ function update(dt) {
   // --- generators: hold E next to one (it's loud, and it also opens a shutter somewhere when done) ---
   near = fixing = null;
   for (const g of gens) { if (g.done || Math.hypot(g.x - P.x, g.y - P.y) > 1.5) continue; near = g; if (actionDown('interact') && !panelOpen) fixing = g; }
-  nearBattery = BATTERY.active && Math.hypot(BATTERY.x - P.x, BATTERY.y - P.y) < 1.35;
+  nearBatteryPickup = null; nearBattery = false; nearQuarterPickup = null; nearVendingMachine = null;
+  const worldPickups = [];
+  if (BATTERY.active) { BATTERY.type = 'battery'; worldPickups.push(BATTERY); }
+  for (const vm of vendingMachines) if (vm.drop && vm.drop.active) worldPickups.push(vm.drop);
+  for (const item of worldPickups) {
+    const d = Math.hypot(item.x - P.x, item.y - P.y);
+    if (d < 1.35 && (!nearBatteryPickup || d < Math.hypot(nearBatteryPickup.x - P.x, nearBatteryPickup.y - P.y))) nearBatteryPickup = item;
+  }
+  nearBattery = !!nearBatteryPickup;
+  for (const item of quarterPickups) if (item.active) {
+    const d = Math.hypot(item.x - P.x, item.y - P.y);
+    if (d < 1.35 && (!nearQuarterPickup || d < Math.hypot(nearQuarterPickup.x - P.x, nearQuarterPickup.y - P.y))) nearQuarterPickup = item;
+  }
+  for (const vm of vendingMachines) {
+    const d = Math.hypot(vm.x - P.x, vm.y - P.y);
+    if (d < 1.55 && (!nearVendingMachine || d < Math.hypot(nearVendingMachine.x - P.x, nearVendingMachine.y - P.y))) nearVendingMachine = vm;
+  }
   if (fixing) {
     ev.fixT = time; fixing.p += dt / FIX_TIME;
     if ((clankT -= dt) <= 0) { beep(rand(140, 240), .09, 'square', .12, 70); noise(.06, .12); clankT = .38; heard(P.x, P.y, 14); }
@@ -793,14 +1287,15 @@ function update(dt) {
     }
   }
   if (Math.hypot(EXIT.x - P.x, EXIT.y - P.y) < .8) {
-    if (fixed === gens.length) { state = 'win'; endT = 0; beep(440, .6, 'triangle', .15, 880); return; }
+    if (fixed === gens.length) { recordModeWin(); state = 'win'; endT = 0; beep(440, .6, 'triangle', .15, 880); return; }
     if (msgT <= 0) say('Exit is locked. Fix the generators first.', 2);
   }
 
   // --- power: Lars walks to the fuse box and kills the lights; you flip it back on ---
-  if (power && L.st === 'patrol' && !L.fuse && (blackIn -= dt) <= 0) { L.fuse = true; route(FUSE.x, FUSE.y); blackIn = rand(82, 108); }
+  if (power && L.st === 'patrol' && !L.fuse && (blackIn -= dt) <= 0) { L.fuse = true; route(FUSE.x, FUSE.y); blackIn = selectedMode === 'extreme' ? rand(55, 78) : rand(82, 108); }
   blackT = power ? 0 : 1;
-  fogD += ((power ? 10 : 3.2) - fogD) * Math.min(1, dt * 5);
+  const visibility = selectedMode === 'extreme' ? (power ? 7.1 : 2.25) : (power ? 10 : 3.2);
+  fogD += (visibility - fogD) * Math.min(1, dt * 5);
   nearFuse = Math.hypot(FUSE.x - P.x, FUSE.y - P.y) < 1.6;
   if (panelOpen && !nearFuse) closePanel();
 
@@ -867,12 +1362,28 @@ function sprite(o, c, hScale, lift) {
   const sx = (RW / 2) * (1 + tx / ty), lh = vk / ty, size = lh * hScale, w = size * c.width / c.height * (RW / (2 * P.fov)) / vk;
   const top = RH / 2 + lh * cameraHeight - size - lh * lift;
   const ambientSpriteLight = power ? 1 : (torchOn && torchBattery > 0 ? .42 : .012);
+  const left = Math.max(0, Math.floor(sx - w / 2)), right = Math.min(RW, sx + w / 2);
   ctx.globalAlpha = clamp(1.3 - ty / (fogD + FL * .5), 0, 1) * ambientSpriteLight;
-  for (let x = Math.max(0, Math.floor(sx - w / 2)); x < Math.min(RW, sx + w / 2); x++) {
-    if (ty >= zbuf[x]) continue;
-    ctx.drawImage(c, Math.min(c.width - 1, (x - (sx - w / 2)) / w * c.width), 0, Math.max(1, c.width / w), c.height, x, top, 1, size);
+  if (o.item3d) {
+    // Extruded side layers make the pickup read as a little object rather than
+    // a flat cut-out. Every layer is still depth-tested against the world walls.
+    for (let d = 3; d >= 1; d--) {
+      ctx.filter = 'brightness(.20) saturate(.55)';
+      for (let x = left; x < right; x++) {
+        const targetX = Math.min(RW - 1, x + d);
+        if (ty >= zbuf[targetX]) continue;
+        const sourceX = Math.min(c.width - 1, (x - (sx - w / 2)) / w * c.width);
+        ctx.drawImage(c, sourceX, 0, Math.max(1, c.width / w), c.height, targetX, top + d, 1, size);
+      }
+    }
   }
-  ctx.globalAlpha = 1;
+  ctx.filter = 'none';
+  for (let x = left; x < right; x++) {
+    if (ty >= zbuf[x]) continue;
+    const sourceX = Math.min(c.width - 1, (x - (sx - w / 2)) / w * c.width);
+    ctx.drawImage(c, sourceX, 0, Math.max(1, c.width / w), c.height, x, top, 1, size);
+  }
+  ctx.globalAlpha = 1; ctx.filter = 'none';
 }
 function bar(x, y, w, h, f, col) { ctx.fillStyle = '#000'; ctx.fillRect(x - 1, y - 1, w + 2, h + 2); ctx.fillStyle = col; ctx.fillRect(x, y, w * clamp(f, 0, 1), h); }
 
@@ -942,41 +1453,309 @@ function drawFloor() {
 }
 
 function drawTorchHud() {
-  const x = RW - 77, y = 7, ratio = torchBattery / torchBatteryMax;
-  ctx.fillStyle = 'rgba(0,0,0,.72)'; ctx.fillRect(x - 4, y - 3, 74, 25);
-  // Pixel flashlight icon, top-right.
-  ctx.fillStyle = '#222a31'; ctx.fillRect(x, y + 4, 18, 8); ctx.fillRect(x + 3, y + 2, 10, 12);
-  ctx.fillStyle = '#75838b'; ctx.fillRect(x + 2, y + 3, 10, 10); ctx.fillStyle = '#d9e3e5'; ctx.fillRect(x + 5, y + 4, 5, 8);
-  ctx.fillStyle = torchOn && torchBattery > 0 ? '#ffe69a' : '#56616a'; ctx.fillRect(x + 13, y + 5, 5, 6);
-  ctx.fillStyle = '#101417'; ctx.fillRect(x + 23, y + 4, 42, 7);
-  ctx.fillStyle = torchBattery > 7 ? '#8cce80' : torchBattery > 2 ? '#e6bd57' : '#d65b52';
-  ctx.fillRect(x + 24, y + 5, 40 * ratio, 5);
-  txt(`${Math.ceil(torchBattery)}s`, x + 44, y + 21, 6, torchOn ? '#ffe69a' : '#aeb6bb');
+  const x = RW - 12, y = 35, w = 5, h = 68, bottom = y + h;
+  const bonusSectionH = h / 3, baseSectionH = h - bonusSectionH;
+  const baseH = baseSectionH * clamp(torchBaseBattery / 20, 0, 1);
+  const bonusH = bonusSectionH * clamp(torchBonusBattery / 10, 0, 1);
+  const greenTop = bottom - bonusSectionH;
+  // The bolt sits above the meter; yellow uses only the upper two thirds,
+  // while reserve charge occupies the bottom third and drains bottom-up.
+  ctx.strokeStyle = 'rgba(255,225,77,.55)'; ctx.lineWidth = 1; ctx.strokeRect(x - .5, y - .5, w + 1, h + 1);
+  if (baseH > 0) { ctx.fillStyle = '#f2d23c'; ctx.fillRect(x + 1, greenTop - baseH, w - 2, baseH); }
+  if (bonusH > 0) { ctx.fillStyle = '#42e26a'; ctx.fillRect(x + 1, greenTop, w - 2, bonusH); }
+  ctx.fillStyle = '#ffe14d'; ctx.beginPath();
+  ctx.moveTo(x + 3, 7); ctx.lineTo(x, 16); ctx.lineTo(x + 3, 16);
+  ctx.lineTo(x + 1, 23); ctx.lineTo(x + 8, 12); ctx.lineTo(x + 5, 12); ctx.closePath(); ctx.fill();
 }
+function drawInventoryItem3D(art, x, y, w, h) {
+  if (!art || (art instanceof HTMLImageElement && (!art.complete || !art.naturalWidth))) return;
+  ctx.save();
+  // A few dark offset passes create a visible side wall, then the clean artwork
+  // sits on top as the front face. This stays legible at the small inventory size.
+  ctx.shadowColor = 'rgba(0,0,0,.72)'; ctx.shadowBlur = 2; ctx.shadowOffsetX = 1; ctx.shadowOffsetY = 2;
+  for (let d = 3; d >= 1; d--) {
+    ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
+    ctx.filter = 'brightness(.22) saturate(.55)';
+    ctx.drawImage(art, x + d * .55, y + d * .7, w, h);
+  }
+  ctx.filter = 'none'; ctx.shadowColor = 'rgba(0,0,0,.8)'; ctx.shadowBlur = 2; ctx.shadowOffsetX = 1; ctx.shadowOffsetY = 1;
+  ctx.drawImage(art, x, y, w, h);
+  ctx.restore();
+}
+function drawInventoryHud() {
+  const slotW = 21, slotH = 19, gap = 3, totalW = slotW * 3 + gap * 2;
+  const startX = Math.round((RW - totalW) / 2), y = RH - slotH - 3;
+  const art = VENDING_ART;
+  for (let i = 0; i < 3; i++) {
+    const slot = inventory[i], selected = i === selectedInventorySlot;
+    const wave = (Math.sin(t * 5.5 + i * .55) + 1) * .5;
+    const alpha = selected ? .76 + wave * .10 : .54;
+    const lift = selected ? wave * 1.0 : 0;
+    const scale = selected ? 1 + wave * .045 : 1;
+    const x = startX + i * (slotW + gap), cx = x + slotW / 2, cy = y + slotH / 2;
+    ctx.save(); ctx.globalAlpha = alpha; ctx.translate(cx, cy - lift); ctx.scale(scale, scale);
+    rr(ctx, -slotW / 2 - 1, -slotH / 2 - 1, slotW + 2, slotH + 2, selected ? '#d9c35b' : '#5a5a54');
+    rr(ctx, -slotW / 2, -slotH / 2, slotW, slotH, 'rgba(9,10,12,.58)');
+    ctx.font = '5px Arial'; ctx.textAlign = 'left'; ctx.fillStyle = selected ? '#ffe14d' : '#b1b1a5';
+    ctx.fillText(String(i + 1), -slotW / 2 + 2, -slotH / 2 + 6);
+    if (slot && getVendingArt(slot.type)) drawInventoryItem3D(getVendingArt(slot.type), -6, -7, 12, 14);
+    if (slot && slot.count > 1) { ctx.fillStyle = '#fff'; ctx.font = 'bold 5px Arial'; ctx.textAlign = 'right'; ctx.fillText(String(slot.count), slotW / 2 - 2, slotH / 2 - 2); }
+    ctx.restore();
+  }
+  const selected = inventory[selectedInventorySlot];
+  if (selected) {
+    const hints = {battery:'LMB · USE',energy:'LMB · USE',eyedrops:'LMB · USE',bsoda:'LMB · USE',pewpew:'LMB · EQUIP',quarter:'LMB · INSERT'};
+    const hint = hints[selected.type] || '';
+    ctx.font = '7px Arial'; ctx.textAlign = 'center';
+    const hintWidth = Math.ceil(ctx.measureText(hint).width) + 8;
+    ctx.fillStyle = 'rgba(0,0,0,.58)'; ctx.fillRect((RW - hintWidth) / 2, y - 10, hintWidth, 9);
+    ctx.fillStyle = '#f1eee0'; ctx.fillText(hint, RW / 2, y - 3);
+  }
+}
+function drawGeneratorHud() {
+  if (!gens || !gens.length) return;
+  const x = 6, y = 6, w = 72, h = 13;
+  ctx.save();
+  ctx.globalAlpha = .64; rr(ctx, x, y, w, h, 'rgba(8,11,13,.88)');
+  ctx.globalAlpha = 1; ctx.font = '5px Arial'; ctx.textAlign = 'left'; ctx.fillStyle = '#b8c0bd';
+  ctx.fillText('GEN', x + 4, y + 5.5);
+  ctx.textAlign = 'right'; ctx.fillStyle = '#e9e9df'; ctx.fillText(fixed + '/' + gens.length, x + w - 4, y + 5.5);
+  const gx = x + 4, gy = y + 8, gw = w - 8, gap = 2, seg = (gw - gap * (gens.length - 1)) / gens.length;
+  for (let i = 0; i < gens.length; i++) rr(ctx, gx + i * (seg + gap), gy, seg, 2, i < fixed ? '#50e47c' : '#493538');
+  ctx.restore();
+}
+
 function drawWeaponOverlay() {
+  const z = zoomAmount;
   const chosenGunImage = zoomHeld ? gunImageRmb : gunImageNormal;
-
-  if (!chosenGunImage.complete || chosenGunImage.naturalWidth === 0) return;
-
-  const maxW = zoomHeld ? 150 : 126;
-  const maxH = zoomHeld ? 112 : 88;
-
-  const scale = Math.min(
-    maxW / chosenGunImage.naturalWidth,
-    maxH / chosenGunImage.naturalHeight
-  );
-
-  const w = chosenGunImage.naturalWidth * scale;
-  const h = chosenGunImage.naturalHeight * scale;
-
-  ctx.drawImage(
-    chosenGunImage,
-    RW - w - 5 - zoomAmount * 10,
-    RH - h + 2,
-    w,
-    h
-  );
+  if (chosenGunImage.complete && chosenGunImage.naturalWidth > 0) {
+    const iw = chosenGunImage.naturalWidth, ih = chosenGunImage.naturalHeight;
+    const maxW = zoomHeld ? 150 : 126, maxH = zoomHeld ? 112 : 88;
+    const scale = Math.min(maxW / iw, maxH / ih);
+    const w = iw * scale, h = ih * scale;
+    ctx.drawImage(chosenGunImage, RW - w - 5 - z * 10, RH - h + 2);
+    if (shotFlash > 0) { ctx.globalAlpha = shotFlash / .16; ctx.fillStyle = '#fff0b0'; ctx.fillRect(RW - w - 12, RH - h - 8, 12, 8); ctx.globalAlpha = 1; }
+    return;
+  }
+  // Existing placeholder prop remains until image URLs are supplied.
+  const scale = 1 + z * .34, ox = RW - 114 - z * 66, oy = RH - 68 - z * 8;
+  ctx.save(); ctx.translate(ox, oy); ctx.scale(scale, scale);
+  // sleeve and forearm
+  rr(ctx, 54, 43, 57, 36, '#263746'); rr(ctx, 61, 38, 39, 28, '#344b5a');
+  rr(ctx, 58, 46, 10, 24, '#52616b'); rr(ctx, 102, 51, 13, 28, '#18232c');
+  // hand gripping the lower receiver
+  rr(ctx, 39, 26, 23, 20, '#9a7056'); rr(ctx, 46, 20, 23, 17, '#b78363');
+  rr(ctx, 61, 26, 15, 15, '#a8795b'); rr(ctx, 38, 31, 12, 12, '#805a46');
+  // receiver, barrel and front sight; simple, non-functional game art
+  rr(ctx, 18, 2, 39, 25, '#171c22'); rr(ctx, 22, 0, 32, 8, '#333d46');
+  rr(ctx, 26, 4, 24, 4, '#65717b'); rr(ctx, 21, 10, 34, 4, '#252d35');
+  rr(ctx, 13, 5, 12, 9, '#11171d'); rr(ctx, 9, 7, 8, 5, '#4a555e');
+  rr(ctx, 30, 19, 20, 11, '#222a31'); rr(ctx, 36, 23, 9, 17, '#151b20');
+  rr(ctx, 29, 34, 16, 22, '#303943'); rr(ctx, 32, 37, 10, 14, '#151b20');
+  rr(ctx, 29, 51, 20, 7, '#7a5943'); rr(ctx, 32, 55, 15, 8, '#a8795b');
+  // cool highlights keep the prop readable at the game's low resolution
+  rr(ctx, 20, 3, 2, 5, '#98a2a8'); rr(ctx, 48, 11, 4, 2, '#87939b');
+  if (shotFlash > 0) { ctx.globalAlpha = shotFlash / .16; rr(ctx, 4, -8, 21, 12, '#fff0b0'); rr(ctx, 8, -14, 12, 9, '#fff'); ctx.globalAlpha = 1; }
+  ctx.restore();
+  if (z > .75) { ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.fillRect(0, 0, 8, RH); ctx.fillRect(RW - 8, 0, 8, RH); }
 }
+
+function vendingRattle(vm) {
+  if (vm.state === 'glitch') return Math.sin(vm.glitchT * 76) * .014;
+  if (vm.state === 'spin') return Math.sin(vm.spinT * 48) * .006;
+  if (vm.state === 'land') return Math.sin(vm.landT * 90) * .018;
+  if (vm.state === 'eject') return Math.sin(vm.ejectT * 92) * .012;
+  return 0;
+}
+function projectVendingPoint(vm, u, v, z) {
+  const bodyScale = .80;
+  const U = u * bodyScale + vendingRattle(vm), V = v * bodyScale;
+  z *= .54; // shorter appliance; it sits comfortably below the ceiling.
+  const wx = vm.x + vm.rx * U + vm.fx * V, wy = vm.y + vm.ry * U + vm.fy * V;
+  const ex = wx - P.x, ey = wy - P.y;
+  const ty = ex * cam.dx + ey * cam.dy;
+  if (ty <= .15) return null;
+  const tx = (cam.dx * ey - cam.dy * ex) / P.fov;
+  return { x: RW / 2 * (1 + tx / ty), y: RH / 2 + vk * (cameraHeight - z) / ty, d: ty };
+}
+function vendingDepthAtColumn(vm, coords, pts, x) {
+  const bodyScale = .80, q = 2 * (x + .5) / RW - 1;
+  const rayX = cam.dx - cam.dy * P.fov * q, rayY = cam.dy + cam.dx * P.fov * q;
+  const relX = P.x - vm.x, relY = P.y - vm.y;
+  const u0 = relX * vm.rx + relY * vm.ry, v0 = relX * vm.fx + relY * vm.fy;
+  const du = rayX * vm.rx + rayY * vm.ry, dv = rayX * vm.fx + rayY * vm.fy;
+  const sameU = coords.every(p => Math.abs(p[0] - coords[0][0]) < 1e-5);
+  const sameV = coords.every(p => Math.abs(p[1] - coords[0][1]) < 1e-5);
+  let depth = Infinity;
+  if (sameU && Math.abs(du) > 1e-6) depth = (coords[0][0] * bodyScale + vendingRattle(vm) - u0) / du;
+  else if (sameV && Math.abs(dv) > 1e-6) depth = (coords[0][1] * bodyScale - v0) / dv;
+  else {
+    // For horizontal faces, conservatively use the farthest intersection of
+    // the polygon's vertical slice so no part can leak through a nearer wall.
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i], b = pts[(i + 1) % pts.length];
+      const min = Math.min(a.x, b.x), max = Math.max(a.x, b.x);
+      if (x + .5 < min || x + .5 > max || Math.abs(b.x - a.x) < 1e-6) continue;
+      const f = clamp((x + .5 - a.x) / (b.x - a.x), 0, 1);
+      const inv = (1 - f) / a.d + f / b.d;
+      if (inv > 0) depth = Math.max(depth === Infinity ? 0 : depth, 1 / inv);
+    }
+    if (!Number.isFinite(depth)) depth = Math.max(...pts.map(p => p.d));
+  }
+  return depth;
+}
+function drawVendingPoly(vm, coords, color, alpha = 1) {
+  const pts = coords.map(p => projectVendingPoint(vm, p[0], p[1], p[2]));
+  if (pts.some(p => !p)) return;
+  const minX = Math.max(0, Math.floor(Math.min(...pts.map(p => p.x))));
+  const maxX = Math.min(RW - 1, Math.ceil(Math.max(...pts.map(p => p.x))));
+  if (maxX < minX) return;
+  ctx.save(); ctx.beginPath();
+  for (let x = minX; x <= maxX; x++) {
+    const depth = vendingDepthAtColumn(vm, coords, pts, x);
+    if (depth > .15 && depth < zbuf[x] - .015) ctx.rect(x, 0, 1, RH);
+  }
+  ctx.clip(); ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.closePath(); ctx.globalAlpha = alpha; ctx.fillStyle = color; ctx.fill();
+  ctx.restore();
+}
+function vendingRect(vm, u1, u2, v, z1, z2, color, alpha = 1) {
+  const f = vm.hd + v;
+  drawVendingPoly(vm, [[u1,f,z1],[u2,f,z1],[u2,f,z2],[u1,f,z2]], color, alpha);
+}
+function vendingText(vm, u, v, z, text, color = '#f1df9c', localSize = .085, font = 'bold') {
+  const p = projectVendingPoint(vm, u, vm.hd + v, z);
+  if (!p) return;
+  const col = Math.max(0, Math.min(RW - 1, Math.round(p.x)));
+  if (p.d >= zbuf[col]) return;
+  const size = Math.max(3, vk * localSize / p.d);
+  ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `${font} ${size}px Arial`;
+  ctx.fillStyle = 'rgba(0,0,0,.8)'; ctx.fillText(text, p.x + .5, p.y + .5);
+  ctx.fillStyle = color; ctx.fillText(text, p.x, p.y); ctx.restore();
+}
+function vendingImage(vm, art, u, z, worldW = .11, worldH = .18, alpha = 1) {
+  if (!art) return;
+  if (art instanceof HTMLImageElement && (!art.complete || !art.naturalWidth)) return;
+  const p = projectVendingPoint(vm, u, vm.hd + .034, z);
+  if (!p) return;
+  const w = (RW * .5) * worldW / Math.max(.15, p.d * P.fov);
+  const h = vk * worldH / Math.max(.15, p.d);
+  const left = Math.max(0, Math.floor(p.x - w / 2)), right = Math.min(RW, Math.ceil(p.x + w / 2));
+  if (right <= left) return;
+  ctx.save();
+  const centreColumn = Math.max(0, Math.min(RW - 1, Math.round(p.x)));
+  if (p.d < zbuf[centreColumn] - .015) {
+    ctx.globalAlpha = alpha * .24; ctx.fillStyle = '#000';
+    ctx.beginPath(); ctx.ellipse(p.x + 2, p.y + h * .38, Math.max(2, w * .42), Math.max(1, h * .075), 0, 0, Math.PI * 2); ctx.fill();
+  }
+  const drawLayer = (dx, dy, filter, layerAlpha) => {
+    ctx.globalAlpha = layerAlpha; ctx.filter = filter;
+    for (let x = left; x < right; x++) {
+      const targetX = Math.max(0, Math.min(RW - 1, x + dx));
+      if (p.d >= zbuf[targetX] - .015) continue;
+      const sourceX = Math.max(0, (x - (p.x - w / 2)) / w * art.width);
+      const sw = Math.max(.5, art.width / w);
+      ctx.drawImage(art, sourceX, 0, sw, art.height, targetX, p.y - h / 2 + dy, 1, h);
+    }
+  };
+  // Stacked dark passes supply visible thickness; the last pass is the artwork's face.
+  drawLayer(3, 2, 'brightness(.18) saturate(.5)', alpha * .9);
+  drawLayer(2, 1.5, 'brightness(.25) saturate(.55)', alpha * .92);
+  drawLayer(1, .75, 'brightness(.38) saturate(.65)', alpha * .96);
+  drawLayer(0, 0, 'none', alpha);
+  ctx.filter = 'none'; ctx.restore();
+}
+function drawVendingMachine(vm) {
+  const hw = vm.hw, hd = vm.hd, h = vm.height;
+  const faces = [
+    { p: [[-hw,-hd,0],[hw,-hd,0],[hw,hd,0],[-hw,hd,0]], c:'#222a33' },
+    { p: [[-hw,-hd,0],[-hw,hd,0],[-hw,hd,h],[-hw,-hd,h]], c:'#303a45' },
+    { p: [[hw,-hd,0],[hw,hd,0],[hw,hd,h],[hw,-hd,h]], c:'#17202a' },
+    { p: [[-hw,-hd,h],[hw,-hd,h],[hw,hd,h],[-hw,hd,h]], c:'#56616a' },
+    { p: [[-hw,-hd,h],[hw,-hd,h],[hw,-hd,0],[-hw,-hd,0]], c:'#283440' },
+    { p: [[-hw,hd,h],[hw,hd,h],[hw,hd,0],[-hw,hd,0]], c:'#26313b' }
+  ];
+  const faceDepth = face => face.p.reduce((a,p) => a + Math.max(.16, (vm.x + vm.rx*p[0] + vm.fx*p[1] - P.x) * cam.dx + (vm.y + vm.ry*p[0] + vm.fy*p[1] - P.y) * cam.dy), 0) / face.p.length;
+  faces.sort((a,b) => faceDepth(b) - faceDepth(a));
+  const ambient = power ? 1 : (torchOn && torchBattery > 0 ? .55 : .12);
+  for (const f of faces) drawVendingPoly(vm, f.p, f.c, ambient);
+  // Product display is only drawn from the machine's front. From behind, the
+  // player sees a plain solid cabinet rather than a second, backwards screen.
+  const frontSide = (P.x - vm.x) * vm.fx + (P.y - vm.y) * vm.fy > .06;
+  if (!frontSide) return;
+
+  // Recessed glass window and product shelves.
+  vendingRect(vm, -.292, .292, .012, .53, 1.365, '#141b22', ambient);
+  vendingRect(vm, -.258, .258, .018, .78, 1.315, '#657983', ambient);
+  vendingRect(vm, -.237, .237, .024, .805, 1.292, '#07141a', ambient);
+  vendingRect(vm, -.218, .218, .029, .825, 1.274, vm.state === 'ready' ? '#142d35' : '#090d12', ambient);
+  if (vm.state === 'ready') {
+    const stock = vm.stock || ['battery','energy','eyedrops'];
+    const poses = [[-.135,1.08], [0,1.08], [.135,1.08]];
+    for (let i=0;i<3;i++) {
+      const [u,z] = poses[i];
+      vendingImage(vm, getVendingArt(stock[i]), u, z, .12, .21, ambient);
+      vendingRect(vm, u-.064, u+.064, .04, .91, .925, '#98a7a7', ambient);
+      vendingRect(vm, u-.064, u+.064, .04, .94, .952, '#d1d8d4', ambient);
+    }
+    // Price marks are physical coin circles, not labels.
+    vendingRect(vm, -.205, .205, .025, .845, .858, '#2a3b42', ambient);
+    for (let i=0;i<3;i++) vendingRect(vm, -.18+i*.18, -.15+i*.18, .031, .85, .855, '#d2b15e', ambient);
+  } else if (vm.state === 'glitch') {
+    const flick = Math.sin(vm.glitchT * 67) > 0;
+    vendingRect(vm, -.215, .215, .032, .83, 1.27, flick ? '#5d174e' : '#102d41', ambient);
+    const flashItem = VENDING_PRIZES[Math.floor(vm.glitchT * 18) % VENDING_PRIZES.length];
+    vendingImage(vm, getVendingArt(flashItem), Math.sin(vm.glitchT * 43) * .08, 1.05, .16, .24, flick ? 1 : .55);
+    if (Math.sin(vm.glitchT * 31) > .55) vendingRect(vm,-.21,.21,.04,.83,1.27,'rgba(255,255,255,.22)',.35);
+  } else if (vm.state === 'spin') {
+    const step = .088, centreZ = 1.05;
+    const position = vm.reelPosition || 0, index = Math.floor(position), fraction = position - index;
+    // Real product images move through a single window. The middle item is
+    // largest; products shrink progressively toward the top and bottom.
+    for (let row = -2; row <= 2; row++) {
+      const symbolIndex = ((index + row) % (vm.reelSymbols?.length || 1) + (vm.reelSymbols?.length || 1)) % (vm.reelSymbols?.length || 1);
+      const type = vm.reelSymbols?.[symbolIndex] || 'battery';
+      const z = centreZ - (row - fraction) * step;
+      if (z < .82 || z > 1.28) continue;
+      const focus = clamp(1 - Math.abs(row - fraction) / 3, 0, 1);
+      const scale = .44 + .56 * Math.pow(focus, .82);
+      vendingImage(vm, getVendingArt(type), 0, z, .17 * scale, .24 * scale, .98);
+    }
+    if (Math.sin(vm.spinT * 26) > .72) vendingRect(vm,-.21,.21,.04,.83,1.27,'rgba(255,255,255,.20)',.32);
+  } else if (vm.state === 'land') {
+    const flash = Math.sin(vm.landT * 68) > -.15;
+    vendingRect(vm, -.215, .215, .032, .83, 1.27, flash ? '#8c6d20' : '#211b10', ambient);
+    vendingImage(vm, getVendingArt(vm.prize || 'battery'), 0, 1.05, .18, .27, flash ? 1 : .82);
+  } else {
+    const prizeArt = getVendingArt(vm.prize || 'battery');
+    vendingImage(vm, prizeArt, 0, 1.075, .15, .25, vm.state === 'eject' ? 1 : .72);
+    if (vm.state === 'done' && Math.sin(t*12)>0) vendingRect(vm,-.21,.21,.04,1.25,1.275,'#f3d768',.8);
+  }
+
+  // Paired play-button pointers mark the exact centre line where the prize lands.
+  if (vm.state === 'spin' || vm.state === 'land' || vm.state === 'eject' || vm.state === 'done') {
+    const pointerY = vm.hd + .064, pointerZ = 1.05;
+    const pointerAlpha = vm.state === 'spin' ? .78 : 1;
+    const pointerColor = vm.state === 'land' || vm.state === 'eject' || vm.state === 'done' ? '#ffe36b' : '#d7e5dd';
+    drawVendingPoly(vm, [[-.235,pointerY,pointerZ-.047],[-.235,pointerY,pointerZ+.047],[-.178,pointerY,pointerZ]], '#071116', pointerAlpha);
+    drawVendingPoly(vm, [[-.224,pointerY+.003,pointerZ-.031],[-.224,pointerY+.003,pointerZ+.031],[-.185,pointerY+.003,pointerZ]], pointerColor, pointerAlpha);
+    drawVendingPoly(vm, [[.235,pointerY,pointerZ-.047],[.235,pointerY,pointerZ+.047],[.178,pointerY,pointerZ]], '#071116', pointerAlpha);
+    drawVendingPoly(vm, [[.224,pointerY+.003,pointerZ-.031],[.224,pointerY+.003,pointerZ+.031],[.185,pointerY+.003,pointerZ]], pointerColor, pointerAlpha);
+  }
+
+  // Coin slot, small selection lights, and a deep dispensing hatch.
+  vendingRect(vm, .185, .265, .025, 1.17, 1.235, '#07090b', ambient);
+  vendingRect(vm, .198, .252, .031, 1.19, 1.205, '#d7b653', ambient);
+  vendingRect(vm, .185, .265, .025, 1.055, 1.105, '#080b10', ambient);
+  vendingRect(vm, -.24, .24, .02, .12, .46, '#07090d', ambient);
+  vendingRect(vm, -.215, .215, .027, .16, .42, '#151d23', ambient);
+  vendingRect(vm, -.255, .255, .08, .105, .14, '#9ca6a8', ambient);
+  vendingRect(vm, -.27, .27, .035, .48, .515, '#6d2527', ambient);
+  vendingRect(vm, -.29, .29, .02, .035, .10, '#11161c', ambient);
+  // No un-clipped side strokes: all visible detail is part of the depth-tested mesh.
+}
+
 
 function draw() {
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, RW, RH);
@@ -991,7 +1770,12 @@ function draw() {
     if (Math.sin(t * 3) > -.2) ctx.fillText('PRESS SPACE OR CLICK TO START', RW / 2, 145);
     return;
   }
-  FL = torchPower * 4.3 + zoomAmount * (5.2 + zoomScale * 3.4); const renderA = P.a + Math.PI * P.lookBack; cam.dx = Math.cos(renderA); cam.dy = Math.sin(renderA); vk = RH * Math.pow(.66 / P.fov, .6);   // keeps wall height sensible at wide FOV
+  const darkRoom = !power && !(torchOn && torchBattery > 0);
+  const normalSquintBoost = selectedMode === 'extreme' ? .9 + zoomScale * .55 : 1.35 + zoomScale * .8;
+  const darkSquintBoost = selectedMode === 'extreme' ? .12 : .16;
+  // Keep the original focus benefit in lit areas; only the dark-room boost is reduced.
+  const squintSightBoost = zoomAmount * (darkRoom ? darkSquintBoost : normalSquintBoost);
+  FL = torchPower * (selectedMode === 'extreme' ? 3.5 : 4.3) + squintSightBoost; const renderA = P.a + Math.PI * P.lookBack; cam.dx = Math.cos(renderA); cam.dy = Math.sin(renderA); vk = RH * Math.pow(.66 / P.fov, .6);   // keeps wall height sensible at wide FOV
   const prox = L.st === 'sleep' ? 0 : clamp(1 - L.d / 10, 0, 1);
   // V2 camera feel: threat shake on both axes, plus the player's actual run/crouch/jump motion.
   const shakeX = rand(-1, 1) * prox * 2
@@ -1007,9 +1791,18 @@ function draw() {
   for (const g of gens) things.push({ x: g.x, y: g.y, c: GENS[g.done ? 1 : 0][Math.floor(t * (g.done ? 3 : 8)) & 1], h: .5, l: 0 });
   if (cheatWall) things.push({ x: cheatWall[0], y: cheatWall[1], c: cheatSign, h: .24, l: .48 });
   paintFuse(); things.push({ x: FUSE.x, y: FUSE.y, c: fuseCv, h: .75, l: 0 });
-  if (BATTERY.active) things.push({ x: BATTERY.x, y: BATTERY.y, c: batteryCv, h: .42, l: 0 });
+  if (BATTERY.active) things.push({ x: BATTERY.x, y: BATTERY.y, c: getWorldPickupArt('battery'), h: .42, l: 0, item3d: true });
+  for (const item of quarterPickups) if (item.active) things.push({ x: item.x, y: item.y, c: quarterCv, h: .34, l: 0, item3d: true });
+  for (const vm of vendingMachines) {
+    things.push({ kind: 'vending', ref: vm, x: vm.x, y: vm.y });
+    if (vm.drop && vm.drop.active) things.push({ x: vm.drop.x, y: vm.drop.y, c: getWorldPickupArt(vm.drop.type), h: .42, l: 0, item3d: true });
+    if (vm.state === 'eject' && vm.ejectT < .72) {
+      const p = clamp(vm.ejectT / .72, 0, 1);
+      things.push({ x: vm.x + vm.fx * (.34 + p * .38), y: vm.y + vm.fy * (.34 + p * .38), c: getWorldPickupArt(vm.prize), h: .34, l: .30 * (1 - p), item3d: true });
+    }
+  }
   things.sort((a, b) => Math.hypot(b.x - P.x, b.y - P.y) - Math.hypot(a.x - P.x, a.y - P.y));
-  for (const o of things) sprite(o, o.c, o.h, o.l);
+  for (const o of things) { if (o.kind === 'vending') drawVendingMachine(o.ref); else sprite(o, o.c, o.h, o.l); }
   ctx.restore();
 
   ctx.fillStyle = `rgba(0,0,0,${(1 - light) * (blackT > 0 ? 1 : .7)})`; ctx.fillRect(0, 0, RW, RH);   // flicker overlay
@@ -1023,15 +1816,27 @@ function draw() {
 
 
   drawTorchHud();
+  drawInventoryHud();
   if (shotgun) drawWeaponOverlay();
-  // HUD
-  for (let i = 0; i < gens.length; i++) { ctx.fillStyle = '#000'; ctx.fillRect(5 + i * 12, 5, 10, 8); ctx.fillStyle = i < fixed ? '#4f6' : '#733'; ctx.fillRect(6 + i * 12, 6, 8, 6); }
-  bar(6, 163, 70, 3, P.stam / 100, P.tired ? '#c22' : '#4c6'); bar(6, 170, 70, 3, 1 - P.bm, P.bm > .8 ? '#e33' : '#6af');
-  ctx.fillStyle = '#9cf'; ctx.beginPath(); ctx.ellipse(84, 171.5, 4, 2.6, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#000'; ctx.fillRect(83, 170.5, 2, 2);
+  // Compact generator status and player meters.
+  drawGeneratorHud();
+  const barX = 6, barW = 72, baseW = 60, bonusW = barW - baseW;
+  ctx.fillStyle = 'rgba(0,0,0,.68)'; ctx.fillRect(barX, 161, barW, 4);
+  ctx.fillStyle = P.tired ? '#c64b45' : '#4c6'; ctx.fillRect(barX, 162, baseW * clamp(Math.min(P.stam,100) / 100, 0, 1), 2);
+  if (P.energyBonus > 0) { ctx.fillStyle = '#e8a43a'; ctx.fillRect(barX + baseW, 162, bonusW * clamp(P.energyBonus / 30, 0, 1), 2); }
+  ctx.fillStyle = 'rgba(0,0,0,.68)'; ctx.fillRect(barX, 168, barW, 4);
+  ctx.fillStyle = P.bm > .8 ? '#e33' : '#6af'; ctx.fillRect(barX, 169, baseW * clamp(1 - P.bm, 0, 1), 2);
+  if (P.eyeBonus > 0) { ctx.fillStyle = '#b58bff'; ctx.fillRect(barX + baseW, 169, bonusW * clamp(P.eyeBonus / 5, 0, 1), 2); }
+  ctx.fillStyle = '#9cf'; ctx.beginPath(); ctx.ellipse(84, 170, 4, 2.6, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#000'; ctx.fillRect(83, 169, 2, 2);
   if (L.st === 'chase' && L.sees && !L.watching && closure() < .5 && Math.abs(L.rel) > Math.atan(P.fov) * .9) { const sd = L.rel > 0 ? 1 : -1, ax = sd > 0 ? RW - 6 : 6; ctx.fillStyle = '#e22'; ctx.beginPath(); ctx.moveTo(ax, RH / 2); ctx.lineTo(ax - sd * 12, RH / 2 - 9); ctx.lineTo(ax - sd * 12, RH / 2 + 9); ctx.fill(); }
-  if ((near && !fixing) || (nearFuse && !panelOpen) || nearBattery) {
+  if ((near && !fixing) || (nearFuse && !panelOpen) || nearBattery || nearQuarterPickup) {
     ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(RW / 2, 130, 8, 0, 7); ctx.fill(); txt('E', RW / 2, 134, 11, '#ffe14d');
-    if (nearBattery) txt('BATTERY  +10s', RW / 2, 145, 7, '#aaf2a0');
+    if (nearBattery) { const pickupName = ({battery:'BATTERY',energy:'ENERGY BAR',eyedrops:'EYE DROPS',bsoda:'BSODA',pewpew:'PEW PEW'})[nearBatteryPickup.type || 'battery'] || 'ITEM'; txt('PICK UP ' + pickupName, RW / 2, 145, 7, '#aaf2a0'); }
+    else if (nearQuarterPickup) txt('PICK UP QUARTER', RW / 2, 145, 7, '#e8c66d');
+  }
+  if (nearVendingMachine && !nearVendingMachine.used) {
+    const slot = inventory[selectedInventorySlot];
+    txt(slot && slot.type === 'quarter' ? 'LMB INSERT QUARTER' : 'SELECT A QUARTER · LMB', RW / 2, 155, 7, '#ffe14d');
   }
   if (fixing) bar(RW / 2 - 40, 114, 80, 5, fixing.p, '#ffe14d');
   if (msgT > 0) txt(msg, RW / 2, 165, 10, '#fff');
@@ -1058,7 +1863,7 @@ function draw() {
     ctx.fillStyle = 'rgba(0,0,0,.88)'; ctx.fillRect(0, 0, RW, RH);
     txt('SECRET ENDING', RW / 2, 52, 24, '#ffe14d');
     txt('LARS HAS BEEN DEFEATED.', RW / 2, 86, 13, '#fff');
-    txt('YOU FOUND THE VERY UNFAIR BUTTON.', RW / 2, 108, 8, '#aaa');
+    txt('YOU FOUND THE PEW PEW.', RW / 2, 108, 10, '#aaa');
     if (endT > 1.5) txt('SPACE TO PLAY AGAIN', RW / 2, 158, 11, '#ffe14d');
   }  // Final eyelid pass: deliberately above every HUD, panel and ending element.
   if (state === 'play') {
@@ -1090,20 +1895,36 @@ addEventListener('keydown', e => {
     return;
   }
 
+  if (state === 'play' && !panelOpen && /^Digit[1-3]$/.test(e.code)) {
+    selectedInventorySlot = Number(e.code.slice(5)) - 1; e.preventDefault(); return;
+  }
   const action = actionForCode(e.code);
-  if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code) || action) e.preventDefault();
+  if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code) || action || /^Digit[1-3]$/.test(e.code)) e.preventDefault();
   if (e.repeat) return;
-  if (state === 'play' && /^[a-z]$/i.test(e.key || '')) {
-    cheatBuffer = (cheatBuffer + e.key.toLowerCase()).slice(-6);
-    if (cheatBuffer === 'ssadad' && !shotgun) {
+  if (/^[a-z]$/i.test(e.key || '')) {
+    cheatBuffer = (cheatBuffer + e.key.toLowerCase()).slice(-7);
+    if (cheatBuffer.endsWith('extreme')) {
+      if (unlockExtreme() && state === 'play') { beep(740, .12, 'square', .1, 1180); beep(980, .18, 'triangle', .08, 660); }
+      cheatBuffer = '';
+    } else if (cheatBuffer.endsWith('lore')) {
+      if (!loreUnlocked) { loreUnlocked = true; saveModeProgress(); renderModeSelector(); animateModeUnlock('lore'); beep(740, .12, 'square', .1, 1180); beep(980, .18, 'triangle', .08, 660); }
+      cheatBuffer = '';
+    } else if (state === 'play' && cheatBuffer.endsWith('ssadad') && !shotgun) {
       shotgun = true; msg = 'CHEAT CODE ACCEPTED — SHOTGUN UNLOCKED'; msgT = 3;
       beep(740, .12, 'square', .1, 1180); beep(980, .18, 'triangle', .08, 660);
+      cheatBuffer = '';
     }
   }
   if (panelOpen && ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) return;
   if (panelOpen && action && action !== 'interact') return;
   keys[e.code] = true;
   if (action === 'blink' && state === 'play' && !panelOpen && P.blinkT < 0) blink(false);
+  if (action === 'interact' && state === 'play' && !panelOpen) {
+    if (nearBatteryPickup && collectWorldItem(nearBatteryPickup, ({battery:'BATTERY',energy:'ENERGY BAR',eyedrops:'EYE DROPS',bsoda:'BSODA',pewpew:'PEW PEW'})[nearBatteryPickup.type || 'battery'] || 'ITEM')) {
+      keys[e.code] = false; return;
+    }
+    if (nearQuarterPickup && collectWorldItem(nearQuarterPickup, 'QUARTER')) { keys[e.code] = false; return; }
+  }
   if (state === 'play') {
     if (action === 'interact' && nearFuse && !panelOpen) openPanel();
     else if ((action === 'interact' || e.code === 'Escape') && panelOpen) closePanel();
@@ -1114,29 +1935,30 @@ addEventListener('keydown', e => {
     else act();
   }
   if (e.code === 'Enter') act();
-  if (e.code === 'KeyX' && state === 'play') fireShot();
-  if (action === 'fovDown' || action === 'fovUp') {
-    baseFov = clamp(baseFov + (action === 'fovUp' ? .08 : -.08), .6, 1.7);
-    say('FOV ' + Math.round(2 * Math.atan(baseFov) * 180 / Math.PI), 1.5);
-  }
+  if (e.code === 'KeyX' && !action && state === 'play') fireShot();
+
   if (action === 'fullscreen') document.getElementById('fsBtn').click();
   if (action === 'torch' && state === 'play' && !panelOpen) {
     if (!torchOn && torchBattery <= 0) { say('NO TORCH BATTERY LEFT.', 1.8); beep(150, .08, 'square', .05); }
     else { torchOn = !torchOn; beep(torchOn ? 1200 : 420, .04, 'square', .055); }
-  }
-  if (action === 'interact' && state === 'play' && !panelOpen && nearBattery && BATTERY.active) {
-    BATTERY.active = false; torchBattery = Math.min(torchBatteryMax, torchBattery + 10);
-    msg = 'SPARE BATTERY +10 SECONDS'; msgT = 2.4; beep(760, .12, 'triangle', .09, 1180);
   }
 });
 addEventListener('keyup', e => keys[e.code] = false);
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; zoomHeld = false; P.eyeHold = 0; });
 cv.addEventListener('click', e => { if (panelOpen) { panelClick(e); return; } act(); if (state === 'play') lockMouse(); });
 cv.addEventListener('contextmenu', e => e.preventDefault());
-addEventListener('wheel', e => { if (state === 'play' && zoomHeld) { zoomScale = clamp(zoomScale + (e.deltaY < 0 ? .12 : -.12), .7, 1.6); e.preventDefault(); } }, { passive: false });
+addEventListener('wheel', e => {
+  if (state !== 'play') return;
+  if (zoomHeld) { zoomScale = clamp(zoomScale + (e.deltaY < 0 ? .12 : -.12), .7, 1.6); e.preventDefault(); return; }
+  selectedInventorySlot = (selectedInventorySlot + (e.deltaY > 0 ? 2 : 1)) % 3;
+  e.preventDefault();
+}, { passive: false });
 cv.addEventListener('mousedown', e => {
   if (e.button === 2) { if (state === 'play') { zoomHeld = true; lockMouse(); } e.preventDefault(); return; }
-  if (state === 'play' && shotgun && e.button === 0) fireShot();
+  if (state === 'play' && e.button === 0) {
+    if (useSelectedInventoryItem()) { e.preventDefault(); return; }
+    if (shotgun) fireShot();
+  }
 });
 addEventListener('mouseup', e => { if (e.button === 2) zoomHeld = false; });
 addEventListener('mousemove', e => { if (document.pointerLockElement === cv && state === 'play') P.a += e.movementX * .0024; });
@@ -1154,7 +1976,12 @@ let last = performance.now();
 function frame(now) {
   const dt = Math.min(.05, (now - last) / 1000); last = now;
   if (slowT > 0) { slowT -= dt; ts = .2 + .8 * Math.pow(1 - Math.max(0, slowT) / .7, 2); } else ts = 1;
-  update(dt * ts); draw(); requestAnimationFrame(frame);
+  const wasPlaying = state === 'play';
+  update(dt * ts);
+  if (wasPlaying && state !== 'play') { renderModeSelector(); if (document.exitPointerLock) document.exitPointerLock(); }
+  const endRunBtn = document.getElementById('endRunBtn');
+  if (endRunBtn) endRunBtn.hidden = state !== 'play';
+  draw(); requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
 </script>

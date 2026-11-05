@@ -10,21 +10,11 @@ funny 3d horror game where a guy named lars chases you around a procedurally gen
 4. if the lights go out, find the fusebox and restore the power.
 5. run to the EXIT door and escape.
 
+but new updates change objectives.
+
 ## controls
 
-* **`WASD`** - move
-* **`Mouse`** - look around (click the game to lock mouse)
-* **`Shift`** - sprint for your life
-* **`C`** - crouch
-* **`Space`** - jump (yes, you can jump over lars)
-* **`Q`** - blink (hold to keep your eyes shut)
-* **`RMB`** - squint / focus
-* **`Z`** - look over your shoulder
-* **`E` (Hold)** - fix gens u noob
-* **`E`** - interact with the fusebox
-* **`T`** - toggle torch
-* **`[` / `]`** - adjust FOV
-* **`F`** - fullscreen
+theyre all now remappable, and displayed on the thingy.
 
 ## how to run
 
