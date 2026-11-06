@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Lars Simulator v0.31</title>
+<title>Lars Simulator v0.33</title>
 <style>
 :root{--yellow:#ffe14d;--red:#c4160a;--ink:#111;color-scheme:dark}
 *{box-sizing:border-box}
@@ -20,6 +20,8 @@ h1{margin:6px 0 0;font-family:Arial,Helvetica,sans-serif;font-weight:700;letter-
 #fovControl{margin:10px 0 8px;padding-top:8px;border-top:1px solid #29231e}
 #fovControl label{display:flex;justify-content:space-between;color:#c9c3b7;font:12px Arial,sans-serif;margin-bottom:7px}
 #fovSlider{width:100%;accent-color:#ffe14d;cursor:pointer}
+.fovInputs{display:flex;align-items:center;gap:3px}
+#fovNumber{width:42px;min-width:0;padding:2px 3px;border:1px solid #514332;border-radius:3px;background:#0d0b09;color:#ffe7a8;font:12px Arial,sans-serif;text-align:center}
 #resetData{position:absolute;left:0;right:0;bottom:-38px;display:block;width:100%;font:11px Arial,sans-serif;color:#e0a3a3;background:#241313;border:1px solid #693535;border-radius:4px;padding:7px 5px;cursor:pointer}
 #resetData:hover{background:#421b1b;color:#fff}
 .key-button,.key-static{width:100%;min-height:25px;display:flex;align-items:center;justify-content:center;padding:3px 5px;border:1px solid #55483a;border-radius:4px;background:linear-gradient(#29231d,#17130f);color:#f0dfbd;font:700 12px Arial,Helvetica,sans-serif;letter-spacing:.04em;text-decoration:none;box-shadow:0 2px 0 #050403}
@@ -123,7 +125,8 @@ canvas{display:block;width:100%;height:100%;object-fit:contain;image-rendering:p
     <div class="bind-row"><button class="key-button" type="button" data-bind="lookBehind">Z</button><span>Look behind</span></div>
     <div class="bind-row"><button class="key-button" type="button" data-bind="torch">T</button><span>Toggle torch</span></div>
     <div class="bind-row"><button class="key-button" type="button" data-bind="fullscreen">F</button><span>Toggle fullscreen</span></div>
-    <div id="fovControl"><label for="fovSlider"><span>Field of view</span><output id="fovValue">63°</output></label><input id="fovSlider" type="range" min="0.6" max="1.7" step="0.01" value="1.1"></div>
+    <div class="bind-row"><button class="key-button" type="button" data-bind="drop">G</button><span>Drop selected item</span></div>
+    <div id="fovControl"><label for="fovSlider"><span>Field of view</span><span class="fovInputs"><input id="fovNumber" type="number" min="70" max="120" step="1" value="95" aria-label="Field of view in degrees">°</span></label><input id="fovSlider" type="range" min="70" max="120" step="1" value="95"></div>
     <p id="bindStatus">Click a key label to change it. Press Escape to cancel. WASD and mouse look stay fixed.</p>
     <button id="resetBinds" type="button">Reset default keys</button>
   </aside>
@@ -146,7 +149,7 @@ canvas{display:block;width:100%;height:100%;object-fit:contain;image-rendering:p
     <button id="resetData" type="button">Reset all data</button>
   </aside>
 </div>
-<div id="version">v0.31 · bugs included</div>
+<div id="version">v0.33 · bugs included</div>
 <a id="watermark" href="https://sites.google.com/view/blazewingz/home" target="_blank" rel="noopener noreferrer">bit.ly/blazewingz</a>
 <script>
 /* =========================================================
@@ -194,6 +197,18 @@ function larsFrame() {
     lc.translate(128, 128 - Math.abs(stride) * 1.8);
     lc.rotate(stride * .008);
     lc.drawImage(IMG[f], -128, -128, 256, 256);
+    lc.restore();
+  }
+  if (!power && !L.knocked) {
+    lc.save(); lc.globalCompositeOperation = 'lighter';
+    for (const [ex, ey] of [[87, 130], [171, 130]]) {
+      const glow = lc.createRadialGradient(ex, ey, 1, ex, ey, 15);
+      glow.addColorStop(0, 'rgba(255,245,190,.95)');
+      glow.addColorStop(.22, 'rgba(255,214,112,.72)');
+      glow.addColorStop(1, 'rgba(255,150,45,0)');
+      lc.fillStyle = glow; lc.beginPath(); lc.ellipse(ex, ey, 15, 9, 0, 0, Math.PI * 2); lc.fill();
+      lc.fillStyle = '#fff5c4'; lc.beginPath(); lc.ellipse(ex, ey, 3.2, 2.2, 0, 0, Math.PI * 2); lc.fill();
+    }
     lc.restore();
   }
   if (L.st === 'sleep') { lc.font = 'bold 30px Impact, sans-serif'; lc.fillStyle = '#fff'; lc.strokeStyle = '#000'; lc.lineWidth = 5;
@@ -303,6 +318,9 @@ for (const [type, url] of Object.entries(VENDING_ART_URLS)) {
   image.onerror = () => { VENDING_ART[type] = VENDING_FALLBACK_ART[type]; };
   image.src = url;
 }
+const ratImage = new Image();
+ratImage.crossOrigin = 'anonymous';
+ratImage.src = 'https://raw.githubusercontent.com/blazewingz/lars-simulator/main/assets/characters/rat.png';
 function getVendingArt(type) {
   const art = VENDING_ART[type] || VENDING_FALLBACK_ART[type] || batteryCv;
   if (art instanceof HTMLImageElement && (!art.complete || !art.naturalWidth)) return VENDING_FALLBACK_ART[type] || batteryCv;
@@ -458,7 +476,7 @@ function music(dt, prox) {                    // chase music: speeds up and gets
 const N = 40, map = Array.from({ length: N }, () => Array(N).fill('#'));
 const WALL = { '#': [200, 176, 70], B: [70, 130, 205], R: [175, 62, 50], G: [150, 150, 160], T: [60, 160, 135], D: [190, 160, 20] };
 const GEN_POS = [[7.5, 7.5], [23.5, 8.5], [11.5, 22.5], [19.5, 23.5]];
-let vendingMachines = [], quarterPickups = [], nearQuarterPickup = null, nearBatteryPickup = null, nearVendingMachine = null;
+let vendingMachines = [], quarterPickups = [], droppedItems = [], rat = null, nearQuarterPickup = null, nearBatteryPickup = null, nearVendingMachine = null;
 const SHUTTERS = [[21, 4], [8, 4], [4, 22]];            // opened in this order as generators get fixed
 const EXIT = { x: 24.5, y: 23.5 }, FIX_TIME = 6;
 const FLOORS = []; for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (map[y][x] === '.') FLOORS.push([x + .5, y + .5]);
@@ -470,10 +488,26 @@ function vendingBlocked(x, y) {
     return Math.abs(side) < vm.hw + .28 && Math.abs(front) < vm.hd + .28;
   });
 }
-const free = (x, y) => !(solid(x - .30, y - .30) || solid(x + .30, y - .30) || solid(x - .30, y + .30) || solid(x + .30, y + .30) || vendingBlocked(x, y));
-function los(x1, y1, x2, y2) {                 // can these two points see each other?
+function orientedPropBlocked(x, y, prop, pad = 0) {
+  if (!prop || !Number.isFinite(prop.x) || !Number.isFinite(prop.y)) return false;
+  const dx = x - prop.x, dy = y - prop.y;
+  const side = dx * (prop.rx || 0) + dy * (prop.ry || 0);
+  const front = dx * (prop.fx || 1) + dy * (prop.fy || 0);
+  return Math.abs(side) < (prop.hw || .2) + pad && Math.abs(front) < (prop.hd || .15) + pad;
+}
+function opaquePropBlocked(x, y) {
+  if (vendingBlocked(x, y)) return true;
+  if (gens && gens.some(g => orientedPropBlocked(x, y, g, .015))) return true;
+  if (typeof FUSE !== 'undefined' && orientedPropBlocked(x, y, FUSE, .015)) return true;
+  return false;
+}
+const free = (x, y) => !(solid(x - .30, y - .30) || solid(x + .30, y - .30) || solid(x - .30, y + .30) || solid(x + .30, y + .30) || opaquePropBlocked(x, y));
+function los(x1, y1, x2, y2) {                 // walls and tall cabinets block Lars's line of sight
   const d = Math.hypot(x2 - x1, y2 - y1), n = Math.ceil(d / .15);
-  for (let i = 1; i < n; i++) if (solid(x1 + (x2 - x1) * i / n, y1 + (y2 - y1) * i / n)) return false;
+  for (let i = 1; i < n; i++) {
+    const x = x1 + (x2 - x1) * i / n, y = y1 + (y2 - y1) * i / n;
+    if (solid(x, y) || opaquePropBlocked(x, y)) return false;
+  }
   return true;
 }
 function jitter(x, y, r) {                      // a random nearby floor spot (so noises are never pinpoint)
@@ -482,7 +516,7 @@ function jitter(x, y, r) {                      // a random nearby floor spot (s
 }
 
 /* ---------- State ---------- */
-const P = { x: 3, y: 3, a: 0, vx: 0, vy: 0, stam: 100, tired: false, fov: 1.1, fv: 1.1, bobP: 0, bm: 0, blinkT: -1, blinkInterval: 3, crouching: false, crouchAmount: 0, jumpZ: 0, jumpV: 0, jumpFov: 0, eyeHold: 0, lookBack: 0, lookFov: 0, energyBonus: 0, eyeBonus: 0 };
+const P = { x: 3, y: 3, a: 0, vx: 0, vy: 0, stam: 100, tired: false, fov: 1.1, fv: 1.1, bobP: 0, bm: 0, blinkT: -1, blinkInterval: 3, squintBlinkT: 0, crouching: false, crouchAmount: 0, jumpZ: 0, jumpV: 0, jumpFov: 0, eyeHold: 0, lookBack: 0, lookFov: 0, energyBonus: 0, eyeBonus: 0 };
 let L, gens, dist = new Int16Array(N * N), cheatWall = null;
 let state = 'title', t = 0, light = 1, bob = 0, msg = '', msgT = 0, time = 0, endT = 0, fixed = 0, fogD = 10;
 let wakeT = 30, clankT = 0, near = null, fixing = null, seenT = 0, routeT = 0, blackT = 0, blackIn = 30, shoutT = 8, hearT = 0, quip = '';
@@ -490,7 +524,7 @@ let speechCaption = '', speechCaptionTimer = 0, speechCaptionToken = 0, ambientB
 const zbuf = new Float32Array(RW), keys = {}, cam = { dx: 1, dy: 0 };
 const DEFAULT_BINDS = {
   sprint: 'ShiftLeft', crouch: 'KeyC', jump: 'Space', interact: 'KeyE', blink: 'KeyQ',
-  lookBehind: 'KeyZ', torch: 'KeyT', fullscreen: 'KeyF'
+  lookBehind: 'KeyZ', torch: 'KeyT', fullscreen: 'KeyF', drop: 'KeyG'
 };
 const BIND_STORAGE_KEY = 'lars-simulator-keybinds-v17';
 const FOV_STORAGE_KEY = 'lars-simulator-fov-v1';
@@ -584,7 +618,9 @@ try {
     const candidate = {}, used = new Set();
     let valid = true;
     for (const action of Object.keys(DEFAULT_BINDS)) {
-      const code = savedBinds[action];
+      let code = savedBinds[action];
+      // Existing saves predate the drop action; add G (or V if G is already taken).
+      if (action === 'drop' && (typeof code !== 'string' || !code)) code = used.has('KeyG') ? 'KeyV' : 'KeyG';
       if (typeof code !== 'string' || !code || BLOCKED_BINDS.has(code) || used.has(code)) { valid = false; break; }
       candidate[action] = code; used.add(code);
     }
@@ -634,26 +670,38 @@ document.getElementById('resetBinds').addEventListener('click', () => {
   setBindStatus('Default keybinds restored.');
 });
 renderKeybinds();
-// Keep the original FOV (1.1) unless this browser has a saved slider value.
+// FOV is shown and edited in degrees; baseFov remains tan(FOV/2) internally.
+const FOV_MIN_DEG = 70, FOV_MAX_DEG = 120;
+const fovInternalMin = Math.tan(FOV_MIN_DEG * Math.PI / 360);
+const fovInternalMax = Math.tan(FOV_MAX_DEG * Math.PI / 360);
 let baseFov = 1.1;
 try {
   const rawSavedFov = localStorage.getItem(FOV_STORAGE_KEY);
   if (rawSavedFov !== null) {
     const savedFov = Number(rawSavedFov);
-    if (Number.isFinite(savedFov) && savedFov >= .6 && savedFov <= 1.7) baseFov = savedFov;
+    if (Number.isFinite(savedFov)) baseFov = clamp(savedFov, fovInternalMin, fovInternalMax);
   }
 } catch(e) {}
-const fovSlider = document.getElementById('fovSlider'), fovValue = document.getElementById('fovValue');
-function syncFovControl() {
-  fovSlider.value = String(baseFov);
-  fovValue.value = Math.round(2 * Math.atan(baseFov) * 180 / Math.PI) + '°';
-  fovValue.textContent = fovValue.value;
+const fovSlider = document.getElementById('fovSlider'), fovNumber = document.getElementById('fovNumber');
+function currentFovDegrees() {
+  return clamp(Math.round(2 * Math.atan(baseFov) * 180 / Math.PI), FOV_MIN_DEG, FOV_MAX_DEG);
 }
-fovSlider.addEventListener('input', () => {
-  baseFov = Number(fovSlider.value);
+function syncFovControl() {
+  const degrees = currentFovDegrees();
+  fovSlider.value = String(degrees);
+  fovNumber.value = String(degrees);
+}
+function setFovDegrees(raw) {
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) return;
+  const degrees = clamp(Math.round(parsed), FOV_MIN_DEG, FOV_MAX_DEG);
+  baseFov = Math.tan(degrees * Math.PI / 360);
   syncFovControl();
   try { localStorage.setItem(FOV_STORAGE_KEY, String(baseFov)); } catch(e) {}
-});
+}
+fovSlider.addEventListener('input', () => setFovDegrees(fovSlider.value));
+fovNumber.addEventListener('change', () => setFovDegrees(fovNumber.value));
+fovNumber.addEventListener('keydown', e => { if (e.key === 'Enter') { setFovDegrees(fovNumber.value); fovNumber.blur(); } });
 syncFovControl();
 document.getElementById('resetData').addEventListener('click', () => {
   if (!window.confirm('Are you sure? This will erase all wins, fastest times, unlocks, selected mode, keybinds and FOV settings. This cannot be undone.')) return;
@@ -692,11 +740,11 @@ const QUIPS = [
 
 function start() {
   if (selectedMode === 'lore') { msg = 'LORE ACCURATE IS NOT RELEASED YET'; msgT = 3; return; }
-  audio(); genLevel(); buildFloor(); cheatWall = null; if (Math.random() < .1) { const options = FLOORS.filter(([x,y]) => Math.hypot(x - SPAWN[0], y - SPAWN[1]) > 5 && Math.hypot(x - EXIT.x, y - EXIT.y) > 3 && GEN_POS.every(([gx,gy]) => Math.hypot(x-gx,y-gy) > 2) && [[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy]) => map[(y|0)+dy]?.[(x|0)+dx] !== '.')); if (options.length) { const [sx,sy] = pick(options); const sides = [[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy]) => map[(sy|0)+dy]?.[(sx|0)+dx] !== '.'); const [dx,dy] = pick(sides); cheatWall = [sx + dx*.38, sy + dy*.38]; } } P.x = SPAWN[0]; P.y = SPAWN[1]; P.a = 0; P.vx = P.vy = 0; P.stam = 100; P.tired = false; P.bm = 0; P.blinkT = -1; P.crouching = false; P.crouchAmount = 0; P.jumpZ = P.jumpV = P.jumpFov = 0; P.eyeHold = 0; P.lookBack = 0; P.lookFov = 0; P.energyBonus = 0; P.eyeBonus = 0; P.blinkInterval = selectedMode === 'extreme' ? rand(5, 7) : rand(7, 9); P.blinkMode = 'normal'; speechCaption = ''; speechCaptionTimer = 0; ambientBreathT = rand(5, 9); cameraHeight = .5; zoomAmount = 0; zoomHeld = false; zoomScale = 1.0; shotgun = false; cheatBuffer = ''; shotCooldown = shotFlash = 0;
+  audio(); genLevel(); buildFloor(); cheatWall = null; if (Math.random() < .1) { const options = FLOORS.filter(([x,y]) => Math.hypot(x - SPAWN[0], y - SPAWN[1]) > 5 && Math.hypot(x - EXIT.x, y - EXIT.y) > 3 && GEN_POS.every(([gx,gy]) => Math.hypot(x-gx,y-gy) > 2) && [[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy]) => map[(y|0)+dy]?.[(x|0)+dx] !== '.')); if (options.length) { const [sx,sy] = pick(options); const sides = [[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy]) => map[(sy|0)+dy]?.[(sx|0)+dx] !== '.'); const [dx,dy] = pick(sides); cheatWall = [sx + dx*.38, sy + dy*.38]; } } P.x = SPAWN[0]; P.y = SPAWN[1]; P.a = 0; P.vx = P.vy = 0; P.stam = 100; P.tired = false; P.bm = 0; P.blinkT = -1; P.squintBlinkT = 0; P.crouching = false; P.crouchAmount = 0; P.jumpZ = P.jumpV = P.jumpFov = 0; P.eyeHold = 0; P.lookBack = 0; P.lookFov = 0; P.energyBonus = 0; P.eyeBonus = 0; P.blinkInterval = selectedMode === 'extreme' ? rand(5, 7) : rand(7, 9); P.blinkMode = 'normal'; speechCaption = ''; speechCaptionTimer = 0; ambientBreathT = rand(5, 9); cameraHeight = .5; zoomAmount = 0; zoomHeld = false; zoomScale = 1.0; shotgun = false; cheatBuffer = ''; shotCooldown = shotFlash = 0;
   torchOn = false; torchBaseBattery = 20; torchBonusBattery = 0; torchBattery = 20; torchPower = 0; torchFlicker = 1; nearBattery = false; inventory = [null, null, null]; selectedInventorySlot = 0;
-  gens = GEN_POS.slice(0, selectedMode === 'extreme' ? 5 : 4).map(([x, y]) => ({ x, y, p: 0, done: false }));
+  gens = GEN_POS.slice(0, selectedMode === 'extreme' ? 5 : 4).map(([x, y]) => ({ x, y, p: 0, done: false, hw: .255, hd: .19, height: .88, bodyScale: 1, heightScale: 1, ...propOrientationAt(x, y) }));
   for (const [x, y] of SHUTTERS) map[y][x] = 'D';
-  L = { x: LSPAWN[0], y: LSPAWN[1], a: 0, st: 'sleep', tx: 0, ty: 0, lx: 0, ly: 0, lostT: 0, waitT: 0, searchPasses: 0, stepT: 0, d: 99, sees: false, mom: 0, watching: false, rel: 0, gait: 0, pauseT: 0, fuse: false, knocked: false, knockT: 0, flashStun: 0, flashDaze: 0, flashTagged: false, flashStunUsed: false };
+  L = { x: LSPAWN[0], y: LSPAWN[1], a: 0, st: 'sleep', tx: 0, ty: 0, lx: 0, ly: 0, lostT: 0, waitT: 0, searchPasses: 0, stepT: 0, d: 99, sees: false, mom: 0, watching: false, rel: 0, gait: 0, pauseT: 0, fuse: false, knocked: false, knockT: 0, flashStun: 0, flashDaze: 0, flashTagged: false, flashStunUsed: false, chairProp: false };
   ev = { dashT: -99, backT: -99, sprintT: -99, fixT: -99, blink: null, spot: '' }; P.fov = P.fv = baseFov;
   fixed = 0; time = 0; light = 1; power = true; fuseP = 0; fxT = punch = pvel = slowT = snapT = 0; panelOpen = false; wakeT = selectedMode === 'extreme' ? 22 : 30; blackT = 0; blackIn = selectedMode === 'extreme' ? rand(38, 55) : rand(55, 75); seenT = 0; shoutT = 8; deathAside = ''; state = 'play';
   say(selectedMode === 'extreme' ? 'EXTREME: FIX ALL 5 GENERATORS. LARS IS ALREADY CLOSER.' : 'Fix all 4 generators. Lars is asleep. DO NOT WAKE LARS.', 5);
@@ -705,7 +753,12 @@ function start() {
 }
 
 /* ---------- Procedural level: rooms + wide corridors + pillars, new every run ---------- */
-const FUSE = { x: 5.5, y: 5.5 };
+const FUSE = { x: 5.5, y: 5.5, hw: .19, hd: .13, height: 1.02, bodyScale: 1, heightScale: 1 };
+function propOrientationAt(x, y) {
+  const open = D4.filter(([dx,dy]) => map[(y|0) + dy]?.[(x|0) + dx] === '.');
+  const [fx, fy] = open[0] || [1, 0];
+  return { fx, fy, rx: -fy, ry: fx };
+}
 const BATTERY = { x: 8.5, y: 8.5, active: true };
 let inventory = [null, null, null], selectedInventorySlot = 0;
 let SPAWN = [3.5, 3.5], LSPAWN = [20.5, 20.5], power = true, fuseP = 0, nearFuse = false, nearBattery = false,
@@ -758,13 +811,13 @@ function genLevel() {
     for (const q of sh) for (let i = 2; i < q[5]; i++) map[q[2][1] + q[4] * i][q[2][0] + q[3] * i] = '.';
     FLOORS.length = 0; for (const [x, y] of fl) FLOORS.push([x + .5, y + .5]);
     GEN_POS.splice(0, 9, ...gp.map(c => [c[0] + .5, c[1] + .5])); SHUTTERS.splice(0, 9, ...sh.map(c => [c[0], c[1]]));
-    EXIT.x = ex[0] + .5; EXIT.y = ex[1] + .5; FUSE.x = fu[0] + .5; FUSE.y = fu[1] + .5; SPAWN = [st[0] + .5, st[1] + .5]; LSPAWN = [lc[0] + .5, lc[1] + .5];
+    EXIT.x = ex[0] + .5; EXIT.y = ex[1] + .5; FUSE.x = fu[0] + .5; FUSE.y = fu[1] + .5; Object.assign(FUSE, propOrientationAt(FUSE.x, FUSE.y)); SPAWN = [st[0] + .5, st[1] + .5]; LSPAWN = [lc[0] + .5, lc[1] + .5];
     const bp = pick(fl.filter(c => dd(c) > maxd * .42 && Math.hypot(c[0] - st[0], c[1] - st[1]) > 8 &&
       gp.every(g => Math.hypot(g[0] - c[0], g[1] - c[1]) > 4) && Math.hypot(ex[0] - c[0], ex[1] - c[1]) > 4));
     const batteryFloor = bp || pick(fl); BATTERY.x = batteryFloor[0] + .5; BATTERY.y = batteryFloor[1] + .5; BATTERY.active = true;
 
     // Every map gets one physical vending machine; a second appears on 25% of maps.
-    vendingMachines = []; quarterPickups = [];
+    vendingMachines = []; quarterPickups = []; droppedItems = []; rat = null;
     const machineCount = Math.random() < .25 ? 2 : 1;
     const machineCandidates = fl.filter(c => {
       const x = c[0] + .5, y = c[1] + .5;
@@ -805,7 +858,7 @@ function genLevel() {
       const [fx, fy] = openDirs[0] || [1,0];
       const facing = Math.atan2(fy, fx);
       vendingMachines.push({ x: c[0] + .5, y: c[1] + .5, facing, fx, fy, rx: -fy, ry: fx,
-        hw: .34, hd: .25, height: 1.37, state: 'ready', used: false, glitchT: 0, spinT: 0, ejectT: 0, prize: null, stock: VENDING_PRIZES.slice().sort(() => Math.random() - .5).slice(0, 3), drop: null });
+        hw: .34, hd: .25, height: 1.37, state: 'ready', used: false, glitchT: 0, spinT: 0, ejectT: 0, resetT: 0, prize: null, stock: VENDING_PRIZES.slice().sort(() => Math.random() - .5).slice(0, 3), drops: [] });
     }
     // A quarter is placed for each machine, separate from the naturally spawning spare battery.
     let coinCandidates = fl.filter(c => {
@@ -816,7 +869,7 @@ function genLevel() {
         gp.every(g => Math.hypot(x - g[0], y - g[1]) > 1.8) &&
         vendingMachines.every(vm => Math.hypot(x - vm.x, y - vm.y) > 3.5);
     });
-    const coinCount = Math.min(6, 3 + vendingMachines.length * 2);
+    const coinCount = Math.min(5, 2 + vendingMachines.length * 2);
     let coinSpots = picks(coinCandidates, coinCount, 2.8);
     if (coinSpots.length < coinCount) {
       const fallbackCoins = fl.filter(c => dd(c) > 3 &&
@@ -825,6 +878,18 @@ function genLevel() {
       coinSpots = coinSpots.concat(picks(fallbackCoins, coinCount - coinSpots.length, 1.8));
     }
     for (const c of coinSpots) quarterPickups.push({ type: 'quarter', x: c[0] + .5, y: c[1] + .5, active: true });
+
+    // Rubin is a rare, harmless ambient visitor. He never touches the generators.
+    if (Math.random() < .28) {
+      const ratSpots = fl.filter(c => dd(c) > 7 && Math.hypot(c[0] - st[0], c[1] - st[1]) > 5 &&
+        Math.hypot(c[0] - ex[0], c[1] - ex[1]) > 3 &&
+        gp.every(g => Math.hypot(c[0] - g[0], c[1] - g[1]) > 1.7) &&
+        vendingMachines.every(vm => Math.hypot(c[0] + .5 - vm.x, c[1] + .5 - vm.y) > 1.6));
+      if (ratSpots.length) {
+        const [rx, ry] = pick(ratSpots);
+        rat = { x: rx + .5, y: ry + .5, tx: null, ty: null, moveT: rand(.2, 1), soundT: rand(1, 2.8) };
+      }
+    }
     return;
   }
 }
@@ -850,17 +915,34 @@ function collectWorldItem(item, label) {
   beep(760, .10, 'triangle', .08, 1120);
   return true;
 }
+function dropSelectedInventoryItem() {
+  const slot = inventory[selectedInventorySlot];
+  if (!slot) { say('NOTHING TO DROP.', 1.2); return false; }
+  // Keep the special-ending item equipped once acquired; ordinary supplies can be dropped.
+  if (slot.type === 'pewpew') { say('THAT ONE STAYS WITH YOU.', 1.4); return false; }
+  let x = P.x + Math.cos(P.a) * .62, y = P.y + Math.sin(P.a) * .62;
+  if (!free(x, y)) { x = P.x - Math.sin(P.a) * .48; y = P.y + Math.cos(P.a) * .48; }
+  if (!free(x, y)) { say('THERE IS NO ROOM TO DROP THAT HERE.', 1.5); return false; }
+  droppedItems.push({ type: slot.type, x, y, active: true });
+  consumeInventoryItem();
+  say('ITEM DROPPED.', 1.2); beep(260, .07, 'triangle', .045, 150);
+  return true;
+}
 function startVendingMachine(vm) {
-  if (!vm || vm.used || vm.state !== 'ready') { say('THIS MACHINE HAS ALREADY BEEN USED.', 1.8); return false; }
+  if (!vm) return false;
+  if (vm.state !== 'ready') { say(vm.state === 'done' ? 'MACHINE IS RESETTING.' : 'MACHINE IS BUSY.', 1.5); return false; }
+  if (!vm.stock || !vm.stock.length) { say('THIS MACHINE IS OUT OF STOCK.', 1.8); return false; }
   const slot = inventory[selectedInventorySlot];
   if (!slot || slot.type !== 'quarter') { say('SELECT A QUARTER TO USE THIS MACHINE.', 2); beep(170, .08, 'square', .05); return false; }
   consumeInventoryItem();
-  vm.used = true; vm.state = 'glitch'; vm.glitchT = 0; vm.spinT = 0; vm.reelPosition = 0;
+  const stockIndex = Math.floor(Math.random() * vm.stock.length);
+  vm.prize = vm.stock.splice(stockIndex, 1)[0];
+  vm.used = vm.stock.length === 0;
+  vm.state = 'glitch'; vm.glitchT = 0; vm.spinT = 0; vm.reelPosition = 0;
   vm.reelStopIndex = 20; vm.reelVelocity = 18.37; vm.reelFriction = .9;
-  vm.prize = rollVendingPrize();
   vm.reelSymbols = Array.from({ length: 28 }, () => pick(VENDING_PRIZES));
   vm.reelSymbols[vm.reelStopIndex] = vm.prize;
-  vm.landT = 0; vm.ejectT = 0;
+  vm.landT = 0; vm.ejectT = 0; vm.resetT = 0;
   say('QUARTER ACCEPTED.', 1.2);
   beep(920, .055, 'square', .10, 180); noise(.16, .12); beep(170, .24, 'sawtooth', .055, 760);
   return true;
@@ -905,7 +987,7 @@ function useSelectedInventoryItem() {
   if (slot.type === 'bsoda') {
     if (L && L.d < 9 && los(P.x, P.y, L.x, L.y) && !L.knocked) {
       const away = Math.atan2(L.y - P.y, L.x - P.x);
-      L.knockback = { dx: Math.cos(away), dy: Math.sin(away), speed: 8.5, distance: 0, maxDistance: 12 };
+      L.knockback = { dx: Math.cos(away), dy: Math.sin(away), speed: 8.5, distance: 0, maxDistance: 12 }; L.chairProp = true;
       L.st = 'stunned'; L.sees = false; L.fuse = false; L.mom = 0;
       L.flashStun = Math.max(L.flashStun, 1.0); L.lx = L.x; L.ly = L.y;
       say('CHAIR BLAST. LARS IS FLYING BACK!', 2); noise(.22, .2); beep(240, .22, 'sawtooth', .09, 70); thud(.22, 0);
@@ -920,6 +1002,35 @@ function useSelectedInventoryItem() {
   }
   return false;
 }
+function updateRat(dt) {
+  if (!rat) return;
+  if (rat.tx == null || rat.ty == null) {
+    rat.moveT -= dt;
+    if (rat.moveT <= 0) {
+      const cx = Math.floor(rat.x), cy = Math.floor(rat.y);
+      const options = D4.filter(([dx,dy]) => map[cy + dy]?.[cx + dx] === '.');
+      if (options.length) {
+        const [dx,dy] = pick(options);
+        rat.tx = cx + dx + .5; rat.ty = cy + dy + .5;
+      }
+      rat.moveT = rand(.45, 1.1);
+    }
+  } else {
+    const dx = rat.tx - rat.x, dy = rat.ty - rat.y, d = Math.hypot(dx,dy);
+    const step = Math.min(d, dt * 1.45);
+    if (d > .001) { rat.x += dx / d * step; rat.y += dy / d * step; }
+    if (d <= .045) { rat.x = rat.tx; rat.y = rat.ty; rat.tx = rat.ty = null; rat.moveT = rand(.25, .8); }
+  }
+  rat.soundT -= dt;
+  if (rat.soundT <= 0) {
+    const rel = Math.atan2(rat.y - P.y, rat.x - P.x) - P.a;
+    const pan = Math.sin(rel);
+    sh(.075, .045, 'highpass', 1450, 2450, .9, pan, .004);
+    sh(.06, .026, 'bandpass', 800, 1500, 1.1, pan, .004);
+    rat.soundT = rand(2.1, 4.4);
+  }
+}
+
 function updateVendingMachines(dt) {
   for (const vm of vendingMachines) {
     if (vm.state === 'glitch') {
@@ -928,14 +1039,10 @@ function updateVendingMachines(dt) {
       if (vm.glitchT >= .88) { vm.state = 'spin'; vm.spinT = 0; beep(180, .18, 'sawtooth', .09, 1120); }
     } else if (vm.state === 'spin') {
       vm.spinT += dt;
-      // Integrate a spinning reel with friction: it keeps its momentum, then
-      // naturally loses speed instead of jumping because elapsed time is
-      // multiplied by a changing speed value.
       vm.reelPosition = (vm.reelPosition || 0) + (vm.reelVelocity || 0) * dt;
       vm.reelVelocity = (vm.reelVelocity || 0) * Math.exp(-(vm.reelFriction || .9) * dt);
       if (vm.spinT >= 4.4) {
-        vm.reelPosition = vm.reelStopIndex || 20;
-        vm.reelVelocity = 0;
+        vm.reelPosition = vm.reelStopIndex || 20; vm.reelVelocity = 0;
         vm.state = 'land'; vm.landT = 0; fxT = Math.max(fxT, .42);
         beep(520, .12, 'triangle', .12, 980); beep(1040, .16, 'sine', .10, 1560); noise(.12, .13); thud(.20, 0);
       }
@@ -945,10 +1052,17 @@ function updateVendingMachines(dt) {
     } else if (vm.state === 'eject') {
       vm.ejectT += dt;
       if (vm.ejectT >= .72) {
-        vm.state = 'done';
-        vm.drop = { type: vm.prize || 'battery', x: vm.x + vm.fx * .74, y: vm.y + vm.fy * .74, active: true };
+        vm.state = 'done'; vm.resetT = 0;
+        vm.drops = vm.drops || [];
+        vm.drops.push({ type: vm.prize || 'battery', x: vm.x + vm.fx * .74, y: vm.y + vm.fy * .74, active: true });
         beep(280, .12, 'square', .10, 150); beep(620, .16, 'triangle', .07, 1040); thud(.18, 0);
         say('YOUR ITEM IS READY. PICK IT UP.', 2.2);
+      }
+    } else if (vm.state === 'done') {
+      vm.resetT = (vm.resetT || 0) + dt;
+      if (vm.resetT >= 3) {
+        vm.state = vm.stock && vm.stock.length ? 'ready' : 'empty';
+        vm.prize = null; vm.resetT = 0;
       }
     }
   }
@@ -1012,10 +1126,10 @@ function spotted() {                           // Evade-style SEEN moment: flash
 }
 const blinkClosure = () => P.blinkT < 0 ? 0 : P.blinkT < .10 ? P.blinkT / .10 : P.blinkT < .24 ? 1 : clamp(1 - (P.blinkT - .24) / .10, 0, 1);
 const closure = () => Math.max(blinkClosure(), P.eyeHold);
-function blink(forced) {
+function blink(forced, preserveDryness = false) {
   if (P.blinkT < 0) {
     P.blinkT = 0;
-    P.bm = 0;
+    if (!preserveDryness) P.bm = 0;
     P.blinkInterval = (selectedMode === 'extreme' ? rand(5, 7) : rand(7, 9)) + P.eyeBonus;
     ev.blink = { t: time, d: L ? L.d : 99, forced: !!forced };
     beep(200, .06, 'sine', .04, 120);
@@ -1087,7 +1201,7 @@ function updateLars(dt) {
     L.a = Math.atan2(kb.dy, kb.dx); L.gait += kb.speed * dt * 2.4;
     L.d = Math.hypot(L.x - P.x, L.y - P.y); L.lx = L.x; L.ly = L.y;
     if (blocked || kb.distance >= kb.maxDistance) {
-      L.knockback = null; L.flashStun = Math.max(L.flashStun, 1.0);
+      L.knockback = null; L.chairProp = false; L.flashStun = Math.max(L.flashStun, 1.0);
       if (L.st === 'stunned') L.st = 'search';
     }
     return;
@@ -1168,6 +1282,7 @@ function update(dt) {
   if (state !== 'play') { endT += dt; if (droneG) droneG.gain.value = 0; if (chaseG) chaseG.gain.value = 0; if (lbG) lbG.gain.value = 0; return; }
   time += dt;
   updateVendingMachines(dt);
+  updateRat(dt);
   P.energyBonus = Math.max(0, P.energyBonus - dt * 1.5);
   P.eyeBonus = Math.max(0, P.eyeBonus - dt * .20);
 
@@ -1200,6 +1315,13 @@ function update(dt) {
     P.bm += dt / P.blinkInterval;
     if (P.bm >= 1) blink(true);
   }
+  if (zoomHeld && !panelOpen) {
+    P.squintBlinkT -= dt;
+    if (P.squintBlinkT <= 0 && P.blinkT < 0 && P.eyeHold < .08) {
+      blink(false, true);
+      P.squintBlinkT = rand(1, 2);
+    }
+  } else P.squintBlinkT = 0;
   if (speechCaptionTimer > 0) speechCaptionTimer = Math.max(0, speechCaptionTimer - dt);
   if ((ambientBreathT -= dt) <= 0) {
     if (!actionDown('sprint') && !P.crouching && P.eyeHold < .2) sh(.62, .022, 'bandpass', 760, 490, .85, 0, .16);
@@ -1263,7 +1385,8 @@ function update(dt) {
   nearBatteryPickup = null; nearBattery = false; nearQuarterPickup = null; nearVendingMachine = null;
   const worldPickups = [];
   if (BATTERY.active) { BATTERY.type = 'battery'; worldPickups.push(BATTERY); }
-  for (const vm of vendingMachines) if (vm.drop && vm.drop.active) worldPickups.push(vm.drop);
+  for (const vm of vendingMachines) for (const drop of (vm.drops || [])) if (drop.active) worldPickups.push(drop);
+  for (const drop of droppedItems) if (drop.active) worldPickups.push(drop);
   for (const item of worldPickups) {
     const d = Math.hypot(item.x - P.x, item.y - P.y);
     if (d < 1.35 && (!nearBatteryPickup || d < Math.hypot(nearBatteryPickup.x - P.x, nearBatteryPickup.y - P.y))) nearBatteryPickup = item;
@@ -1361,20 +1484,20 @@ function sprite(o, c, hScale, lift) {
   if (ty < .15) return;
   const sx = (RW / 2) * (1 + tx / ty), lh = vk / ty, size = lh * hScale, w = size * c.width / c.height * (RW / (2 * P.fov)) / vk;
   const top = RH / 2 + lh * cameraHeight - size - lh * lift;
-  const ambientSpriteLight = power ? 1 : (torchOn && torchBattery > 0 ? .42 : .012);
+  const ambientSpriteLight = power ? 1 : (torchOn && torchBattery > 0 ? .98 : .90);
   const left = Math.max(0, Math.floor(sx - w / 2)), right = Math.min(RW, sx + w / 2);
-  ctx.globalAlpha = clamp(1.3 - ty / (fogD + FL * .5), 0, 1) * ambientSpriteLight;
+  const spriteFogAlpha = clamp(1.3 - ty / (fogD + FL * .5), 0, 1);
+  ctx.globalAlpha = (power ? spriteFogAlpha : Math.max(.24, spriteFogAlpha)) * ambientSpriteLight;
   if (o.item3d) {
-    // Extruded side layers make the pickup read as a little object rather than
-    // a flat cut-out. Every layer is still depth-tested against the world walls.
-    for (let d = 3; d >= 1; d--) {
-      ctx.filter = 'brightness(.20) saturate(.55)';
-      for (let x = left; x < right; x++) {
-        const targetX = Math.min(RW - 1, x + d);
-        if (ty >= zbuf[targetX]) continue;
-        const sourceX = Math.min(c.width - 1, (x - (sx - w / 2)) / w * c.width);
-        ctx.drawImage(c, sourceX, 0, Math.max(1, c.width / w), c.height, targetX, top + d, 1, size);
-      }
+    // A small, flat contact shadow stays directly beneath the pickup.
+    // It scales with perspective and no longer grows into a deep offset silhouette.
+    const floorY = RH / 2 + lh * cameraHeight;
+    const shadowCol = Math.max(0, Math.min(RW - 1, Math.round(sx)));
+    if (ty < zbuf[shadowCol]) {
+      ctx.save(); ctx.globalAlpha *= .22; ctx.fillStyle = '#000';
+      ctx.beginPath();
+      ctx.ellipse(sx + 1, floorY + .4, Math.max(1, w * .19), Math.max(.8, lh * .018), 0, 0, Math.PI * 2);
+      ctx.fill(); ctx.restore();
     }
   }
   ctx.filter = 'none';
@@ -1454,14 +1577,18 @@ function drawFloor() {
 
 function drawTorchHud() {
   const x = RW - 12, y = 35, w = 5, h = 68, bottom = y + h;
-  const bonusSectionH = h / 3, baseSectionH = h - bonusSectionH;
+  // Only reserve a green section while bonus charge actually exists. Without
+  // reserve charge, the yellow base meter expands to use the full track.
+  const reserveActive = torchBonusBattery > .01;
+  const bonusSectionH = reserveActive ? h / 3 : 0;
+  const baseSectionH = h - bonusSectionH;
   const baseH = baseSectionH * clamp(torchBaseBattery / 20, 0, 1);
-  const bonusH = bonusSectionH * clamp(torchBonusBattery / 10, 0, 1);
+  const bonusH = reserveActive ? bonusSectionH * clamp(torchBonusBattery / 10, 0, 1) : 0;
   const greenTop = bottom - bonusSectionH;
-  // The bolt sits above the meter; yellow uses only the upper two thirds,
-  // while reserve charge occupies the bottom third and drains bottom-up.
+  ctx.fillStyle = 'rgba(0,0,0,.48)'; ctx.fillRect(x - 1, y - 1, w + 2, h + 2);
   ctx.strokeStyle = 'rgba(255,225,77,.55)'; ctx.lineWidth = 1; ctx.strokeRect(x - .5, y - .5, w + 1, h + 1);
   if (baseH > 0) { ctx.fillStyle = '#f2d23c'; ctx.fillRect(x + 1, greenTop - baseH, w - 2, baseH); }
+  // The reserve meter is anchored at its upper edge so it empties bottom-up.
   if (bonusH > 0) { ctx.fillStyle = '#42e26a'; ctx.fillRect(x + 1, greenTop, w - 2, bonusH); }
   ctx.fillStyle = '#ffe14d'; ctx.beginPath();
   ctx.moveTo(x + 3, 7); ctx.lineTo(x, 16); ctx.lineTo(x + 3, 16);
@@ -1517,14 +1644,13 @@ function drawGeneratorHud() {
   const x = 6, y = 6, w = 72, h = 13;
   ctx.save();
   ctx.globalAlpha = .64; rr(ctx, x, y, w, h, 'rgba(8,11,13,.88)');
-  ctx.globalAlpha = 1; ctx.font = '5px Arial'; ctx.textAlign = 'left'; ctx.fillStyle = '#b8c0bd';
-  ctx.fillText('GEN', x + 4, y + 5.5);
-  ctx.textAlign = 'right'; ctx.fillStyle = '#e9e9df'; ctx.fillText(fixed + '/' + gens.length, x + w - 4, y + 5.5);
-  const gx = x + 4, gy = y + 8, gw = w - 8, gap = 2, seg = (gw - gap * (gens.length - 1)) / gens.length;
-  for (let i = 0; i < gens.length; i++) rr(ctx, gx + i * (seg + gap), gy, seg, 2, i < fixed ? '#50e47c' : '#493538');
+  const gx = x + 4, gy = y + 4, gw = w - 8, gh = 5, gap = 2;
+  const seg = (gw - gap * (gens.length - 1)) / gens.length;
+  for (let i = 0; i < gens.length; i++) {
+    rr(ctx, gx + i * (seg + gap), gy, seg, gh, i < fixed ? '#50e47c' : '#493538');
+  }
   ctx.restore();
 }
-
 function drawWeaponOverlay() {
   const z = zoomAmount;
   const chosenGunImage = zoomHeld ? gunImageRmb : gunImageNormal;
@@ -1568,9 +1694,9 @@ function vendingRattle(vm) {
   return 0;
 }
 function projectVendingPoint(vm, u, v, z) {
-  const bodyScale = .80;
+  const bodyScale = vm.bodyScale ?? .80;
   const U = u * bodyScale + vendingRattle(vm), V = v * bodyScale;
-  z *= .54; // shorter appliance; it sits comfortably below the ceiling.
+  z *= vm.heightScale ?? .54;
   const wx = vm.x + vm.rx * U + vm.fx * V, wy = vm.y + vm.ry * U + vm.fy * V;
   const ex = wx - P.x, ey = wy - P.y;
   const ty = ex * cam.dx + ey * cam.dy;
@@ -1579,7 +1705,7 @@ function projectVendingPoint(vm, u, v, z) {
   return { x: RW / 2 * (1 + tx / ty), y: RH / 2 + vk * (cameraHeight - z) / ty, d: ty };
 }
 function vendingDepthAtColumn(vm, coords, pts, x) {
-  const bodyScale = .80, q = 2 * (x + .5) / RW - 1;
+  const bodyScale = vm.bodyScale ?? .80, q = 2 * (x + .5) / RW - 1;
   const rayX = cam.dx - cam.dy * P.fov * q, rayY = cam.dy + cam.dx * P.fov * q;
   const relX = P.x - vm.x, relY = P.y - vm.y;
   const u0 = relX * vm.rx + relY * vm.ry, v0 = relX * vm.fx + relY * vm.fy;
@@ -1634,20 +1760,23 @@ function vendingText(vm, u, v, z, text, color = '#f1df9c', localSize = .085, fon
   ctx.fillStyle = 'rgba(0,0,0,.8)'; ctx.fillText(text, p.x + .5, p.y + .5);
   ctx.fillStyle = color; ctx.fillText(text, p.x, p.y); ctx.restore();
 }
-function vendingImage(vm, art, u, z, worldW = .11, worldH = .18, alpha = 1) {
+function vendingImage(vm, art, u, z, worldW = .11, worldH = .18, alpha = 1, maxPx = 20) {
   if (!art) return;
   if (art instanceof HTMLImageElement && (!art.complete || !art.naturalWidth)) return;
   const p = projectVendingPoint(vm, u, vm.hd + .034, z);
   if (!p) return;
-  const w = (RW * .5) * worldW / Math.max(.15, p.d * P.fov);
-  const h = vk * worldH / Math.max(.15, p.d);
+  // Clamp in screen space: machines can be approached very closely, so pure
+  // world-space scaling made the product art enormous and caused reel overlap.
+  const w = Math.min(maxPx * .86, (RW * .5) * worldW / Math.max(.15, p.d * P.fov));
+  const h = Math.min(maxPx, vk * worldH / Math.max(.15, p.d));
   const left = Math.max(0, Math.floor(p.x - w / 2)), right = Math.min(RW, Math.ceil(p.x + w / 2));
   if (right <= left) return;
   ctx.save();
   const centreColumn = Math.max(0, Math.min(RW - 1, Math.round(p.x)));
   if (p.d < zbuf[centreColumn] - .015) {
-    ctx.globalAlpha = alpha * .24; ctx.fillStyle = '#000';
-    ctx.beginPath(); ctx.ellipse(p.x + 2, p.y + h * .38, Math.max(2, w * .42), Math.max(1, h * .075), 0, 0, Math.PI * 2); ctx.fill();
+    // Simple soft contact ellipse beneath each product, never a large offset shadow.
+    ctx.globalAlpha = alpha * .20; ctx.fillStyle = '#000';
+    ctx.beginPath(); ctx.ellipse(p.x + 1, p.y + h / 2 - .5, Math.max(1, w * .22), Math.max(.8, h * .045), 0, 0, Math.PI * 2); ctx.fill();
   }
   const drawLayer = (dx, dy, filter, layerAlpha) => {
     ctx.globalAlpha = layerAlpha; ctx.filter = filter;
@@ -1659,10 +1788,8 @@ function vendingImage(vm, art, u, z, worldW = .11, worldH = .18, alpha = 1) {
       ctx.drawImage(art, sourceX, 0, sw, art.height, targetX, p.y - h / 2 + dy, 1, h);
     }
   };
-  // Stacked dark passes supply visible thickness; the last pass is the artwork's face.
-  drawLayer(3, 2, 'brightness(.18) saturate(.5)', alpha * .9);
-  drawLayer(2, 1.5, 'brightness(.25) saturate(.55)', alpha * .92);
-  drawLayer(1, .75, 'brightness(.38) saturate(.65)', alpha * .96);
+  // A single offset face gives a hint of thickness without muddying small icons.
+  drawLayer(1, 1, 'brightness(.22) saturate(.55)', alpha * .82);
   drawLayer(0, 0, 'none', alpha);
   ctx.filter = 'none'; ctx.restore();
 }
@@ -1678,7 +1805,7 @@ function drawVendingMachine(vm) {
   ];
   const faceDepth = face => face.p.reduce((a,p) => a + Math.max(.16, (vm.x + vm.rx*p[0] + vm.fx*p[1] - P.x) * cam.dx + (vm.y + vm.ry*p[0] + vm.fy*p[1] - P.y) * cam.dy), 0) / face.p.length;
   faces.sort((a,b) => faceDepth(b) - faceDepth(a));
-  const ambient = power ? 1 : (torchOn && torchBattery > 0 ? .55 : .12);
+  const ambient = power ? 1 : (torchOn && torchBattery > 0 ? .98 : .90);
   for (const f of faces) drawVendingPoly(vm, f.p, f.c, ambient);
   // Product display is only drawn from the machine's front. From behind, the
   // player sees a plain solid cabinet rather than a second, backwards screen.
@@ -1691,22 +1818,24 @@ function drawVendingMachine(vm) {
   vendingRect(vm, -.237, .237, .024, .805, 1.292, '#07141a', ambient);
   vendingRect(vm, -.218, .218, .029, .825, 1.274, vm.state === 'ready' ? '#142d35' : '#090d12', ambient);
   if (vm.state === 'ready') {
-    const stock = vm.stock || ['battery','energy','eyedrops'];
-    const poses = [[-.135,1.08], [0,1.08], [.135,1.08]];
-    for (let i=0;i<3;i++) {
-      const [u,z] = poses[i];
-      vendingImage(vm, getVendingArt(stock[i]), u, z, .12, .21, ambient);
-      vendingRect(vm, u-.064, u+.064, .04, .91, .925, '#98a7a7', ambient);
-      vendingRect(vm, u-.064, u+.064, .04, .94, .952, '#d1d8d4', ambient);
+    const stock = vm.stock || [];
+    const poses = stock.length === 3 ? [-.145, 0, .145] : stock.length === 2 ? [-.105, .105] : [0];
+    for (let i=0;i<stock.length;i++) {
+      const u = poses[i], z = 1.08;
+      vendingImage(vm, getVendingArt(stock[i]), u, z, .085, .13, ambient, 17);
+      vendingRect(vm, u-.053, u+.053, .04, .91, .925, '#98a7a7', ambient);
+      vendingRect(vm, u-.053, u+.053, .04, .94, .952, '#d1d8d4', ambient);
     }
-    // Price marks are physical coin circles, not labels.
     vendingRect(vm, -.205, .205, .025, .845, .858, '#2a3b42', ambient);
-    for (let i=0;i<3;i++) vendingRect(vm, -.18+i*.18, -.15+i*.18, .031, .85, .855, '#d2b15e', ambient);
+    for (let i=0;i<stock.length;i++) vendingRect(vm, poses[i]-.025, poses[i]+.025, .031, .85, .855, '#d2b15e', ambient);
+  } else if (vm.state === 'empty') {
+    vendingRect(vm, -.215, .215, .032, .83, 1.27, '#11171c', ambient);
+    vendingText(vm, 0, .04, 1.05, 'SOLD OUT', '#d9b46a', .10, 'bold');
   } else if (vm.state === 'glitch') {
     const flick = Math.sin(vm.glitchT * 67) > 0;
     vendingRect(vm, -.215, .215, .032, .83, 1.27, flick ? '#5d174e' : '#102d41', ambient);
     const flashItem = VENDING_PRIZES[Math.floor(vm.glitchT * 18) % VENDING_PRIZES.length];
-    vendingImage(vm, getVendingArt(flashItem), Math.sin(vm.glitchT * 43) * .08, 1.05, .16, .24, flick ? 1 : .55);
+    vendingImage(vm, getVendingArt(flashItem), Math.sin(vm.glitchT * 43) * .08, 1.05, .09, .14, flick ? 1 : .55, 15);
     if (Math.sin(vm.glitchT * 31) > .55) vendingRect(vm,-.21,.21,.04,.83,1.27,'rgba(255,255,255,.22)',.35);
   } else if (vm.state === 'spin') {
     const step = .088, centreZ = 1.05;
@@ -1720,16 +1849,16 @@ function drawVendingMachine(vm) {
       if (z < .82 || z > 1.28) continue;
       const focus = clamp(1 - Math.abs(row - fraction) / 3, 0, 1);
       const scale = .44 + .56 * Math.pow(focus, .82);
-      vendingImage(vm, getVendingArt(type), 0, z, .17 * scale, .24 * scale, .98);
+      vendingImage(vm, getVendingArt(type), 0, z, .11 * scale, .16 * scale, .98, 13);
     }
     if (Math.sin(vm.spinT * 26) > .72) vendingRect(vm,-.21,.21,.04,.83,1.27,'rgba(255,255,255,.20)',.32);
   } else if (vm.state === 'land') {
     const flash = Math.sin(vm.landT * 68) > -.15;
     vendingRect(vm, -.215, .215, .032, .83, 1.27, flash ? '#8c6d20' : '#211b10', ambient);
-    vendingImage(vm, getVendingArt(vm.prize || 'battery'), 0, 1.05, .18, .27, flash ? 1 : .82);
+    vendingImage(vm, getVendingArt(vm.prize || 'battery'), 0, 1.05, .11, .16, flash ? 1 : .82, 20);
   } else {
     const prizeArt = getVendingArt(vm.prize || 'battery');
-    vendingImage(vm, prizeArt, 0, 1.075, .15, .25, vm.state === 'eject' ? 1 : .72);
+    vendingImage(vm, prizeArt, 0, 1.075, .10, .15, vm.state === 'eject' ? 1 : .72, 18);
     if (vm.state === 'done' && Math.sin(t*12)>0) vendingRect(vm,-.21,.21,.04,1.25,1.275,'#f3d768',.8);
   }
 
@@ -1756,6 +1885,96 @@ function drawVendingMachine(vm) {
   // No un-clipped side strokes: all visible detail is part of the depth-tested mesh.
 }
 
+
+function propFaces(prop, palette) {
+  const hw = prop.hw, hd = prop.hd, h = prop.height;
+  const faces = [
+    { p:[[-hw,-hd,0],[hw,-hd,0],[hw,hd,0],[-hw,hd,0]], c:palette.base },
+    { p:[[-hw,-hd,0],[-hw,hd,0],[-hw,hd,h],[-hw,-hd,h]], c:palette.left },
+    { p:[[hw,-hd,0],[hw,hd,0],[hw,hd,h],[hw,-hd,h]], c:palette.right },
+    { p:[[-hw,-hd,h],[hw,-hd,h],[hw,hd,h],[-hw,hd,h]], c:palette.top },
+    { p:[[-hw,-hd,h],[hw,-hd,h],[hw,-hd,0],[-hw,-hd,0]], c:palette.back },
+    { p:[[-hw,hd,h],[hw,hd,h],[hw,hd,0],[-hw,hd,0]], c:palette.front }
+  ];
+  const depth = face => face.p.reduce((sum,p) => sum + Math.max(.16,
+    (prop.x + prop.rx*p[0] + prop.fx*p[1] - P.x)*cam.dx +
+    (prop.y + prop.ry*p[0] + prop.fy*p[1] - P.y)*cam.dy), 0) / face.p.length;
+  faces.sort((a,b) => depth(b) - depth(a));
+  const ambient = power ? 1 : (torchOn && torchBattery > 0 ? .98 : .90);
+  for (const face of faces) drawVendingPoly(prop, face.p, face.c, ambient);
+  return ambient;
+}
+function drawGenerator3D(generator) {
+  const g = { ...generator, hw: generator.hw || .255, hd: generator.hd || .19, height: generator.height || .88, bodyScale:1, heightScale:1, state: generator.done ? 'done' : 'idle' };
+  const ambient = propFaces(g, { base:'#15191c', left:'#31383a', right:'#20272a', top:'#65706a', back:'#293033', front:'#46504d' });
+  const frontSide = (P.x-g.x)*g.fx + (P.y-g.y)*g.fy > .02;
+  if (!frontSide) return;
+  // Generator: chunky industrial cabinet, exposed vents, cable conduits and indicator lamps.
+  vendingRect(g,-.215,.215,.008,.12,.77,'#20282a',ambient);
+  vendingRect(g,-.185,.185,.016,.52,.735,'#11191b',ambient);
+  vendingRect(g,-.155,.155,.022,.565,.69,g.done?'#183b2a':'#3c2521',ambient);
+  for (let i=0;i<5;i++) vendingRect(g,-.145+i*.072,-.12+i*.072,.028,.60,.62,'#85918a',ambient);
+  vendingRect(g,-.19,.19,.012,.43,.46,'#b39435',ambient);
+  vendingRect(g,-.19,-.15,.024,.17,.38,'#101517',ambient);
+  for(let i=0;i<4;i++) vendingRect(g,-.17,-.10,.03,.20+i*.045,.215+i*.045,'#798783',ambient);
+  vendingRect(g,.10,.18,.024,.19,.39,'#111619',ambient);
+  drawVendingPoly(g,[[.13,g.hd+.035,.27],[.185,g.hd+.035,.27],[.185,g.hd+.035,.38],[.13,g.hd+.035,.38]],g.done?'#4dff91':'#e0b638',ambient);
+  vendingRect(g,-.22,.22,.018,.075,.105,'#8d9b92',ambient);
+  // Raised top cap and side cable box make the silhouette unlike the vending machine.
+  drawVendingPoly(g,[[-.15,-.025,.79],[.15,-.025,.79],[.15,.05,.79],[-.15,.05,.79]],'#87948b',ambient);
+  drawVendingPoly(g,[[g.hw+.002,-.13,.20],[g.hw+.002,.13,.20],[g.hw+.002,.13,.60],[g.hw+.002,-.13,.60]],'#111719',ambient);
+}
+function drawFuse3D() {
+  const f = { ...FUSE, hw:.19, hd:.13, height:1.02, bodyScale:1, heightScale:1, state:'fuse' };
+  const ambient = propFaces(f, { base:'#171b20', left:'#2b343a', right:'#111a20', top:'#7d8b8e', back:'#25323a', front:'#59666b' });
+  const frontSide = (P.x-f.x)*f.fx + (P.y-f.y)*f.fy > .02;
+  if (!frontSide) return;
+  // Narrow electrical breaker pedestal: fuse wells and a prominent red disconnect handle.
+  vendingRect(f,-.155,.155,.008,.17,.86,'#10171c',ambient);
+  vendingRect(f,-.135,.135,.016,.63,.81,'#29343a',ambient);
+  vendingRect(f,-.12,.12,.024,.66,.76,'#8b2823',ambient);
+  vendingRect(f,-.11,.11,.03,.695,.725,'#e6c25b',ambient);
+  for(let i=0;i<5;i++) {
+    const u=-.105+i*.052;
+    vendingRect(f,u-.018,u+.018,.03,.39,.61,'#090d11',ambient);
+    vendingRect(f,u-.013,u+.013,.035,power? .405 : (sw[i] ? .405 : .49),power? .48 : (sw[i] ? .48 : .565),power?'#54ec83':(sw[i]?'#54ec83':'#c33b34'),ambient);
+    vendingRect(f,u-.019,u+.019,.035,.37,.39,'#d3d9d2',ambient);
+  }
+  vendingRect(f,-.08,.08,.034,.23,.30,'#4d5d62',ambient);
+  // Master switch lever is a raised red diagonal slab.
+  drawVendingPoly(f,[[-.035,f.hd+.055,.25],[.025,f.hd+.055,.25],[.105,f.hd+.055,.43],[.045,f.hd+.055,.43]],'#b83a31',ambient);
+  vendingRect(f,-.15,.15,.02,.12,.15,'#c7ab55',ambient);
+}
+
+
+function drawLarsNightEyes() {
+  if (power || !L || L.knocked) return;
+  const ex = L.x - P.x, ey = L.y - P.y;
+  const inv = 1 / P.fov;
+  const tx = (cam.dx * ey - cam.dy * ex) * inv;
+  const ty = ex * cam.dx + ey * cam.dy;
+  if (ty <= .15) return;
+  const sx = RW / 2 * (1 + tx / ty);
+  const lh = vk / ty, size = lh * .95;
+  const width = size * RW / (2 * P.fov) / vk;
+  const top = RH / 2 + lh * cameraHeight - size - lh * .04;
+  for (const [ix, iy] of [[87, 130], [171, 130]]) {
+    const x = sx - width / 2 + ix / 256 * width;
+    const y = top + iy / 256 * size;
+    const col = Math.max(0, Math.min(RW - 1, Math.round(x)));
+    if (ty >= zbuf[col]) continue;
+    const r = clamp(width * .045, 2, 10);
+    const glow = ctx.createRadialGradient(x, y, .3, x, y, r);
+    glow.addColorStop(0, 'rgba(255,248,202,.98)');
+    glow.addColorStop(.2, 'rgba(255,218,132,.88)');
+    glow.addColorStop(.55, 'rgba(255,154,65,.36)');
+    glow.addColorStop(1, 'rgba(255,125,35,0)');
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff5cf'; ctx.beginPath(); ctx.arc(x, y, Math.max(.8, r * .17), 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+}
 
 function draw() {
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, RW, RH);
@@ -1788,24 +2007,28 @@ function draw() {
   larsFrame();
   const things = [{ x: EXIT.x, y: EXIT.y, c: fixed === gens.length ? exitOpen : exitShut, h: .95, l: 0 },
                   { x: L.x, y: L.y, c: larsC, h: L.knocked ? .54 : .95, l: .04 }];
-  for (const g of gens) things.push({ x: g.x, y: g.y, c: GENS[g.done ? 1 : 0][Math.floor(t * (g.done ? 3 : 8)) & 1], h: .5, l: 0 });
+  for (const g of gens) things.push({ kind:'generator', ref:g, x:g.x, y:g.y });
   if (cheatWall) things.push({ x: cheatWall[0], y: cheatWall[1], c: cheatSign, h: .24, l: .48 });
-  paintFuse(); things.push({ x: FUSE.x, y: FUSE.y, c: fuseCv, h: .75, l: 0 });
+  things.push({ kind:'fuse', x:FUSE.x, y:FUSE.y });
+  if (rat && ratImage.complete && ratImage.naturalWidth) things.push({ x:rat.x, y:rat.y, c:ratImage, h:.19, l:0, rat:true });
   if (BATTERY.active) things.push({ x: BATTERY.x, y: BATTERY.y, c: getWorldPickupArt('battery'), h: .42, l: 0, item3d: true });
   for (const item of quarterPickups) if (item.active) things.push({ x: item.x, y: item.y, c: quarterCv, h: .34, l: 0, item3d: true });
+  for (const item of droppedItems) if (item.active) things.push({ x: item.x, y: item.y, c: getWorldPickupArt(item.type), h: .42, l: 0, item3d: true });
   for (const vm of vendingMachines) {
     things.push({ kind: 'vending', ref: vm, x: vm.x, y: vm.y });
-    if (vm.drop && vm.drop.active) things.push({ x: vm.drop.x, y: vm.drop.y, c: getWorldPickupArt(vm.drop.type), h: .42, l: 0, item3d: true });
+    for (const drop of (vm.drops || [])) if (drop.active) things.push({ x: drop.x, y: drop.y, c: getWorldPickupArt(drop.type), h: .42, l: 0, item3d: true });
     if (vm.state === 'eject' && vm.ejectT < .72) {
       const p = clamp(vm.ejectT / .72, 0, 1);
       things.push({ x: vm.x + vm.fx * (.34 + p * .38), y: vm.y + vm.fy * (.34 + p * .38), c: getWorldPickupArt(vm.prize), h: .34, l: .30 * (1 - p), item3d: true });
     }
   }
   things.sort((a, b) => Math.hypot(b.x - P.x, b.y - P.y) - Math.hypot(a.x - P.x, a.y - P.y));
-  for (const o of things) { if (o.kind === 'vending') drawVendingMachine(o.ref); else sprite(o, o.c, o.h, o.l); }
+  for (const o of things) { if (o.kind === 'vending') drawVendingMachine(o.ref); else if (o.kind === 'generator') drawGenerator3D(o.ref); else if (o.kind === 'fuse') drawFuse3D(); else sprite(o, o.c, o.h, o.l); }
+  if (L.chairProp && L.knockback) sprite({ x:L.x - L.knockback.dx*.20, y:L.y - L.knockback.dy*.20 }, getVendingArt('bsoda'), .58, .015);
   ctx.restore();
 
-  ctx.fillStyle = `rgba(0,0,0,${(1 - light) * (blackT > 0 ? 1 : .7)})`; ctx.fillRect(0, 0, RW, RH);   // flicker overlay
+  ctx.fillStyle = `rgba(0,0,0,${(1 - light) * (blackT > 0 ? .48 : .56)})`; ctx.fillRect(0, 0, RW, RH);   // retain darkness without fading world objects into near-invisibility
+  drawLarsNightEyes();
   if (L.st === 'chase' && L.d < 8) { ctx.globalAlpha = (1 - L.d / 8) * .8; ctx.fillStyle = vig; ctx.fillRect(0, 0, RW, RH); ctx.globalAlpha = 1; }
   { const ca = clamp((L.st === 'chase' ? 1 - L.d / 9 : 0) + fxT * .7, 0, 1);               // Evade-style: colour bleeds at the edges and the screen pulses as he closes in
     if (ca > .04) { ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = ca * .2; ctx.drawImage(cv, -ca * 3, 0); ctx.drawImage(cv, ca * 3, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; }
@@ -1818,29 +2041,57 @@ function draw() {
   drawTorchHud();
   drawInventoryHud();
   if (shotgun) drawWeaponOverlay();
-  // Compact generator status and player meters.
+  // Compact generator status and continuous resource meters.
   drawGeneratorHud();
-  const barX = 6, barW = 72, baseW = 60, bonusW = barW - baseW;
-  ctx.fillStyle = 'rgba(0,0,0,.68)'; ctx.fillRect(barX, 161, barW, 4);
-  ctx.fillStyle = P.tired ? '#c64b45' : '#4c6'; ctx.fillRect(barX, 162, baseW * clamp(Math.min(P.stam,100) / 100, 0, 1), 2);
-  if (P.energyBonus > 0) { ctx.fillStyle = '#e8a43a'; ctx.fillRect(barX + baseW, 162, bonusW * clamp(P.energyBonus / 30, 0, 1), 2); }
+  const barX = 6, barW = 72, meterY = 161;
+  // Stamina: the orange bonus segment joins the green base segment directly.
+  const energyMax = 100 + Math.max(0, P.energyBonus);
+  const staminaBaseSlot = barW * (100 / energyMax);
+  const staminaBonusSlot = barW - staminaBaseSlot;
+  ctx.fillStyle = 'rgba(0,0,0,.68)'; ctx.fillRect(barX, meterY, barW, 4);
+  const staminaBaseFill = staminaBaseSlot * clamp(Math.min(P.stam, 100) / 100, 0, 1);
+  ctx.fillStyle = P.tired ? '#c64b45' : '#4c6';
+  ctx.fillRect(barX, meterY + 1, staminaBaseFill, 2);
+  if (P.energyBonus > .01 && P.stam > 100) {
+    const staminaBonusFill = staminaBonusSlot * clamp((P.stam - 100) / P.energyBonus, 0, 1);
+    ctx.fillStyle = '#e8a43a';
+    ctx.fillRect(barX + staminaBaseSlot, meterY + 1, staminaBonusFill, 2);
+  }
+
+  // Eye drops extend the same bar instead of reserving a permanently empty tail.
+  const eyeBaseInterval = 8;
+  const eyeTotalInterval = eyeBaseInterval + Math.max(0, P.eyeBonus);
+  const eyeBaseSlot = barW * eyeBaseInterval / eyeTotalInterval;
+  const eyeBonusSlot = barW - eyeBaseSlot;
+  const eyeRemaining = clamp(1 - P.bm, 0, 1);
   ctx.fillStyle = 'rgba(0,0,0,.68)'; ctx.fillRect(barX, 168, barW, 4);
-  ctx.fillStyle = P.bm > .8 ? '#e33' : '#6af'; ctx.fillRect(barX, 169, baseW * clamp(1 - P.bm, 0, 1), 2);
-  if (P.eyeBonus > 0) { ctx.fillStyle = '#b58bff'; ctx.fillRect(barX + baseW, 169, bonusW * clamp(P.eyeBonus / 5, 0, 1), 2); }
-  ctx.fillStyle = '#9cf'; ctx.beginPath(); ctx.ellipse(84, 170, 4, 2.6, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#000'; ctx.fillRect(83, 169, 2, 2);
+  ctx.fillStyle = P.bm > .8 ? '#e33' : '#6af';
+  ctx.fillRect(barX, 169, eyeBaseSlot * eyeRemaining, 2);
+  if (P.eyeBonus > .01) {
+    ctx.fillStyle = '#b58bff';
+    ctx.fillRect(barX + eyeBaseSlot, 169, eyeBonusSlot * eyeRemaining, 2);
+  }
+  // A clearer almond-shaped eye icon with an iris, pupil and highlight.
+  ctx.save();
+  ctx.lineWidth = .8; ctx.strokeStyle = '#7faec8'; ctx.fillStyle = '#d9f1fa';
+  ctx.beginPath(); ctx.moveTo(78.5, 170); ctx.bezierCurveTo(81, 165.5, 87, 165.5, 89.5, 170); ctx.bezierCurveTo(87, 174.5, 81, 174.5, 78.5, 170); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#62b7e9'; ctx.beginPath(); ctx.arc(84, 170, 2.8, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#172330'; ctx.beginPath(); ctx.arc(84, 170, 1.35, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.fillRect(83, 168.8, 1, 1);
+  ctx.restore();
   if (L.st === 'chase' && L.sees && !L.watching && closure() < .5 && Math.abs(L.rel) > Math.atan(P.fov) * .9) { const sd = L.rel > 0 ? 1 : -1, ax = sd > 0 ? RW - 6 : 6; ctx.fillStyle = '#e22'; ctx.beginPath(); ctx.moveTo(ax, RH / 2); ctx.lineTo(ax - sd * 12, RH / 2 - 9); ctx.lineTo(ax - sd * 12, RH / 2 + 9); ctx.fill(); }
   if ((near && !fixing) || (nearFuse && !panelOpen) || nearBattery || nearQuarterPickup) {
     ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(RW / 2, 130, 8, 0, 7); ctx.fill(); txt('E', RW / 2, 134, 11, '#ffe14d');
-    if (nearBattery) { const pickupName = ({battery:'BATTERY',energy:'ENERGY BAR',eyedrops:'EYE DROPS',bsoda:'BSODA',pewpew:'PEW PEW'})[nearBatteryPickup.type || 'battery'] || 'ITEM'; txt('PICK UP ' + pickupName, RW / 2, 145, 7, '#aaf2a0'); }
+    if (nearBattery) { const pickupName = ({battery:'BATTERY',energy:'ENERGY BAR',eyedrops:'EYE DROPS',bsoda:'BSODA',pewpew:'PEW PEW',quarter:'QUARTER'})[nearBatteryPickup.type || 'battery'] || 'ITEM'; txt('PICK UP ' + pickupName, RW / 2, 145, 7, '#aaf2a0'); }
     else if (nearQuarterPickup) txt('PICK UP QUARTER', RW / 2, 145, 7, '#e8c66d');
   }
-  if (nearVendingMachine && !nearVendingMachine.used) {
+  if (nearVendingMachine && nearVendingMachine.state === 'ready' && nearVendingMachine.stock?.length) {
     const slot = inventory[selectedInventorySlot];
     txt(slot && slot.type === 'quarter' ? 'LMB INSERT QUARTER' : 'SELECT A QUARTER · LMB', RW / 2, 155, 7, '#ffe14d');
   }
   if (fixing) bar(RW / 2 - 40, 114, 80, 5, fixing.p, '#ffe14d');
   if (msgT > 0) txt(msg, RW / 2, 165, 10, '#fff');
-  if (speechCaptionTimer > 0 && state === 'play') { txt(speechCaption, RW / 2, 154, 8, '#fff'); }
+  if (speechCaptionTimer > 0 && state === 'play') { txt(speechCaption, RW / 2, 133, 8, '#fff'); }
 
   if (panelOpen) drawPanel();
   if (state === 'dead') {                       // JUMPSCARE: the close-up zooms in, flashes negative, tears
@@ -1868,7 +2119,7 @@ function draw() {
   }  // Final eyelid pass: deliberately above every HUD, panel and ending element.
   if (state === 'play') {
     const lidClosure = closure();
-    const lidH = Math.max(lidClosure * RH * .52, zoomAmount * (9 + zoomScale * 10));
+    const lidH = Math.max(lidClosure * RH * .52, zoomAmount * (15 + zoomScale * 12));
     if (lidH > .5) { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, RW, lidH); ctx.fillRect(0, RH - lidH, RW, lidH + 1); }
   }
 }
@@ -1918,6 +2169,7 @@ addEventListener('keydown', e => {
   if (panelOpen && ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) return;
   if (panelOpen && action && action !== 'interact') return;
   keys[e.code] = true;
+  if (action === 'drop' && state === 'play' && !panelOpen) { dropSelectedInventoryItem(); keys[e.code] = false; return; }
   if (action === 'blink' && state === 'play' && !panelOpen && P.blinkT < 0) blink(false);
   if (action === 'interact' && state === 'play' && !panelOpen) {
     if (nearBatteryPickup && collectWorldItem(nearBatteryPickup, ({battery:'BATTERY',energy:'ENERGY BAR',eyedrops:'EYE DROPS',bsoda:'BSODA',pewpew:'PEW PEW'})[nearBatteryPickup.type || 'battery'] || 'ITEM')) {
@@ -1954,13 +2206,13 @@ addEventListener('wheel', e => {
   e.preventDefault();
 }, { passive: false });
 cv.addEventListener('mousedown', e => {
-  if (e.button === 2) { if (state === 'play') { zoomHeld = true; lockMouse(); } e.preventDefault(); return; }
+  if (e.button === 2) { if (state === 'play') { zoomHeld = true; P.squintBlinkT = rand(1, 2); lockMouse(); } e.preventDefault(); return; }
   if (state === 'play' && e.button === 0) {
     if (useSelectedInventoryItem()) { e.preventDefault(); return; }
     if (shotgun) fireShot();
   }
 });
-addEventListener('mouseup', e => { if (e.button === 2) zoomHeld = false; });
+addEventListener('mouseup', e => { if (e.button === 2) { zoomHeld = false; P.squintBlinkT = 0; } });
 addEventListener('mousemove', e => { if (document.pointerLockElement === cv && state === 'play') P.a += e.movementX * .0024; });
 
 /* ---------- Gun images: paste your two image URLs here ---------- */
