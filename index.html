@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Lars Simulator v0.33</title>
+<title>Lars Simulator v0.41</title>
 <style>
 :root{--yellow:#ffe14d;--red:#c4160a;--ink:#111;color-scheme:dark}
 *{box-sizing:border-box}
@@ -67,6 +67,48 @@ canvas{display:block;width:100%;height:100%;object-fit:contain;image-rendering:p
 .mode-button .lock{position:absolute;right:8px;top:8px;font-size:19px;color:#fff;text-shadow:0 1px 4px #000}
 #modeExplanation{min-height:42px;margin:0;color:#aaa;font:10px/1.4 Arial,sans-serif;text-align:center}
 #modeSelectorTitle{margin:0;color:#aaa;text-align:center;font:10px/1 Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase}
+#modeTabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;width:100%}
+.selector-tab{min-width:0;padding:7px 3px;border:1px solid #514332;border-radius:3px;background:#100e0c;color:#9d9588;font:700 8px Arial,sans-serif;letter-spacing:.06em;cursor:pointer}
+.selector-tab.selected{background:#33271a;border-color:#b28c52;color:#ffe5a7}
+.selector-tab:disabled{opacity:.4;cursor:default}
+#gameModeSelector{display:flex;flex-direction:column;gap:7px}
+.game-mode-button{position:relative;width:100%;height:82px;min-height:82px;padding:8px 7px;border:2px solid #393939;background:#171717;color:#eee;text-align:left;cursor:pointer;overflow:hidden;box-shadow:3px 3px 0 #000;display:flex;flex-direction:column;justify-content:center;gap:5px}
+.game-mode-button .mode-name{font-size:14px;font-weight:900;letter-spacing:.08em}
+.game-mode-button .mode-stats{font:10px/1.35 Arial,sans-serif;color:#c5c5c5}
+.game-mode-button.classic{background:linear-gradient(135deg,#263a32,#101b17);border-color:#4d8068}
+.game-mode-button.classic.selected{outline:2px solid #fff;outline-offset:2px;filter:brightness(1.2)}
+.game-mode-button.endless:disabled{opacity:.42;filter:grayscale(1);cursor:not-allowed}
+#gameModePanel[hidden],#difficultyPanel[hidden]{display:none!important}
+body.lore-mode .selector-tab{background:#10080a;border-color:#432027;color:#80666b;font-family:"Courier New",monospace}
+body.lore-mode .selector-tab.selected{background:#321018;border-color:#a13b48;color:#e0c6c9}
+body.lore-mode .game-mode-button{background:#0c080a;border-color:#3a1c22;color:#705b60;font-family:"Courier New",monospace}
+body.lore-mode .game-mode-button.classic.selected{background:linear-gradient(135deg,#321018,#10080b);border-color:#a13b48;color:#e0c6c9;filter:none}
+#leaderboardPanel{width:min(100%,1370px);padding:14px 16px;background:linear-gradient(145deg,#171411,#0b0a09);border:1px solid #332a22;box-shadow:4px 4px 0 #000;border-radius:5px;color:#ddd}
+#leaderboardHeader{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+#leaderboardTitle{margin:0;color:#e8ddc9;font:700 13px Arial,sans-serif;letter-spacing:.16em}
+#leaderboardFilter{display:block;margin-top:4px;color:#8d8579;font:10px Arial,sans-serif}
+#leaderboardControls{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+#leaderboardControls label{color:#b9ad99;font:10px Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+#leaderboardNickname{width:150px;max-width:42vw;padding:7px 8px;border:1px solid #514332;border-radius:3px;background:#0d0b09;color:#ffe7a8;font:12px Arial,sans-serif}
+#leaderboardNickname:focus{outline:2px solid #b28c52;outline-offset:1px}
+#leaderboardRefresh{padding:7px 10px;border:1px solid #514332;border-radius:3px;background:#211b15;color:#d2b98d;font:700 10px Arial,sans-serif;cursor:pointer}
+#leaderboardRefresh:hover{background:#382d20;color:#fff}
+#leaderboardStatus{min-height:15px;margin:0 0 8px;color:#847c70;font:10px/1.4 Arial,sans-serif}
+#leaderboardTable{width:100%;border-collapse:collapse;font:12px Arial,sans-serif}
+#leaderboardTable th{padding:8px 9px;border-bottom:1px solid #514332;color:#9c907c;text-align:left;font-size:9px;letter-spacing:.12em;text-transform:uppercase}
+#leaderboardTable td{padding:8px 9px;border-bottom:1px solid #27221c;color:#d8d0c2}
+#leaderboardTable tbody tr:not(.empty-row):first-child td{color:#ffe5a7}
+#leaderboardTable td:first-child,#leaderboardTable th:first-child{width:48px;color:#928675}
+#leaderboardTable td:last-child,#leaderboardTable th:last-child{text-align:right;font-variant-numeric:tabular-nums}
+#leaderboardTable .empty-row td{text-align:center;color:#7f776c;padding:18px 9px}
+body.lore-mode #leaderboardPanel{background:linear-gradient(145deg,#110b0d,#050405);border-color:#422025;box-shadow:4px 4px 0 #000,0 0 17px rgba(107,18,28,.12)}
+body.lore-mode #leaderboardTitle{color:#c9bdbd;font-family:"Courier New",monospace}
+body.lore-mode #leaderboardFilter,body.lore-mode #leaderboardStatus{color:#80666b;font-family:"Courier New",monospace}
+body.lore-mode #leaderboardNickname{background:#080506;border-color:#57252d;color:#d7b8bb}
+body.lore-mode #leaderboardRefresh{background:#170d10;border-color:#4b2027;color:#b48388;font-family:"Courier New",monospace}
+body.lore-mode #leaderboardTable th,body.lore-mode #leaderboardTable td{border-color:#32181d;color:#987b80;font-family:"Courier New",monospace}
+@media(max-width:780px){.selector-tab{font-size:7px;letter-spacing:0;padding:6px 1px}}
+@media(max-width:540px){#leaderboardPanel{padding:11px 9px}#leaderboardHeader{align-items:flex-start}#leaderboardNickname{width:125px}#leaderboardTable th,#leaderboardTable td{padding:7px 5px}}
 #below{width:100%;display:flex;flex-direction:column;align-items:center;gap:9px;margin-top:12px}
 #objective{max-width:760px;margin:0;text-align:center;font-size:14px;line-height:1.5;color:#c9c3b7}
 #hint{max-width:760px;margin:0;text-align:center;font-size:12px;line-height:1.5;color:#aaa;opacity:.75}
@@ -107,6 +149,108 @@ canvas{display:block;width:100%;height:100%;object-fit:contain;image-rendering:p
 #modeSelector{width:100%;flex:0 0 auto}
 .mode-button{width:100%;flex:0 0 82px;height:82px;min-height:82px}
 #resetData{position:static;margin-top:0}
+.mode-button.sandbox{background:linear-gradient(135deg,#184431,#0b2119);border-color:#397b56;color:#c9f4d8;font-family:Arial,sans-serif}
+#sandboxPanel{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:7px;margin-top:8px;padding:8px;background:rgba(10,20,14,.88);border:1px solid #31553e;border-radius:4px}
+#sandboxPanel[hidden],.mode-button[hidden]{display:none!important}
+#sandboxPanel button,#sandboxPanel select{min-height:27px;padding:5px 8px;background:#17241b;border:1px solid #496b52;border-radius:3px;color:#d9f4df;font:700 10px Arial,sans-serif;cursor:pointer}
+#sandboxPanel button:hover{background:#24452d;border-color:#78b88b}
+#sandboxPanel select{font-weight:400;cursor:pointer}
+.sandbox-tag{font:700 9px Arial,sans-serif;letter-spacing:.12em;color:#8ee5a8}
+@media(max-width:780px){#sandboxPanel{grid-column:1/-1}}
+
+
+/* v0.39 — camera input, Owen posture checks and item artwork. */
+#wrap{position:relative;isolation:isolate}
+#wrap::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;z-index:2;background:repeating-linear-gradient(to bottom,rgba(255,255,255,.035) 0,rgba(255,255,255,.035) 1px,transparent 1px,transparent 4px);mix-blend-mode:screen;transition:opacity .4s ease}
+body.lore-mode{background:radial-gradient(ellipse at 50% 18%,#170d10 0,#080607 46%,#020202 100%);color:#bdb5b5}
+body.lore-mode h1{font-family:"Courier New",monospace;font-size:clamp(18px,3.4vw,25px);font-weight:700;letter-spacing:.28em;color:#c9bdbd;text-shadow:0 0 8px rgba(145,20,30,.28),2px 2px 0 #21080b}
+body.lore-mode #gameLayout{filter:saturate(.72)}
+body.lore-mode #controlsPanel{background:linear-gradient(145deg,#110b0d,#050405);border-color:#422025;box-shadow:4px 4px 0 #000,0 0 17px rgba(107,18,28,.12)}
+body.lore-mode .bind-row{border-color:#291316}
+body.lore-mode .bind-row span{font-family:"Courier New",monospace;color:#9c8789;letter-spacing:.035em}
+body.lore-mode .bind-row .key-button{background:linear-gradient(#241014,#10090b);border-color:#612630;color:#d5a7aa;box-shadow:0 2px 0 #030203}
+body.lore-mode .bind-row .key-button:hover,body.lore-mode .bind-row .key-button.capturing{background:#48151d;border-color:#b33b49;color:#fff}
+body.lore-mode .bind-row .key-static{color:#392a2c}
+body.lore-mode #bindStatus{color:#775e62;font-family:"Courier New",monospace}
+body.lore-mode #resetBinds{background:#170d10;border-color:#4b2027;color:#b48388;font-family:"Courier New",monospace}
+body.lore-mode #fovControl{border-color:#32181d}
+body.lore-mode #fovControl label{color:#987b80;font-family:"Courier New",monospace}
+body.lore-mode #fovNumber{background:#080506;border-color:#57252d;color:#d7b8bb}
+body.lore-mode #fovSlider{accent-color:#9b2734}
+body.lore-mode #wrap{border-color:#060405;box-shadow:0 0 0 2px #4a171f,0 0 24px rgba(108,12,24,.28),8px 8px 0 #020102}
+body.lore-mode #wrap::after{opacity:.44}
+body.lore-mode #endRunBtn{background:rgba(15,4,7,.92);border-color:#61212b;color:#b7868d;font-family:"Courier New",monospace}
+body.lore-mode #fsBtn{background:#160b0e;border-color:#050204;color:#cdaeb2;box-shadow:2px 2px 0 #000;font-family:"Courier New",monospace;letter-spacing:.15em;text-transform:uppercase}
+body.lore-mode #modeSelectorTitle{color:#76565c;font-family:"Courier New",monospace;letter-spacing:.3em}
+body.lore-mode .mode-button{background:#0c080a!important;border-color:#3a1c22!important;color:#705b60;box-shadow:2px 2px 0 #000;font-family:"Courier New",monospace}
+body.lore-mode .mode-button .mode-name{letter-spacing:.22em;font-family:"Courier New",monospace;font-weight:700}
+body.lore-mode .mode-button.selected{background:linear-gradient(135deg,#321018,#10080b)!important;border-color:#a13b48!important;color:#e0c6c9;outline-color:#9f3a46;filter:none}
+body.lore-mode .mode-button .mode-stats{color:#8f7277;font-family:"Courier New",monospace}
+body.lore-mode #resetData{background:#10080a;border-color:#4b2027;color:#a77a80;font-family:"Courier New",monospace}
+body.lore-mode #objective{color:#a75c66;font:700 12px/1.4 "Courier New",monospace;letter-spacing:.28em;text-transform:lowercase;text-shadow:0 0 9px rgba(166,22,38,.25);margin-top:4px}
+body.lore-mode #hint,body.lore-mode #version,body.lore-mode #watermark{display:none!important}
+body.lore-mode #below{margin-top:9px;min-height:22px}
+body.lore-mode #sandboxPanel{filter:grayscale(.65);background:#080607;border-color:#342027}
+body.lore-mode #sandboxPanel button,body.lore-mode #sandboxPanel select{background:#170b10;border-color:#52232d;color:#c39da2}
+
+
+/* v0.41 profile and leaderboard layout */
+#gameLayout{grid-template-columns:205px minmax(0,1fr) 238px;gap:14px}
+#fsSide{width:100%;min-width:0;gap:10px}
+#modeTabs{display:flex;position:relative;gap:16px;width:100%;padding:0 0 7px;margin:3px 0 8px;border-bottom:1px solid #292929}
+#modeTabs::after{content:"";position:absolute;left:0;bottom:-1px;width:calc((100% - 16px)/2);height:2px;background:#fff;box-shadow:0 0 7px rgba(255,255,255,.25);transform:translateX(0);transition:transform .28s ease}
+#modeTabs.game-mode-active::after{transform:translateX(calc(100% + 16px))}
+.selector-tab{flex:1;min-width:0;padding:4px 0 5px;border:0;border-radius:0;background:transparent;color:#666;font:700 10px Arial,sans-serif;letter-spacing:.12em;text-align:center;cursor:pointer;transition:color .2s ease}
+.selector-tab.selected{background:transparent;border:0;color:#fff}
+.selector-tab:focus-visible{outline:1px solid #fff;outline-offset:3px}
+#modeSelector{gap:7px}
+#difficultyPanel,#gameModePanel{width:100%}
+#gameModeSelector{gap:7px}
+#playerProfile{width:100%;display:flex;flex-direction:column;gap:10px;margin-top:3px}
+#nicknameWrap{position:relative;width:100%;padding:0 2px 7px}
+#nicknameWrap::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent 0%,#656565 18%,#656565 82%,transparent 100%);transition:height .2s,filter .2s,opacity .2s}
+#nicknameWrap:focus-within::after{height:2px;background:linear-gradient(90deg,transparent 0%,#fff 20%,#fff 80%,transparent 100%);filter:drop-shadow(0 0 4px rgba(255,255,255,.5))}
+#leaderboardNickname{display:block;width:100%;max-width:none;padding:7px 4px 5px;border:0;border-radius:0;outline:0;background:transparent;color:#eee;font:13px Arial,sans-serif;letter-spacing:.07em;text-align:center}
+#leaderboardNickname::placeholder{color:#777;opacity:1}
+#leaderboardNickname:focus{outline:0}
+#saveKeyRow{display:flex;align-items:stretch;gap:5px;width:100%;min-width:0}
+#saveKeyField{display:block;min-width:0;width:100%;height:28px;padding:5px 6px;border:0;border-bottom:1px solid #383838;border-radius:0;background:#0b0b0b;color:#888;font:9px/1.2 Consolas,monospace;letter-spacing:.025em;outline:0}
+#saveKeyField:not([readonly]){border-bottom-color:#777;color:#ddd}
+#saveKeyField:not([readonly]):focus{border-bottom-color:#fff;box-shadow:0 2px 7px -4px #fff}
+#saveKeyField::placeholder{color:#666;opacity:1}
+#copySaveKey{flex:0 0 auto;padding:0 7px;border:0;border-bottom:1px solid #454545;background:transparent;color:#aaa;font:700 8px Arial,sans-serif;letter-spacing:.1em;cursor:pointer}
+#copySaveKey:hover{color:#fff;border-bottom-color:#fff}
+#copySaveKey[hidden]{display:none}
+#resetData{position:static;width:100%;margin:0;padding:7px 8px;border:1px solid #303030;border-radius:0;background:transparent;color:#555;font:10px Arial,sans-serif;letter-spacing:.04em;cursor:default;box-shadow:none;transition:color .2s,border-color .2s,box-shadow .2s}
+#resetData:disabled{opacity:1}
+#resetData.has-data{border-color:#777;color:#ddd;cursor:pointer;box-shadow:0 0 12px rgba(255,255,255,.10)}
+#resetData.has-data:hover{border-color:#fff;color:#fff;box-shadow:0 0 15px rgba(255,255,255,.2)}
+#leaderboardPanel{width:100%;min-width:0;margin-top:3px;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;color:#ddd}
+#leaderboardTable{width:100%;table-layout:fixed;border-collapse:collapse;font:10px Arial,sans-serif}
+#leaderboardTable th{padding:7px 3px;border-bottom:1px solid #353535;color:#777;text-align:left;font-size:8px;letter-spacing:.1em;text-transform:uppercase}
+#leaderboardTable td{padding:7px 3px;border-bottom:1px solid #202020;color:#c9c9c9;overflow-wrap:anywhere}
+#leaderboardTable th:first-child,#leaderboardTable td:first-child{width:34px;color:#858585}
+#leaderboardTable th:nth-child(2),#leaderboardTable td:nth-child(2){width:auto}
+#leaderboardTable th:last-child,#leaderboardTable td:last-child{text-align:right;width:70px;font-variant-numeric:tabular-nums;white-space:nowrap}
+#leaderboardTable tbody tr:not(.empty-row):first-child td{color:#fff}
+#leaderboardTable .empty-row td{text-align:center;color:#777;padding:14px 4px;line-height:1.5}
+.visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+body.lore-mode #leaderboardTable th,body.lore-mode #leaderboardTable td{border-color:#32181d;color:#987b80;font-family:"Courier New",monospace}
+body.lore-mode #leaderboardTable tbody tr:not(.empty-row):first-child td{color:#e0c6c9}
+body.lore-mode .selector-tab{background:transparent;border:0;color:#666}
+body.lore-mode .selector-tab.selected{background:transparent;border:0;color:#fff}
+body.lore-mode #leaderboardPanel{background:transparent;border:0;box-shadow:none}
+body.lore-mode #leaderboardNickname{border:0;background:transparent;color:#eee}
+body.lore-mode #resetData{background:transparent;border-color:#303030;color:#555;box-shadow:none}
+body.lore-mode #resetData.has-data{border-color:#777;color:#ddd;box-shadow:0 0 12px rgba(255,255,255,.10)}
+body.lore-mode #saveKeyField{background:#080506;color:#a98e93}
+body.lore-mode #saveKeyField:not([readonly]){color:#e0c6c9}
+body.lore-mode #nicknameWrap::after{background:linear-gradient(90deg,transparent 0%,#65454b 18%,#65454b 82%,transparent 100%)}
+body.lore-mode #nicknameWrap:focus-within::after{background:linear-gradient(90deg,transparent 0%,#fff 20%,#fff 80%,transparent 100%)}
+@media(max-width:1120px){#gameLayout{grid-template-columns:180px minmax(0,1fr) 220px;gap:10px}}
+@media(max-width:780px){#gameLayout{grid-template-columns:minmax(0,1fr) 220px;grid-template-areas:"game side" "controls controls";gap:10px}#fsSide{min-height:100%}}
+@media(max-width:540px){#gameLayout{grid-template-columns:minmax(0,1fr);grid-template-areas:"game" "side" "controls";gap:9px}#fsSide{width:100%;gap:10px}#modeTabs{max-width:300px;align-self:center}#playerProfile,#leaderboardPanel{max-width:100%}#leaderboardTable th:last-child,#leaderboardTable td:last-child{width:80px}}
+
 </style>
 </head>
 <body>
@@ -137,19 +281,57 @@ canvas{display:block;width:100%;height:100%;object-fit:contain;image-rendering:p
       <p id="objective">Restore power by repairing all four generators, then find the exit. Lars is somewhere in the building. Keep your eyes open.</p>
       <p id="hint">WASD MOVE · MOUSE LOOK · CHANGE THE OTHER KEYBINDS IN THE PANEL</p>
     </div>
+    <div id="sandboxPanel" hidden aria-label="Sandbox controls">
+      <span class="sandbox-tag">SANDBOX · INVINCIBLE · ESC TO ACCESS TOOLS</span>
+      <button type="button" id="sandboxLarsBtn">DISABLE LARS</button>
+      <select id="sandboxItemSelect" aria-label="Item to spawn">
+        <option value="battery">Battery</option><option value="quarter">Quarter</option><option value="energy">Energy bar</option><option value="eyedrops">Eye drops</option><option value="bsoda">BSODA chair</option><option value="pewpew">Pew Pew</option>
+      </select>
+      <button type="button" id="sandboxSpawnItem">SPAWN ITEM</button>
+      <button type="button" id="sandboxSpawnRat">SPAWN RUBIN</button>
+      <button type="button" id="sandboxSpawnOwen">SPAWN OWEN</button>
+    </div>
   </main>
   <aside id="fsSide">
     <button class="btn" id="fsBtn" type="button">fullscreen</button>
-    <div id="modeSelector" aria-label="Game mode">
-      <p id="modeSelectorTitle" style="grid-column:1/-1">Game mode</p>
-      <button class="mode-button normal selected" data-mode="normal" type="button"><span class="mode-name">NORMAL</span><span class="mode-stats" id="normalStats">0 wins · Best --</span></button>
-      <button class="mode-button extreme locked" data-mode="extreme" type="button" aria-label="Extreme locked" title="Win a Normal run to unlock Extreme."><span class="mode-name">EXTREME</span><span class="mode-stats" id="extremeStats">0 wins · Best --</span><span class="mode-unlock-note">WIN NORMAL TO UNLOCK</span><span class="lock" aria-hidden="true">🔒</span></button>
-      <button class="mode-button lore locked" data-mode="lore" type="button" aria-label="Lore Accurate unreleased" title="Not released yet. This is a placeholder."><span class="mode-name">LORE ACCURATE</span><span class="mode-stats" id="loreStats">0 wins · Best --</span><span class="mode-unlock-note">TYPE LORE TO UNLOCK</span><span class="lock" aria-hidden="true">🔒</span></button>
+    <div id="modeTabs" role="tablist" aria-label="Selection category">
+      <button class="selector-tab selected" id="difficultyTab" type="button" role="tab" aria-selected="true">DIFFICULTIES</button>
+      <button class="selector-tab" id="gameModesTab" type="button" role="tab" aria-selected="false">GAME MODES</button>
     </div>
-    <button id="resetData" type="button">Reset all data</button>
+    <div id="difficultyPanel" role="tabpanel">
+      <div id="modeSelector" aria-label="Difficulty">
+        <button class="mode-button normal selected" data-mode="normal" type="button"><span class="mode-name">NORMAL</span><span class="mode-stats" id="normalStats">0 wins · Best --</span></button>
+        <button class="mode-button extreme locked" data-mode="extreme" type="button" aria-label="Extreme locked" title="Win a Normal run to unlock Extreme."><span class="mode-name">EXTREME</span><span class="mode-stats" id="extremeStats">0 wins · Best --</span><span class="mode-unlock-note">WIN NORMAL TO UNLOCK</span><span class="lock" aria-hidden="true">🔒</span></button>
+        <button class="mode-button lore locked" data-mode="lore" type="button" aria-label="Lore Accurate locked" title="Type LORE to unlock."><span class="mode-name">LORE ACCURATE</span><span class="mode-stats" id="loreStats">0 wins · Best --</span><span class="mode-unlock-note">TYPE LORE TO UNLOCK</span><span class="lock" aria-hidden="true">🔒</span></button>
+        <button class="mode-button sandbox" data-mode="sandbox" type="button" hidden><span class="mode-name">SANDBOX</span><span class="mode-stats" id="sandboxStats">PRIVATE TEST MODE</span><span class="mode-unlock-note">PERSONAL TEST MODE</span></button>
+      </div>
+    </div>
+    <div id="gameModePanel" role="tabpanel" hidden>
+      <div id="gameModeSelector" aria-label="Game mode">
+        <button class="game-mode-button classic selected" data-game-mode="Classic" type="button"><span class="mode-name">CLASSIC</span><span class="mode-stats">Standard Lars Simulator run</span></button>
+        <button class="game-mode-button endless" data-game-mode="Endless" type="button" disabled aria-disabled="true"><span class="mode-name">ENDLESS</span><span class="mode-stats">COMING SOON</span></button>
+      </div>
+    </div>
+    <div id="playerProfile">
+      <div id="nicknameWrap">
+        <input id="leaderboardNickname" type="text" maxlength="20" autocomplete="nickname" placeholder="NICKNAME" aria-label="Nickname">
+      </div>
+      <div id="saveKeyRow">
+        <input id="saveKeyField" type="text" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Save key" placeholder="PASTE SAVE KEY TO IMPORT">
+        <button id="copySaveKey" type="button" aria-label="Copy save key" title="Copy save key">COPY</button>
+      </div>
+      <button id="resetData" type="button" disabled>Reset all data</button>
+    </div>
+    <section id="leaderboardPanel" aria-label="Speedrun leaderboard">
+      <table id="leaderboardTable">
+        <thead><tr><th>Rank</th><th>Nickname</th><th>Time</th></tr></thead>
+        <tbody id="leaderboardRows"><tr class="empty-row"><td colspan="3">Loading leaderboard…</td></tr></tbody>
+      </table>
+      <p id="leaderboardStatus" class="visually-hidden" role="status" aria-live="polite">Loading leaderboard…</p>
+    </section>
   </aside>
 </div>
-<div id="version">v0.33 · bugs included</div>
+<div id="version">v0.41 · bugs included</div>
 <a id="watermark" href="https://sites.google.com/view/blazewingz/home" target="_blank" rel="noopener noreferrer">bit.ly/blazewingz</a>
 <script>
 /* =========================================================
@@ -308,8 +490,10 @@ const VENDING_ART = { ...VENDING_FALLBACK_ART };
 // Hand-drawn canvases remain as a fallback if a remote image is unavailable.
 const VENDING_ART_URLS = {
   battery: 'https://raw.githubusercontent.com/blazewingz/lars-simulator/main/assets/battery.png',
+  energy: 'https://raw.githubusercontent.com/blazewingz/lars-simulator/main/assets/energy%20bar.png',
   bsoda: 'https://raw.githubusercontent.com/blazewingz/lars-simulator/main/assets/chair.png',
-  eyedrops: 'https://raw.githubusercontent.com/blazewingz/lars-simulator/main/assets/eye%20drops.png'
+  eyedrops: 'https://raw.githubusercontent.com/blazewingz/lars-simulator/main/assets/eye%20drops.png',
+  pewpew: 'https://raw.githubusercontent.com/blazewingz/lars-simulator/main/assets/pew%20pew.png'
 };
 for (const [type, url] of Object.entries(VENDING_ART_URLS)) {
   const image = new Image();
@@ -328,7 +512,7 @@ function getVendingArt(type) {
 }
 function getWorldPickupArt(type) {
   if (type === 'battery') return getVendingArt('battery'); // Use the supplied battery.png everywhere.
-  if (type === 'pewpew') return pewpewCv; // its supplied image is reserved for the machine and inventory.
+  if (type === 'pewpew') return getVendingArt('pewpew'); // supplied Pew Pew asset is used consistently.
   return getVendingArt(type);
 }
 // The machine's prize reel cycles through the standard supplies. It never
@@ -357,7 +541,7 @@ function paintFuse() {
 }
 
 /* ---------- Sound (synthesized, plus the browser's own voice for Lars) ---------- */
-let ac, masterG, droneG, chaseG, chaseO, chaseP, lbG, lbF, lbP, lbL, larsLoopToken = 0;
+let ac, masterG, droneG, chaseG, chaseO, chaseP, lbG, lbF, lbP, lbL, loreDroneG, loreOscA, loreOscB, larsLoopToken = 0;
 function audio() {
   try {
     if (ac && ac.state !== 'closed') {
@@ -380,6 +564,11 @@ function audio() {
     const lbM = ac.createGain(); lbM.gain.value = .5; lbL = ac.createOscillator(); lbL.frequency.value = .45; const lbA = ac.createGain(); lbA.gain.value = .5; lbL.connect(lbA).connect(lbM.gain);
     lbG = ac.createGain(); lbG.gain.value = 0; lbP = ac.createStereoPanner ? ac.createStereoPanner() : null;
     ns.connect(lbF).connect(lbM).connect(lbG); if (lbP) lbG.connect(lbP).connect(masterG); else lbG.connect(masterG); ns.start(); lbL.start();
+    loreDroneG = ac.createGain(); loreDroneG.gain.value = 0; loreDroneG.connect(masterG);
+    loreOscA = ac.createOscillator(); loreOscA.type = 'sine'; loreOscA.frequency.value = 31.8;
+    loreOscB = ac.createOscillator(); loreOscB.type = 'sine'; loreOscB.frequency.value = 32.45;
+    const loreFilter = ac.createBiquadFilter(); loreFilter.type = 'lowpass'; loreFilter.frequency.value = 115;
+    loreOscA.connect(loreFilter); loreOscB.connect(loreFilter); loreFilter.connect(loreDroneG); loreOscA.start(); loreOscB.start();
   } catch (e) {}
 }
 function beep(f, d, type = 'sine', vol = .1, slide = 0) {
@@ -413,16 +602,18 @@ function thud(vol, pan) {
     if (ac.createStereoPanner) { const p = ac.createStereoPanner(); p.pan.value = pan; g.connect(p).connect(masterG); } else g.connect(masterG); o.start(); o.stop(n + .16);
   } catch (e) {}
 }
-function lstep() {                                       // his shoes: heavier + louder close up, muffled through walls, panned to where he is
+function lstep() {                                       // mode-specific movement sound
   const v = Math.pow(clamp(1 - L.d / 17, 0, 1), 1.4), occ = (L.sees || L.d < 3) ? 1 : .5; if (v < .01) return;
-  const pan = Math.sin(Math.atan2(L.y - P.y, L.x - P.x) - (P.a + Math.PI * P.lookBack)); sh(.14, .5 * v * occ, 'lowpass', 420 * occ + 120, 160, .7, pan, .004); thud(.55 * v * occ, pan);
+  const pan = Math.sin(Math.atan2(L.y - P.y, L.x - P.x) - (P.a + Math.PI * P.lookBack));
+  if (selectedMode === 'lore') { sh(.22, .22 * v * occ, 'bandpass', 150 * occ + 45, 38, 1.8, pan, .015); thud(.76 * v * occ, pan); beep(42 + v * 9, .11, 'sine', .10 * v, 24); return; }
+  sh(.14, .5 * v * occ, 'lowpass', 420 * occ + 120, 160, .7, pan, .004); thud(.55 * v * occ, pan);
 }
 function silencePersistentAudio() {
   try {
     larsLoopToken++;
     if (ac) {
       const n = ac.currentTime;
-      for (const g of [droneG, chaseG, lbG]) if (g) {
+      for (const g of [droneG, chaseG, lbG, loreDroneG]) if (g) {
         g.gain.cancelScheduledValues(n); g.gain.setTargetAtTime(0, n, .035);
       }
     }
@@ -441,8 +632,9 @@ function jumpscareSound() {
     o.connect(g).connect(masterG); o.start(n); o.stop(n + .51);
   } catch (e) {}
 }
-function larsAudio() {                                   // runs every frame: you can always hear roughly where he is
+function larsAudio() {                                   // runs every frame: mode-specific location audio
   if (!lbG || !L) return;
+  if (selectedMode === 'lore') { lbG.gain.value = 0; if (chaseG) chaseG.gain.value = 0; return; }
   if (L.knocked) { lbG.gain.value = 0; if (chaseG) chaseG.gain.value = 0; return; }
   const asleep = L.st === 'sleep', chase = L.st === 'chase', d = L.d, rel = Math.atan2(L.y - P.y, L.x - P.x) - (P.a + Math.PI * P.lookBack), v = clamp(1 - d / (asleep ? 9 : 17), 0, 1), occ = (L.sees || d < 3) ? 1 : .45;
   lbG.gain.value = v * v * (asleep ? .2 : chase ? .4 : .3) * occ; lbF.frequency.value = (asleep ? 230 : chase ? 780 : 560) * (occ < 1 ? .65 : 1); lbL.frequency.value = asleep ? .22 : chase ? 1 : .5;
@@ -451,7 +643,7 @@ function larsAudio() {                                   // runs every frame: yo
 function shout(vol, words) {                  // Lars's spoken lines are captioned only while he speaks
   try {
     if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
-    const line = pick(words || ['I SEE YOU', 'dont run', 'come here', 'LARS', 'Lars, Lars, Lars, Lars', 'wait for me', 'where are you going']);
+    const line = pick(words || ['Lars', 'LARS!', 'Larrrrs', 'Lars is coming', 'Lars']);
     speechSynthesis.cancel();
     const token = ++speechCaptionToken;
     speechCaption = 'Lars: ' + line;
@@ -477,6 +669,7 @@ const N = 40, map = Array.from({ length: N }, () => Array(N).fill('#'));
 const WALL = { '#': [200, 176, 70], B: [70, 130, 205], R: [175, 62, 50], G: [150, 150, 160], T: [60, 160, 135], D: [190, 160, 20] };
 const GEN_POS = [[7.5, 7.5], [23.5, 8.5], [11.5, 22.5], [19.5, 23.5]];
 let vendingMachines = [], quarterPickups = [], droppedItems = [], rat = null, nearQuarterPickup = null, nearBatteryPickup = null, nearVendingMachine = null;
+let owen = null, owenSpawnCheck = 0, owenSpawnUsed = false;
 const SHUTTERS = [[21, 4], [8, 4], [4, 22]];            // opened in this order as generators get fixed
 const EXIT = { x: 24.5, y: 23.5 }, FIX_TIME = 6;
 const FLOORS = []; for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (map[y][x] === '.') FLOORS.push([x + .5, y + .5]);
@@ -495,13 +688,26 @@ function orientedPropBlocked(x, y, prop, pad = 0) {
   const front = dx * (prop.fx || 1) + dy * (prop.fy || 0);
   return Math.abs(side) < (prop.hw || .2) + pad && Math.abs(front) < (prop.hd || .15) + pad;
 }
-function opaquePropBlocked(x, y) {
+function opaquePropBlocked(x, y, allowLowGeneratorPass = false) {
   if (vendingBlocked(x, y)) return true;
-  if (gens && gens.some(g => orientedPropBlocked(x, y, g, .015))) return true;
+  // Generators are low enough to jump over; cabinets and vending machines remain solid.
+  if (!allowLowGeneratorPass && gens && gens.some(g => orientedPropBlocked(x, y, g, .015))) return true;
   if (typeof FUSE !== 'undefined' && orientedPropBlocked(x, y, FUSE, .015)) return true;
   return false;
 }
-const free = (x, y) => !(solid(x - .30, y - .30) || solid(x + .30, y - .30) || solid(x - .30, y + .30) || solid(x + .30, y + .30) || opaquePropBlocked(x, y));
+const free = (x, y, allowLowGeneratorPass = false) => !(solid(x - .30, y - .30) || solid(x + .30, y - .30) || solid(x - .30, y + .30) || solid(x + .30, y + .30) || opaquePropBlocked(x, y, allowLowGeneratorPass));
+function zoneForPosition(x, y) {
+  let best = Infinity, zone = '#';
+  const cx = x | 0, cy = y | 0;
+  for (let r = 1; r <= 4; r++) for (let oy = -r; oy <= r; oy++) for (let ox = -r; ox <= r; ox++) {
+    if (Math.max(Math.abs(ox), Math.abs(oy)) !== r) continue;
+    const ch = map[cy + oy]?.[cx + ox];
+    if (!ch || ch === '.' || ch === 'D') continue;
+    const d = ox * ox + oy * oy;
+    if (d < best) { best = d; zone = ch; }
+  }
+  return zone;
+}
 function los(x1, y1, x2, y2) {                 // walls and tall cabinets block Lars's line of sight
   const d = Math.hypot(x2 - x1, y2 - y1), n = Math.ceil(d / .15);
   for (let i = 1; i < n; i++) {
@@ -529,14 +735,26 @@ const DEFAULT_BINDS = {
 const BIND_STORAGE_KEY = 'lars-simulator-keybinds-v17';
 const FOV_STORAGE_KEY = 'lars-simulator-fov-v1';
 const PROGRESS_STORAGE_KEY = 'lars-simulator-progress-v1';
-let extremeUnlocked = false, loreUnlocked = false;
+const NICKNAME_STORAGE_KEY = 'lars-simulator-nickname-v1';
+const LEADERBOARD_ENDPOINT = 'https://script.google.com/macros/s/AKfycby05WfM7bGAfiW4rWoEp95UvzbqY5qMfgtMZwQ-oRVgnHh6v6uF0hDdz-tijRXbIFN4/exec';
+let playerNickname = '';
+let selectedGameMode = 'Classic';
+let extremeUnlocked = false, loreUnlocked = false, sandboxUnlocked = false, sandboxLarsEnabled = true;
 let selectedMode = 'normal';
 try {
   const savedProgress = JSON.parse(localStorage.getItem(PROGRESS_STORAGE_KEY) || 'null');
   extremeUnlocked = !!(savedProgress && savedProgress.extremeUnlocked === true);
   loreUnlocked = !!(savedProgress && savedProgress.loreUnlocked === true);
-  if (savedProgress && ['normal','extreme','lore'].includes(savedProgress.selectedMode)) selectedMode = savedProgress.selectedMode;
+  sandboxUnlocked = !!(savedProgress && savedProgress.sandboxUnlocked === true);
+  if (savedProgress && ['normal','extreme','lore','sandbox'].includes(savedProgress.selectedMode)) selectedMode = savedProgress.selectedMode;
+  if (savedProgress && savedProgress.selectedGameMode === 'Classic') selectedGameMode = 'Classic';
+  playerNickname = (savedProgress && typeof savedProgress.nickname === 'string' ? savedProgress.nickname : '') || localStorage.getItem(NICKNAME_STORAGE_KEY) || '';
+  if (selectedMode === 'sandbox' && !sandboxUnlocked) selectedMode = 'normal';
 } catch (e) {}
+if (!playerNickname) {
+  playerNickname = 'Guest_' + String(Math.floor(Math.random() * 1000)).padStart(3, '0');
+  try { localStorage.setItem(NICKNAME_STORAGE_KEY, playerNickname); } catch (e) {}
+}
 function unlockExtreme() {
   if (extremeUnlocked) return false;
   extremeUnlocked = true;
@@ -545,6 +763,7 @@ function unlockExtreme() {
     localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify({ ...savedProgress, version: 1, extremeUnlocked: true }));
   } catch (e) {}
   if (typeof renderModeSelector === 'function') { renderModeSelector(); animateModeUnlock('extreme'); }
+  if (typeof refreshSaveKeyUI === 'function') refreshSaveKeyUI();
   return true;
 }
 let modeProgress = { normal: { wins: 0, best: null }, extreme: { wins: 0, best: null }, lore: { wins: 0, best: null } };
@@ -561,30 +780,231 @@ try {
 function saveModeProgress() {
   try {
     const saved = JSON.parse(localStorage.getItem(PROGRESS_STORAGE_KEY) || '{}');
-    localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify({ ...saved, version: 1, extremeUnlocked, loreUnlocked, selectedMode, modes: modeProgress }));
+    localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify({ ...saved, version: 1, extremeUnlocked, loreUnlocked, sandboxUnlocked, selectedMode, selectedGameMode, nickname: playerNickname, modes: modeProgress }));
+    localStorage.setItem(NICKNAME_STORAGE_KEY, playerNickname);
   } catch (e) {}
+  refreshSaveKeyUI();
 }
+function cleanLeaderboardNickname(raw) {
+  return String(raw || '').replace(/[\u0000-\u001f\u007f]/g, '').replace(/\s+/g, ' ').trim().slice(0, 20);
+}
+function difficultyDisplayName(mode) {
+  return mode === 'normal' ? 'Normal' : mode === 'extreme' ? 'Extreme' : mode === 'lore' ? 'Lore Accurate' : 'Sandbox';
+}
+function updateLeaderboardFilterLabel() {
+  const label = document.getElementById('leaderboardFilter');
+  if (label) label.textContent = difficultyDisplayName(selectedMode) + ' · ' + selectedGameMode;
+}
+function formatLeaderboardTime(rawMs) {
+  const ms = Number(rawMs);
+  if (!Number.isFinite(ms) || ms < 0) return '--';
+  const totalMs = Math.round(ms);
+  const minutes = Math.floor(totalMs / 60000);
+  const seconds = Math.floor((totalMs % 60000) / 1000);
+  const millis = totalMs % 1000;
+  return minutes > 0 ? String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0') + '.' + String(millis).padStart(3, '0') : seconds + '.' + String(millis).padStart(3, '0') + 's';
+}
+function renderLeaderboardRows(entries) {
+  const body = document.getElementById('leaderboardRows');
+  if (!body) return;
+  body.replaceChildren();
+  const valid = Array.isArray(entries) ? entries.map(entry => ({
+    nickname: entry && (entry.nickname ?? entry.Nickname) || 'Player',
+    timeMs: entry && (entry.timeMs ?? entry.time_ms ?? entry['Time (ms)'])
+  })).filter(entry => Number.isFinite(Number(entry.timeMs)) && Number(entry.timeMs) >= 0) : [];
+  valid.sort((a, b) => Number(a.timeMs) - Number(b.timeMs));
+  valid.slice(0, 10).forEach((entry, index) => {
+    const row = document.createElement('tr');
+    const rank = document.createElement('td'); rank.textContent = String(index + 1);
+    const name = document.createElement('td'); name.textContent = String(entry.nickname || 'Player').slice(0, 20);
+    const timeCell = document.createElement('td'); timeCell.textContent = formatLeaderboardTime(entry.timeMs);
+    row.append(rank, name, timeCell); body.appendChild(row);
+  });
+  if (!valid.length) {
+    const row = document.createElement('tr'); row.className = 'empty-row';
+    const cell = document.createElement('td'); cell.colSpan = 3; cell.textContent = 'No completed runs yet for this selection though.';
+    row.appendChild(cell); body.appendChild(row);
+  }
+}
+let leaderboardRequestId = 0;
+function refreshLeaderboard() {
+  updateLeaderboardFilterLabel();
+  const status = document.getElementById('leaderboardStatus');
+  const body = document.getElementById('leaderboardRows');
+  if (selectedMode === 'sandbox') {
+    if (status) status.textContent = 'Sandbox runs are not ranked.';
+    renderLeaderboardRows([]);
+    return;
+  }
+  if (status) status.textContent = 'Loading leaderboard…';
+  if (body) body.innerHTML = '<tr class="empty-row"><td colspan="3">Loading leaderboard…</td></tr>';
+  const requestId = ++leaderboardRequestId;
+  const callbackName = '__larsLeaderboardCallback' + requestId;
+  const script = document.createElement('script');
+  let finished = false;
+  const cleanUp = () => {
+    if (finished) return;
+    finished = true;
+    script.remove();
+    try { delete window[callbackName]; } catch (e) { window[callbackName] = undefined; }
+  };
+  const timeout = setTimeout(() => {
+    cleanUp();
+    if (requestId === leaderboardRequestId) {
+      if (status) status.textContent = 'Leaderboard unavailable. Check your connection and refresh.';
+      renderLeaderboardRows([]);
+    }
+  }, 12000);
+  window[callbackName] = payload => {
+    clearTimeout(timeout);
+    cleanUp();
+    if (requestId !== leaderboardRequestId) return;
+    if (!payload || payload.ok === false) {
+      if (status) status.textContent = 'Leaderboard unavailable. Check the published Apps Script deployment.';
+      renderLeaderboardRows([]);
+      return;
+    }
+    const entries = Array.isArray(payload) ? payload : Array.isArray(payload.entries) ? payload.entries : Array.isArray(payload.leaderboard) ? payload.leaderboard : Array.isArray(payload.rows) ? payload.rows : [];
+    renderLeaderboardRows(entries);
+    if (status) status.textContent = entries.length ? 'Fastest completed runs · top 10' : 'No completed runs yet for this selection.';
+  };
+  script.onerror = () => {
+    clearTimeout(timeout);
+    cleanUp();
+    if (requestId === leaderboardRequestId) {
+      if (status) status.textContent = 'Could not load the leaderboard. Check the Apps Script URL and deployment access.';
+      renderLeaderboardRows([]);
+    }
+  };
+  const params = new URLSearchParams({
+    action: 'leaderboard',
+    difficulty: difficultyDisplayName(selectedMode),
+    mode: selectedGameMode,
+    callback: callbackName,
+    _: String(Date.now())
+  });
+  script.src = LEADERBOARD_ENDPOINT + '?' + params.toString();
+  document.head.appendChild(script);
+}
+function submitLeaderboardRun(mode, seconds) {
+  if (mode === 'sandbox') return;
+  const nicknameInput = document.getElementById('leaderboardNickname');
+  const nickname = cleanLeaderboardNickname(nicknameInput ? nicknameInput.value : playerNickname);
+  playerNickname = nickname;
+  try { localStorage.setItem(NICKNAME_STORAGE_KEY, playerNickname); } catch (e) {}
+  if (!nickname) {
+    const status = document.getElementById('leaderboardStatus');
+    if (status) status.textContent = 'This run was completed, but no nickname was set, so it was not submitted.';
+    return;
+  }
+  const status = document.getElementById('leaderboardStatus');
+  if (status) status.textContent = 'Sending completed run to the leaderboard…';
+  const body = new URLSearchParams({
+    difficulty: difficultyDisplayName(mode),
+    mode: selectedGameMode,
+    nickname,
+    timeMs: String(Math.max(0, Math.round(Number(seconds) * 1000)))
+  });
+  fetch(LEADERBOARD_ENDPOINT, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+    body
+  }).then(() => {
+    if (status) status.textContent = 'Run submission sent. The leaderboard will refresh shortly.';
+    setTimeout(() => refreshLeaderboard(), 1800);
+  }).catch(() => {
+    if (status) status.textContent = 'The run is complete, but the leaderboard submission could not be sent.';
+  });
+}
+
 function renderModeSelector() {
-  for (const mode of ['normal', 'extreme', 'lore']) {
+  for (const mode of ['normal', 'extreme', 'lore', 'sandbox']) {
     const button = document.querySelector('[data-mode="' + mode + '"]');
-    const entry = modeProgress[mode];
-    document.getElementById(mode + 'Stats').textContent = entry.wins + ' wins · Best ' + (entry.best == null ? '--' : entry.best.toFixed(1) + 's');
+    if (!button) continue;
+    button.hidden = mode === 'sandbox' && !sandboxUnlocked;
+    const entry = modeProgress[mode] || { wins: 0, best: null };
+    const stats = document.getElementById(mode + 'Stats');
+    if (stats) stats.textContent = mode === 'sandbox' ? 'PRIVATE TEST MODE' : entry.wins + ' wins · Best ' + (entry.best == null ? '--' : entry.best.toFixed(1) + 's');
     button.classList.toggle('selected', selectedMode === mode);
-    const locked = (mode === 'extreme' && !extremeUnlocked) || (mode === 'lore' && !loreUnlocked);
+    const locked = (mode === 'extreme' && !extremeUnlocked) || (mode === 'lore' && !loreUnlocked) || (mode === 'sandbox' && !sandboxUnlocked);
     button.classList.toggle('locked', locked);
     button.disabled = locked || state === 'play';
     const lock = button.querySelector('.lock');
     if (lock) { lock.textContent = (locked || button.classList.contains('unlocking')) ? '🔒' : ''; lock.style.display = (locked || button.classList.contains('unlocking')) ? 'block' : 'none'; }
-    button.title = mode === 'extreme' && locked ? 'Win a Normal run, or type EXTREME.' : mode === 'lore' && locked ? 'Type LORE to reveal this unreleased placeholder.' : mode === 'lore' ? 'Unreleased placeholder. Gameplay is not available.' : mode === 'extreme' ? 'Five generators. Reduced visibility and faster pressure.' : 'Standard difficulty.';
+    button.title = mode === 'extreme' && locked ? 'Win a Normal run, or type EXTREME.' :
+      mode === 'lore' && locked ? 'Type LORE to unlock Lore Accurate.' :
+      mode === 'sandbox' ? 'Private test mode. Type SANDBOX to unlock.' :
+      mode === 'lore' ? 'Six generators. Lars only moves when he is outside your view. Eye dryness: 5–7 seconds.' :
+      mode === 'extreme' ? 'Five generators. Reduced visibility and faster pressure.' : 'Standard difficulty.';
   }
-  document.getElementById('objective').textContent = selectedMode === 'extreme' ? 'EXTREME · Repair five generators. Visibility is reduced and Lars is more aggressive.' : selectedMode === 'lore' ? 'LORE ACCURATE · UNRELEASED PLACEHOLDER' : 'Restore power by repairing all four generators, then find the exit. Lars is somewhere in the building. Keep your eyes open.';
+  const loreTheme = selectedMode === 'lore';
+  document.body.classList.toggle('lore-mode', loreTheme);
+  document.querySelector('h1').textContent = loreTheme ? 'L A R S  /  OBSERVATION' : 'LARS SIMULATOR';
+  document.title = loreTheme ? 'OBSERVATION FAILURE · LARS SIMULATOR' : 'Lars Simulator v0.41';
+  const selectorTitle = document.getElementById('modeSelectorTitle');
+  if (selectorTitle) selectorTitle.textContent = loreTheme ? 'CONTAINMENT STATUS' : 'Game mode';
+  const rows = document.querySelectorAll('#controlsPanel .bind-row');
+  const standardHints = ['Move','Look around','Focus / squint','Adjust focus zoom','Sprint','Crouch','Jump / start / retry','Interact / repair','Blink / hold eyes shut','Look behind','Toggle torch','Toggle fullscreen','Drop selected item'];
+  const loreHints = ['MOVE. DO NOT STOP.','LOOK AHEAD.','FOCUS ON THE SHAPE.','CHANGE YOUR FOCUS.','RUN WHEN YOU CAN.','STAY LOW.','JUMP / START.','REPAIR THE GENERATORS.','BLINK. HE WILL MOVE.','CHECK BEHIND YOU.','USE THE LIGHT.','FULLSCREEN.','DROP SELECTED ITEM.'];
+  rows.forEach((row, i) => { const spans = row.querySelectorAll('span'); if (spans.length > 1) spans[1].textContent = loreTheme ? (loreHints[i] || standardHints[i] || '') : (standardHints[i] || ''); });
+  const objective = document.getElementById('objective');
+  objective.textContent = loreTheme ? 'nobody can save you now.' : selectedMode === 'extreme' ? 'EXTREME · Repair five generators. Visibility is reduced and Lars is more aggressive.' :
+    selectedMode === 'sandbox' ? 'SANDBOX · Invincible testing. Spawn items and toggle Lars whenever you like.' :
+    'Restore power by repairing all four generators, then find the exit. Lars is somewhere in the building. Keep your eyes open.';
+  syncSandboxTools();
+  updateLeaderboardFilterLabel();
 }
+function syncSandboxTools() {
+  const panel = document.getElementById('sandboxPanel');
+  if (!panel) return;
+  panel.hidden = !(sandboxUnlocked && selectedMode === 'sandbox' && state === 'play');
+  const toggle = document.getElementById('sandboxLarsBtn');
+  if (toggle) toggle.textContent = sandboxLarsEnabled ? 'DISABLE LARS' : 'ENABLE LARS';
+}
+function sandboxSpawnPoint() {
+  const angles = [P.a, P.a + .45, P.a - .45, P.a + .9, P.a - .9, P.a + Math.PI];
+  for (const distance of [.9, 1.25, 1.65, 2.1]) for (const angle of angles) {
+    const x = P.x + Math.cos(angle) * distance, y = P.y + Math.sin(angle) * distance;
+    if (free(x, y)) return { x, y };
+  }
+  return { x: P.x, y: P.y };
+}
+function sandboxSpawnItem() {
+  if (selectedMode !== 'sandbox' || state !== 'play') return;
+  const pos = sandboxSpawnPoint();
+  droppedItems.push({ type: document.getElementById('sandboxItemSelect').value, x: pos.x, y: pos.y, active: true });
+  say('ITEM SPAWNED.', 1.2); beep(760, .08, 'triangle', .06, 1120);
+}
+document.getElementById('sandboxLarsBtn').addEventListener('click', () => {
+  if (selectedMode !== 'sandbox' || state !== 'play') return;
+  sandboxLarsEnabled = !sandboxLarsEnabled;
+  if (sandboxLarsEnabled && L) {
+    const pos = sandboxSpawnPoint(); L.x = pos.x; L.y = pos.y; L.knocked = false; L.knockback = null;
+    L.st = 'chase'; L.a = Math.atan2(P.y - L.y, P.x - L.x); L.sees = true; L.lostT = 0; L.loreRouteT = 0; L.flashStun = 0;
+    route(P.x, P.y);
+  }
+  syncSandboxTools();
+});
+document.getElementById('sandboxSpawnItem').addEventListener('click', sandboxSpawnItem);
+document.getElementById('sandboxSpawnRat').addEventListener('click', () => {
+  if (selectedMode !== 'sandbox' || state !== 'play') return;
+  const pos = sandboxSpawnPoint(); rat = { x: pos.x, y: pos.y, tx: null, ty: null, moveT: .1, soundT: .5 };
+  say('RUBIN SPAWNED.', 1.2);
+});
+document.getElementById('sandboxSpawnOwen').addEventListener('click', () => {
+  if (selectedMode !== 'sandbox' || state !== 'play') return;
+  if (owen) { say('OWEN IS ALREADY HERE.', 1.2); return; }
+  if (!spawnOwen(true)) say('NO CLEAR SPOT FOR OWEN.', 1.2);
+});
 function recordModeWin() {
+  if (selectedMode === 'sandbox') return;
   const entry = modeProgress[selectedMode];
   entry.wins++;
   if (entry.best == null || time < entry.best) entry.best = time;
   if (selectedMode === 'normal') unlockExtreme();
   saveModeProgress(); renderModeSelector();
+  submitLeaderboardRun(selectedMode, time);
 }
 function animateModeUnlock(mode) {
   const button = document.querySelector('[data-mode="' + mode + '"]');
@@ -597,9 +1017,8 @@ function animateModeUnlock(mode) {
 document.querySelectorAll('[data-mode]').forEach(button => button.addEventListener('click', () => {
   if (!['title','dead','win','secret'].includes(state)) return;
   const mode = button.dataset.mode;
-  if ((mode === 'extreme' && !extremeUnlocked) || (mode === 'lore' && !loreUnlocked)) return;
-  if (mode === 'lore') { selectedMode = mode; saveModeProgress(); renderModeSelector(); return; }
-  selectedMode = mode; saveModeProgress(); renderModeSelector();
+  if ((mode === 'extreme' && !extremeUnlocked) || (mode === 'lore' && !loreUnlocked) || (mode === 'sandbox' && !sandboxUnlocked)) return;
+  selectedMode = mode; saveModeProgress(); renderModeSelector(); syncSandboxTools(); refreshLeaderboard();
 }));
 document.getElementById('endRunBtn').addEventListener('click', () => {
   if (state !== 'play') return;
@@ -607,9 +1026,42 @@ document.getElementById('endRunBtn').addEventListener('click', () => {
   state = 'title'; endT = 0; panelOpen = false; zoomHeld = false;
   for (const code in keys) keys[code] = false;
   if (document.exitPointerLock) document.exitPointerLock();
-  silencePersistentAudio(); renderModeSelector();
+  silencePersistentAudio(); renderModeSelector(); syncSandboxTools();
 });
 renderModeSelector();
+function selectSelectorTab(tab) {
+  const difficulty = tab === 'difficulty';
+  document.getElementById('difficultyTab').classList.toggle('selected', difficulty);
+  document.getElementById('gameModesTab').classList.toggle('selected', !difficulty);
+  document.getElementById('difficultyTab').setAttribute('aria-selected', String(difficulty));
+  document.getElementById('gameModesTab').setAttribute('aria-selected', String(!difficulty));
+  document.getElementById('difficultyPanel').hidden = !difficulty;
+  document.getElementById('gameModePanel').hidden = difficulty;
+  document.getElementById('modeTabs').classList.toggle('game-mode-active', !difficulty);
+}
+document.getElementById('difficultyTab').addEventListener('click', () => selectSelectorTab('difficulty'));
+document.getElementById('gameModesTab').addEventListener('click', () => selectSelectorTab('gameModes'));
+document.querySelectorAll('[data-game-mode]').forEach(button => button.addEventListener('click', () => {
+  if (button.disabled) return;
+  selectedGameMode = button.dataset.gameMode;
+  document.querySelectorAll('[data-game-mode]').forEach(item => item.classList.toggle('selected', item === button));
+  saveModeProgress();
+  refreshLeaderboard();
+}));
+const leaderboardNicknameInput = document.getElementById('leaderboardNickname');
+leaderboardNicknameInput.value = playerNickname;
+leaderboardNicknameInput.addEventListener('input', () => {
+  playerNickname = cleanLeaderboardNickname(leaderboardNicknameInput.value);
+  try { localStorage.setItem(NICKNAME_STORAGE_KEY, playerNickname); } catch (e) {}
+  saveModeProgress();
+  refreshSaveKeyUI();
+});
+leaderboardNicknameInput.addEventListener('change', () => {
+  leaderboardNicknameInput.value = cleanLeaderboardNickname(leaderboardNicknameInput.value);
+  playerNickname = leaderboardNicknameInput.value;
+  saveModeProgress();
+});
+refreshLeaderboard();
 const BLOCKED_BINDS = new Set(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Escape','Enter','Tab','F12']);
 let keybinds = { ...DEFAULT_BINDS }, bindCapture = null;
 try {
@@ -654,6 +1106,7 @@ function setBindStatus(message) {
 }
 function saveKeybinds() {
   try { localStorage.setItem(BIND_STORAGE_KEY, JSON.stringify(keybinds)); } catch (e) {}
+  refreshSaveKeyUI();
 }
 document.querySelectorAll('[data-bind]').forEach(button => {
   button.addEventListener('click', () => {
@@ -692,63 +1145,188 @@ function syncFovControl() {
   fovNumber.value = String(degrees);
 }
 function setFovDegrees(raw) {
+  if (String(raw).trim() === '') return;
   const parsed = Number(raw);
   if (!Number.isFinite(parsed)) return;
   const degrees = clamp(Math.round(parsed), FOV_MIN_DEG, FOV_MAX_DEG);
   baseFov = Math.tan(degrees * Math.PI / 360);
   syncFovControl();
   try { localStorage.setItem(FOV_STORAGE_KEY, String(baseFov)); } catch(e) {}
+  refreshSaveKeyUI();
 }
 fovSlider.addEventListener('input', () => setFovDegrees(fovSlider.value));
 fovNumber.addEventListener('change', () => setFovDegrees(fovNumber.value));
+fovNumber.addEventListener('blur', () => setFovDegrees(fovNumber.value));
 fovNumber.addEventListener('keydown', e => { if (e.key === 'Enter') { setFovDegrees(fovNumber.value); fovNumber.blur(); } });
 syncFovControl();
+
+function hasLocalSaveData() {
+  try {
+    const hasProgress = [PROGRESS_STORAGE_KEY, BIND_STORAGE_KEY, FOV_STORAGE_KEY]
+      .some(key => localStorage.getItem(key) !== null);
+    const storedNickname = localStorage.getItem(NICKNAME_STORAGE_KEY) || '';
+    const hasCustomNickname = !!storedNickname && !/^Guest_\d{3}$/.test(storedNickname);
+    return hasProgress || hasCustomNickname;
+  } catch (e) { return false; }
+}
+function saveKeyPayload() {
+  let savedProgress = {};
+  try { savedProgress = JSON.parse(localStorage.getItem(PROGRESS_STORAGE_KEY) || '{}') || {}; } catch (e) {}
+  let savedBinds = { ...DEFAULT_BINDS };
+  try { savedBinds = JSON.parse(localStorage.getItem(BIND_STORAGE_KEY) || 'null') || { ...DEFAULT_BINDS }; } catch (e) {}
+  const storedFov = Number(localStorage.getItem(FOV_STORAGE_KEY));
+  return {
+    version: 1,
+    nickname: cleanLeaderboardNickname(playerNickname || savedProgress.nickname || localStorage.getItem(NICKNAME_STORAGE_KEY) || ''),
+    progress: {
+      extremeUnlocked: !!extremeUnlocked,
+      loreUnlocked: !!loreUnlocked,
+      sandboxUnlocked: !!sandboxUnlocked,
+      selectedMode: ['normal','extreme','lore','sandbox'].includes(selectedMode) ? selectedMode : 'normal',
+      selectedGameMode: 'Classic',
+      modes: modeProgress
+    },
+    keybinds: savedBinds,
+    fov: Number.isFinite(storedFov) && storedFov > 0 ? storedFov : baseFov
+  };
+}
+function saveKeyHash(value) {
+  let hash = 2166136261;
+  for (let i = 0; i < value.length; i++) { hash ^= value.charCodeAt(i); hash = Math.imul(hash, 16777619); }
+  return (hash >>> 0).toString(36);
+}
+function encodeSaveKey(payload) {
+  const json = JSON.stringify(payload);
+  const base64 = btoa(unescape(encodeURIComponent(json)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  return 'LARS1.' + base64 + '.' + saveKeyHash(json);
+}
+function decodeSaveKey(key) {
+  const match = String(key || '').trim().match(/^LARS1\.([A-Za-z0-9_-]+)\.([a-z0-9]+)$/);
+  if (!match) throw new Error('Invalid save key');
+  const base64 = match[1].replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64 + '='.repeat((4 - base64.length % 4) % 4);
+  const binary = atob(padded);
+  const json = decodeURIComponent(Array.from(binary, ch => '%' + ch.charCodeAt(0).toString(16).padStart(2, '0')).join(''));
+  if (saveKeyHash(json) !== match[2]) throw new Error('Save key check failed');
+  const payload = JSON.parse(json);
+  if (!payload || payload.version !== 1 || !payload.progress || typeof payload.progress !== 'object') throw new Error('Unsupported save key');
+  return payload;
+}
+function validateAndImportSaveKey(rawKey) {
+  if (hasLocalSaveData()) throw new Error('Reset local data before importing a save key.');
+  const payload = decodeSaveKey(rawKey);
+  const p = payload.progress;
+  const allowedModes = ['normal','extreme','lore','sandbox'];
+  if (typeof payload.nickname !== 'string' || !payload.keybinds || typeof payload.keybinds !== 'object') throw new Error('Incomplete save key');
+  const candidateBinds = {}, used = new Set();
+  for (const action of Object.keys(DEFAULT_BINDS)) {
+    const code = payload.keybinds[action];
+    if (typeof code !== 'string' || !code || BLOCKED_BINDS.has(code) || used.has(code)) throw new Error('Invalid keybind data');
+    candidateBinds[action] = code; used.add(code);
+  }
+  const fov = Number(payload.fov);
+  if (!Number.isFinite(fov) || fov < fovInternalMin || fov > fovInternalMax) throw new Error('Invalid FOV setting');
+  const cleanModes = { normal:{wins:0,best:null}, extreme:{wins:0,best:null}, lore:{wins:0,best:null} };
+  if (p.modes && typeof p.modes === 'object') {
+    for (const mode of Object.keys(cleanModes)) {
+      const entry = p.modes[mode] || {};
+      const wins = Number(entry.wins);
+      const best = entry.best == null ? null : Number(entry.best);
+      if (!Number.isInteger(wins) || wins < 0 || (best !== null && (!Number.isFinite(best) || best <= 0))) throw new Error('Invalid progress data');
+      cleanModes[mode] = { wins, best };
+    }
+  }
+  const restored = {
+    version: 1,
+    extremeUnlocked: p.extremeUnlocked === true,
+    loreUnlocked: p.loreUnlocked === true,
+    sandboxUnlocked: p.sandboxUnlocked === true,
+    selectedMode: allowedModes.includes(p.selectedMode) ? p.selectedMode : 'normal',
+    selectedGameMode: 'Classic',
+    nickname: cleanLeaderboardNickname(payload.nickname),
+    modes: cleanModes
+  };
+  if (restored.selectedMode === 'extreme' && !restored.extremeUnlocked) restored.selectedMode = 'normal';
+  if (restored.selectedMode === 'lore' && !restored.loreUnlocked) restored.selectedMode = 'normal';
+  if (restored.selectedMode === 'sandbox' && !restored.sandboxUnlocked) restored.selectedMode = 'normal';
+  localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(restored));
+  localStorage.setItem(BIND_STORAGE_KEY, JSON.stringify(candidateBinds));
+  localStorage.setItem(FOV_STORAGE_KEY, String(fov));
+  localStorage.setItem(NICKNAME_STORAGE_KEY, restored.nickname);
+  window.location.reload();
+}
+function refreshSaveKeyUI() {
+  const field = document.getElementById('saveKeyField');
+  const copy = document.getElementById('copySaveKey');
+  const reset = document.getElementById('resetData');
+  if (!field || !copy || !reset) return;
+  const hasData = hasLocalSaveData();
+  reset.disabled = !hasData;
+  reset.classList.toggle('has-data', hasData);
+  copy.hidden = !hasData;
+  field.readOnly = hasData;
+  field.value = hasData ? encodeSaveKey(saveKeyPayload()) : '';
+  field.placeholder = hasData ? '' : 'PASTE SAVE KEY TO IMPORT';
+  field.title = hasData ? 'Select and copy this key to transfer your progress.' : 'Paste a save key here to import progress.';
+}
+const saveKeyField = document.getElementById('saveKeyField');
+saveKeyField.addEventListener('click', () => { if (saveKeyField.readOnly) saveKeyField.select(); });
+saveKeyField.addEventListener('paste', event => {
+  if (saveKeyField.readOnly) return;
+  event.preventDefault();
+  const pasted = (event.clipboardData || window.clipboardData).getData('text').trim();
+  saveKeyField.value = pasted;
+  try { validateAndImportSaveKey(pasted); }
+  catch (error) { saveKeyField.value = ''; alert(error.message || 'That save key could not be imported.'); }
+});
+saveKeyField.addEventListener('keydown', event => {
+  if (event.key !== 'Enter' || saveKeyField.readOnly) return;
+  event.preventDefault();
+  try { validateAndImportSaveKey(saveKeyField.value); }
+  catch (error) { alert(error.message || 'That save key could not be imported.'); }
+});
+document.getElementById('copySaveKey').addEventListener('click', async () => {
+  if (!saveKeyField.value) return;
+  saveKeyField.select();
+  try {
+    await navigator.clipboard.writeText(saveKeyField.value);
+    document.getElementById('copySaveKey').textContent = 'COPIED';
+    setTimeout(() => { const button = document.getElementById('copySaveKey'); if (button) button.textContent = 'COPY'; }, 1200);
+  } catch (e) {
+    try { document.execCommand('copy'); } catch (ignored) {}
+  }
+});
+refreshSaveKeyUI();
 document.getElementById('resetData').addEventListener('click', () => {
-  if (!window.confirm('Are you sure? This will erase all wins, fastest times, unlocks, selected mode, keybinds and FOV settings. This cannot be undone.')) return;
+  if (!window.confirm('Are you sure? This will erase all wins, fastest times, unlocks (including Sandbox), selected mode, keybinds and FOV settings. This cannot be undone.')) return;
   try {
     localStorage.removeItem(PROGRESS_STORAGE_KEY);
     localStorage.removeItem(BIND_STORAGE_KEY);
     localStorage.removeItem(FOV_STORAGE_KEY);
+    localStorage.removeItem(NICKNAME_STORAGE_KEY);
   } catch(e) {}
   window.location.reload();
 });
 const cheatSign = document.createElement('canvas'); cheatSign.width = 128; cheatSign.height = 40; const cheatSignCtx = cheatSign.getContext('2d'); cheatSignCtx.fillStyle = '#241e17'; cheatSignCtx.fillRect(0,0,128,40); cheatSignCtx.strokeStyle = '#897b58'; cheatSignCtx.strokeRect(1,1,126,38); cheatSignCtx.fillStyle = '#d6c8a0'; cheatSignCtx.font = 'bold 15px monospace'; cheatSignCtx.textAlign = 'center'; cheatSignCtx.fillText('SSADAD',64,25);
+let invincibleCheat = false;
 let vk = RH, cameraHeight = .5, zoomAmount = 0, zoomHeld = false, zoomScale = 1.0, shotgun = false, cheatBuffer = '', shotCooldown = 0, shotFlash = 0, ev = { dashT: -99, backT: -99, sprintT: -99, fixT: -99, blink: null, spot: '' };
 const say = (s, d = 2.5) => { if (String(s).startsWith('FOV')) { msg = s; msgT = d; } };   // on-screen text is mostly gone on purpose
 const SEEN = ['SEEN. skill issue.', 'LARS SPOTTED YOU. THIS IS NOT A DRILL.', 'he saw you. he is so excited.', 'lars wants to be friends (violently)', 'LARS.EXE HAS STARTED'];
-const QUIPS = [
-  'Lars was only thirsty.',
-  'Have you tried not being caught?',
-  'He just wanted a drink.',
-  'Oops.',
-  'Lars wants to be friends. Violently.',
-  'He thought you looked familiar.',
-  'Lars has terrible boundaries.',
-  'He was only saying hello.',
-  'You made his whole day.',
-  'Lars missed you.',
-  'He gets excited easily.',
-  'That was a little awkward.',
-  'He really wanted a hug.',
-  'Lars is not good at personal space.',
-  'He took that personally.',
-  'You should have said goodbye.',
-  'He was just checking on you.',
-  'Lars appreciates the company.',
-  'Well, that escalated quickly.'
-];
+const QUIPS = ['You blinked. Classic.', 'Lars was only thirsty.', 'Lars would like a word. And also your face.', 'Have you tried not being caught?', 'Lars says hi.', 'Hydrate or diedrate.'];
 
 function start() {
-  if (selectedMode === 'lore') { msg = 'LORE ACCURATE IS NOT RELEASED YET'; msgT = 3; return; }
-  audio(); genLevel(); buildFloor(); cheatWall = null; if (Math.random() < .1) { const options = FLOORS.filter(([x,y]) => Math.hypot(x - SPAWN[0], y - SPAWN[1]) > 5 && Math.hypot(x - EXIT.x, y - EXIT.y) > 3 && GEN_POS.every(([gx,gy]) => Math.hypot(x-gx,y-gy) > 2) && [[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy]) => map[(y|0)+dy]?.[(x|0)+dx] !== '.')); if (options.length) { const [sx,sy] = pick(options); const sides = [[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy]) => map[(sy|0)+dy]?.[(sx|0)+dx] !== '.'); const [dx,dy] = pick(sides); cheatWall = [sx + dx*.38, sy + dy*.38]; } } P.x = SPAWN[0]; P.y = SPAWN[1]; P.a = 0; P.vx = P.vy = 0; P.stam = 100; P.tired = false; P.bm = 0; P.blinkT = -1; P.squintBlinkT = 0; P.crouching = false; P.crouchAmount = 0; P.jumpZ = P.jumpV = P.jumpFov = 0; P.eyeHold = 0; P.lookBack = 0; P.lookFov = 0; P.energyBonus = 0; P.eyeBonus = 0; P.blinkInterval = selectedMode === 'extreme' ? rand(5, 7) : rand(7, 9); P.blinkMode = 'normal'; speechCaption = ''; speechCaptionTimer = 0; ambientBreathT = rand(5, 9); cameraHeight = .5; zoomAmount = 0; zoomHeld = false; zoomScale = 1.0; shotgun = false; cheatBuffer = ''; shotCooldown = shotFlash = 0;
+  if (selectedMode === 'sandbox' && !sandboxUnlocked) { selectedMode = 'normal'; }
+  audio(); genLevel(); buildFloor(); owen = null; owenSpawnUsed = false; owenSpawnCheck = rand(42, 78); cheatWall = null; if (Math.random() < .1) { const options = FLOORS.filter(([x,y]) => Math.hypot(x - SPAWN[0], y - SPAWN[1]) > 5 && Math.hypot(x - EXIT.x, y - EXIT.y) > 3 && GEN_POS.every(([gx,gy]) => Math.hypot(x-gx,y-gy) > 2) && [[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy]) => map[(y|0)+dy]?.[(x|0)+dx] !== '.')); if (options.length) { const [sx,sy] = pick(options); const sides = [[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy]) => map[(sy|0)+dy]?.[(sx|0)+dx] !== '.'); const [dx,dy] = pick(sides); cheatWall = [sx + dx*.38, sy + dy*.38]; } } P.x = SPAWN[0]; P.y = SPAWN[1]; P.a = 0; P.vx = P.vy = 0; P.stam = 100; P.tired = false; P.bm = 0; P.blinkT = -1; P.squintBlinkT = 0; P.crouching = false; P.crouchAmount = 0; P.jumpZ = P.jumpV = P.jumpFov = 0; P.eyeHold = 0; P.lookBack = 0; P.lookFov = 0; P.energyBonus = 0; P.eyeBonus = 0; P.blinkInterval = (selectedMode === 'extreme' || selectedMode === 'lore') ? rand(5, 7) : rand(7, 9); P.blinkMode = 'normal'; speechCaption = ''; speechCaptionTimer = 0; ambientBreathT = rand(5, 9); cameraHeight = .5; zoomAmount = 0; zoomHeld = false; zoomScale = 1.0; shotgun = false; cheatBuffer = ''; shotCooldown = shotFlash = 0;
   torchOn = false; torchBaseBattery = 20; torchBonusBattery = 0; torchBattery = 20; torchPower = 0; torchFlicker = 1; nearBattery = false; inventory = [null, null, null]; selectedInventorySlot = 0;
-  gens = GEN_POS.slice(0, selectedMode === 'extreme' ? 5 : 4).map(([x, y]) => ({ x, y, p: 0, done: false, hw: .255, hd: .19, height: .88, bodyScale: 1, heightScale: 1, ...propOrientationAt(x, y) }));
+  gens = GEN_POS.slice(0, selectedMode === 'lore' ? 6 : selectedMode === 'extreme' ? 5 : 4).map(([x, y]) => ({ x, y, p: 0, done: false, zone: zoneForPosition(x, y), hw: .205, hd: .145, height: .36, bodyScale: 1, heightScale: 1, ...propOrientationAt(x, y) }));
   for (const [x, y] of SHUTTERS) map[y][x] = 'D';
-  L = { x: LSPAWN[0], y: LSPAWN[1], a: 0, st: 'sleep', tx: 0, ty: 0, lx: 0, ly: 0, lostT: 0, waitT: 0, searchPasses: 0, stepT: 0, d: 99, sees: false, mom: 0, watching: false, rel: 0, gait: 0, pauseT: 0, fuse: false, knocked: false, knockT: 0, flashStun: 0, flashDaze: 0, flashTagged: false, flashStunUsed: false, chairProp: false };
-  ev = { dashT: -99, backT: -99, sprintT: -99, fixT: -99, blink: null, spot: '' }; P.fov = P.fv = baseFov;
-  fixed = 0; time = 0; light = 1; power = true; fuseP = 0; fxT = punch = pvel = slowT = snapT = 0; panelOpen = false; wakeT = selectedMode === 'extreme' ? 22 : 30; blackT = 0; blackIn = selectedMode === 'extreme' ? rand(38, 55) : rand(55, 75); seenT = 0; shoutT = 8; deathAside = ''; state = 'play';
-  say(selectedMode === 'extreme' ? 'EXTREME: FIX ALL 5 GENERATORS. LARS IS ALREADY CLOSER.' : 'Fix all 4 generators. Lars is asleep. DO NOT WAKE LARS.', 5);
-  renderModeSelector();
+  L = { x: LSPAWN[0], y: LSPAWN[1], a: 0, st: selectedMode === 'lore' ? 'patrol' : 'sleep', tx: 0, ty: 0, lx: 0, ly: 0, lostT: 0, waitT: 0, searchPasses: 0, stepT: 0, d: 99, sees: false, mom: 0, watching: false, rel: 0, gait: 0, pauseT: 0, fuse: false, knocked: false, knockT: 0, flashStun: 0, flashDaze: 0, flashTagged: false, flashStunUsed: false, chairProp: false, loreRouteT: 0, lastSeenX: LSPAWN[0], lastSeenY: LSPAWN[1], loreTargetX: LSPAWN[0], loreTargetY: LSPAWN[1], loreMode: selectedMode === 'lore' ? 'roam' : 'idle', loreSearchT: 0, lorePauseT: 0 };
+  ev = { dashT: -99, backT: -99, sprintT: -99, fixT: -99, blink: null, spot: '' }; P.fov = P.fv = baseFov; sandboxLarsEnabled = selectedMode !== 'sandbox'; if (selectedMode === 'lore') { const [lx, ly] = chooseLoreWaypoint(L.x, L.y, 2.2, 4.8); L.loreTargetX = lx; L.loreTargetY = ly; L.lastSeenX = L.x; L.lastSeenY = L.y; route(lx, ly); L.sees = false; }
+  fixed = 0; time = 0; power = selectedMode !== 'lore'; light = power ? 1 : .12; fuseP = 0; fxT = punch = pvel = slowT = snapT = 0; panelOpen = false; wakeT = selectedMode === 'extreme' ? 22 : selectedMode === 'lore' ? 0 : 30; blackT = 0; blackIn = selectedMode === 'extreme' ? rand(38, 55) : rand(55, 75); seenT = 0; shoutT = 8; loreAmbientT = rand(3, 6); loreHeartbeatT = rand(1.8, 3.2); deathAside = ''; state = 'play';
+  if (selectedMode === 'lore') { say('DO NOT LOOK AWAY.', 3.5); sh(.8, .08, 'lowpass', 92, 34, 2.8, 0, .08); }
+  else say(selectedMode === 'extreme' ? 'EXTREME: FIX ALL 5 GENERATORS. LARS IS ALREADY CLOSER.' : selectedMode === 'sandbox' ? 'SANDBOX: YOU ARE INVINCIBLE.' : 'Fix all 4 generators. Lars is asleep. DO NOT WAKE LARS.', 5);
+  renderModeSelector(); syncSandboxTools();
   lockMouse();
 }
 
@@ -793,14 +1371,15 @@ function genLevel() {
     for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (map[y][x] !== '.') { let b = seeds[0], bd = 1e9; for (const q of seeds) { const d = Math.hypot(q.p[0] - x, q.p[1] - y); if (d < bd) { bd = d; b = q; } } map[y][x] = b.ch; }
     const maxd = Math.max(...fl.map(dd)), shuf = a => [...a].sort(() => Math.random() - .5);
     const picks = (cands, n, sep) => { const out = []; for (const c of shuf(cands)) { if (out.every(o => Math.hypot(o[0] - c[0], o[1] - c[1]) >= sep)) out.push(c); if (out.length === n) break; } return out; };
-    const genCount = selectedMode === 'extreme' ? 5 : 4;
+    const genCount = selectedMode === 'lore' ? 6 : selectedMode === 'extreme' ? 5 : 4;
     let gp = []; for (let sep = 10; sep >= 3 && gp.length < genCount; sep--) gp = picks(fl.filter(c => dd(c) > 10), genCount, sep);
     if (gp.length < genCount) continue;
     const exc = fl.filter(c => dd(c) >= maxd * .8 && gp.every(g => Math.hypot(g[0] - c[0], g[1] - c[1]) > 4)); if (!exc.length) continue; const ex = pick(exc);
     const fuc = fl.filter(c => dd(c) > 8 && gp.every(g => Math.hypot(g[0] - c[0], g[1] - c[1]) > 5) && Math.hypot(ex[0] - c[0], ex[1] - c[1]) > 5); if (!fuc.length) continue; const fu = pick(fuc);
-    const lcs = fl.filter(c => dd(c) >= maxd * .55 && Math.hypot(ex[0] - c[0], ex[1] - c[1]) > 2); if (!lcs.length) continue; const lc = pick(lcs);
+    const lcs = fl.filter(c => dd(c) >= maxd * .55 && Math.hypot(ex[0] - c[0], ex[1] - c[1]) > 2 && Math.hypot(c[0] - st[0], c[1] - st[1]) > 10); if (!lcs.length) continue; const lc = pick(lcs);
     const sh = [], dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];                                                                  // shutters = doors in thick walls that cut a long route short
-    for (let tries = 0; tries < 4000 && sh.length < 3; tries++) {
+    const shutterCount = Math.max(3, genCount - 1);
+    for (let tries = 0; tries < 6000 && sh.length < shutterCount; tries++) {
       const a = pick(fl), [dx, dy] = pick(dirs); let k = 1, ok = false;
       for (; k < 6; k++) { const x = a[0] + dx * k, y = a[1] + dy * k; if (x < 1 || y < 1 || x > N - 2 || y > N - 2) break; if (map[y][x] === '.') { ok = k >= 2; break; } }
       if (!ok) continue;
@@ -857,8 +1436,11 @@ function genLevel() {
         });
       const [fx, fy] = openDirs[0] || [1,0];
       const facing = Math.atan2(fy, fx);
+      const machineStock = VENDING_PRIZES.slice().sort(() => Math.random() - .5).slice(0, 3);
+      // Pew Pew is still a rare, legitimate prize; it replaces one of the three visible stock items.
+      if (Math.random() < .20) machineStock[Math.floor(Math.random() * machineStock.length)] = 'pewpew';
       vendingMachines.push({ x: c[0] + .5, y: c[1] + .5, facing, fx, fy, rx: -fy, ry: fx,
-        hw: .34, hd: .25, height: 1.37, state: 'ready', used: false, glitchT: 0, spinT: 0, ejectT: 0, resetT: 0, prize: null, stock: VENDING_PRIZES.slice().sort(() => Math.random() - .5).slice(0, 3), drops: [] });
+        hw: .34, hd: .25, height: 1.37, state: 'ready', used: false, glitchT: 0, spinT: 0, ejectT: 0, resetT: 0, prize: null, stock: machineStock, drops: [] });
     }
     // A quarter is placed for each machine, separate from the naturally spawning spare battery.
     let coinCandidates = fl.filter(c => {
@@ -972,7 +1554,7 @@ function useSelectedInventoryItem() {
   }
   if (slot.type === 'eyedrops') {
     P.bm = 0; P.eyeHold = 0; P.blinkT = -1; P.eyeBonus = 5;
-    P.blinkInterval = rand(7, 9) + P.eyeBonus;
+    P.blinkInterval = ((selectedMode === 'extreme' || selectedMode === 'lore') ? rand(5, 7) : rand(7, 9)) + P.eyeBonus;
     consumeInventoryItem();
     say('YOUR EYES FEEL CLEARER.', 1.5); beep(680, .10, 'sine', .07, 1080);
     return true;
@@ -1130,13 +1712,33 @@ function blink(forced, preserveDryness = false) {
   if (P.blinkT < 0) {
     P.blinkT = 0;
     if (!preserveDryness) P.bm = 0;
-    P.blinkInterval = (selectedMode === 'extreme' ? rand(5, 7) : rand(7, 9)) + P.eyeBonus;
+    P.blinkInterval = ((selectedMode === 'extreme' || selectedMode === 'lore') ? rand(5, 7) : rand(7, 9)) + P.eyeBonus;
     ev.blink = { t: time, d: L ? L.d : 99, forced: !!forced };
-    beep(200, .06, 'sine', .04, 120);
+    if (selectedMode === 'lore') { sh(.08, .07, 'highpass', 2600, 780, 2.2, 0, .002); beep(76, .12, 'sine', .08, 34); }
+    else beep(200, .06, 'sine', .04, 120);
   }
 }
 function getDeathAside() {
   const recentBlink = ev.blink && (time - ev.blink.t) < 1.25;
+  if (P.eyeHold > .62) return 'pussy.';
+  if (selectedMode === 'lore') {
+    if (closure() > .62 || (recentBlink && P.blinkT >= 0)) return pick([
+      'You blinked. He did not.',
+      'You closed your eyes. He did not.',
+      'That was a spectacularly bad time to blink.'
+    ]);
+    if (L && Math.abs(L.rel) > Math.atan(P.fov) * .9) return pick([
+      'You were looking in completely the wrong direction.',
+      'He was behind you. Obviously.',
+      'You looked everywhere except at him.'
+    ]);
+    return pick([
+      'You looked away. He did not.',
+      'He only needed you to look somewhere else.',
+      'You gave him exactly one opening.',
+      'You were busy looking at literally anything else.'
+    ]);
+  }
   if (recentBlink && ev.blink.forced) return 'Your eyes ran dry.';
   if (recentBlink) return pick([
     'A bad moment to close your eyes.',
@@ -1184,9 +1786,213 @@ function fireShot() {
   }
 }
 
+function chooseLoreWaypoint(cx, cy, minDistance, maxDistance) {
+  let candidates = FLOORS.filter(([x, y]) => {
+    const d = Math.hypot(x - cx, y - cy);
+    return d >= minDistance && d <= maxDistance && !solid(x, y);
+  });
+  if (!candidates.length) candidates = FLOORS.filter(([x, y]) => !solid(x, y));
+  return candidates.length ? pick(candidates) : [L.x, L.y];
+}
+function setLoreTarget(x, y) {
+  L.loreTargetX = x; L.loreTargetY = y; L.loreRouteT = 0;
+}
+function updateLoreAccurateLars(dt) {
+  L.d = Math.hypot(L.x - P.x, L.y - P.y);
+  L.st = 'chase'; // Retain the existing close-presence visuals and audio routing.
+  const playerViewA = P.a + Math.PI * P.lookBack;
+  const toLars = Math.atan2(L.y - P.y, L.x - P.x);
+  const delta = Math.atan2(Math.sin(toLars - playerViewA), Math.cos(toLars - playerViewA));
+  const observed = Math.abs(delta) <= Math.atan(P.fov) && closure() < .5 && los(P.x, P.y, L.x, L.y);
+  const wasObserved = !!L.watching;
+  L.rel = delta;
+  if (observed) {
+    // Observation freezes him and refreshes the one position he is allowed to know.
+    L.watching = true; L.sees = true;
+    L.lastSeenX = P.x; L.lastSeenY = P.y;
+    L.loreMode = 'pursue'; L.loreSearchT = 0; L.lorePauseT = 0;
+    setLoreTarget(L.lastSeenX, L.lastSeenY);
+    L.mom = 0;
+    return;
+  }
+  L.watching = false; L.sees = false;
+  if (wasObserved) {
+    // He commits to the last place he saw you, not your live position behind a wall.
+    setLoreTarget(L.lastSeenX, L.lastSeenY);
+    L.loreMode = 'pursue'; L.loreSearchT = 0; L.lorePauseT = 0;
+    const pan = Math.sin(Math.atan2(L.y - P.y, L.x - P.x) - playerViewA);
+    sh(.32, .20, 'bandpass', 260, 54, 2.4, pan, .012); thud(.55, pan);
+  }
+  if (!L.loreMode) {
+    // Defensive fallback: resume a local patrol, never initialise pursuit from the player's live position.
+    L.loreMode = 'roam';
+    L.lastSeenX = L.x; L.lastSeenY = L.y;
+    const [wx, wy] = chooseLoreWaypoint(L.x, L.y, 1.8, 4.2);
+    setLoreTarget(wx, wy);
+  }
+
+  const targetDistance = Math.hypot(L.x - L.loreTargetX, L.y - L.loreTargetY);
+  if (L.loreMode === 'pursue' && targetDistance < .43) {
+    L.loreMode = 'search'; L.loreSearchT = 0; L.lorePauseT = 0;
+    const [wx, wy] = chooseLoreWaypoint(L.lastSeenX, L.lastSeenY, .7, 2.1);
+    setLoreTarget(wx, wy);
+  } else if (L.loreMode === 'search') {
+    L.loreSearchT += dt;
+    if (targetDistance < .38) {
+      const [wx, wy] = chooseLoreWaypoint(L.lastSeenX, L.lastSeenY, .7, 2.5);
+      setLoreTarget(wx, wy);
+    }
+    if (L.loreSearchT > 10.5) {
+      L.loreMode = 'roam'; L.lorePauseT = rand(1.1, 2.3);
+      const [wx, wy] = chooseLoreWaypoint(L.x, L.y, 1.8, 4.3);
+      setLoreTarget(wx, wy);
+    }
+  } else if (L.loreMode === 'roam') {
+    if (L.lorePauseT > 0) L.lorePauseT = Math.max(0, L.lorePauseT - dt);
+    else if (targetDistance < .42) {
+      L.lorePauseT = rand(.8, 1.8);
+      const [wx, wy] = chooseLoreWaypoint(L.x, L.y, 1.5, 4.0);
+      setLoreTarget(wx, wy);
+    }
+  }
+
+  if (L.lorePauseT <= 0) {
+    if ((L.loreRouteT -= dt) <= 0) {
+      route(L.loreTargetX, L.loreTargetY);
+      L.loreRouteT = .24;
+    }
+    const cx = L.x | 0, cy = L.y | 0;
+    const targetCellX = L.loreTargetX | 0, targetCellY = L.loreTargetY | 0;
+    let tx = L.loreTargetX, ty = L.loreTargetY;
+    if (cx !== targetCellX || cy !== targetCellY) {
+      let best = dist[cy * N + cx];
+      for (const [sx, sy] of D4) {
+        const nx = cx + sx, ny = cy + sy, value = dist[ny * N + nx];
+        if (value >= 0 && (best < 0 || value < best)) {
+          best = value; tx = nx + .5; ty = ny + .5;
+        }
+      }
+    }
+    const dx = tx - L.x, dy = ty - L.y, d = Math.hypot(dx, dy);
+    if (d > .018) {
+      const speed = L.loreMode === 'pursue' ? 14.2 : L.loreMode === 'search' ? 1.35 : 5.2;
+      const step = Math.min(speed * dt, d), nx = L.x + dx / d * step, ny = L.y + dy / d * step;
+      if (!solid(nx, ny) && !vendingBlocked(nx, ny)) {
+        L.x = nx; L.y = ny; L.a = Math.atan2(dy, dx); L.gait += step * 4.8;
+      } else L.loreRouteT = 0;
+    }
+  }
+  if ((L.stepT -= dt * (L.loreMode === 'pursue' ? 10 : 5.5)) <= 0 && L.lorePauseT <= 0) {
+    lstep(); L.stepT = L.loreMode === 'pursue' ? .58 : L.loreMode === 'search' ? rand(1.9, 2.8) : rand(.9, 1.5);
+  }
+  L.d = Math.hypot(L.x - P.x, L.y - P.y);
+  if (L.d < .62 && P.jumpZ < .42 && L.flashStun <= 0 && state === 'play' && selectedMode !== 'sandbox' && !invincibleCheat) {
+    deathAside = getDeathAside(); state = 'dead'; endT = 0;
+    quip = pick(QUIPS); speechCaptionTimer = 0; silencePersistentAudio(); jumpscareSound();
+    if (document.exitPointerLock) document.exitPointerLock();
+  }
+}
+const OWEN_IMAGE_URL = 'https://raw.githubusercontent.com/blazewingz/lars-simulator/main/assets/characters/shrek.png';
+const owenImage = new Image();
+owenImage.crossOrigin = 'anonymous';
+owenImage.src = OWEN_IMAGE_URL;
+function playOwenWarning() {
+  // A short, unsettling, high-pitched breathy squeal; repeated while he remains.
+  sh(.16, .085, 'bandpass', 1180, 420, 1.35, 0, .012);
+  beep(740, .075, 'sine', .045, 390);
+  sh(.10, .04, 'highpass', 2100, 1300, .8, 0, .006);
+}
+function spawnOwen(force = false) {
+  if (owen || (selectedMode === 'sandbox' && !force)) return false;
+  // Owen has two heights only: crouching is the more common encounter.
+  const pose = Math.random() < .60 ? 'crouching' : 'standing';
+  const targetCameraHeight = pose === 'crouching' ? .28 : .50;
+  // Crouching Owen is physically shorter and sits lower in the frame; standing Owen
+  // occupies more of the vertical sightline so the required player posture is obvious.
+  const height = pose === 'crouching' ? .40 : .72;
+  const lift = targetCameraHeight - height / 2;
+  const viewA = P.a + Math.PI * P.lookBack;
+  let spot = null;
+  // He can appear anywhere around the player except directly ahead.
+  for (let tries = 0; tries < 48 && !spot; tries++) {
+    const side = Math.random() < .5 ? -1 : 1;
+    const offset = side * rand(1.0, Math.PI);
+    const distance = rand(2.25, 4.1);
+    const a = viewA + offset;
+    const x = P.x + Math.cos(a) * distance;
+    const y = P.y + Math.sin(a) * distance;
+    if (free(x, y) && Math.hypot(x - P.x, y - P.y) > 1.9) spot = { x, y };
+  }
+  if (!spot) {
+    const candidates = FLOORS.filter(([x, y]) => {
+      const dx = x - P.x, dy = y - P.y, distance = Math.hypot(dx, dy);
+      const angle = Math.atan2(dy, dx) - viewA;
+      const relative = Math.atan2(Math.sin(angle), Math.cos(angle));
+      return distance >= 2.0 && distance <= 4.5 && Math.abs(relative) >= 1.0 && free(x, y);
+    });
+    if (candidates.length) { const [x, y] = pick(candidates); spot = { x, y }; }
+  }
+  if (!spot) return false;
+  owen = { ...spot, pose, targetCameraHeight, lift, h: height, age: 0, lookProgress: 0, soundT: rand(2.2, 3.0), active: true };
+  playOwenWarning();
+  if (force) owenSpawnUsed = true;
+  return true;
+}
+function updateOwen(dt) {
+  if (state !== 'play') return;
+  if (!owen) {
+    if (selectedMode !== 'sandbox' && !owenSpawnUsed && (owenSpawnCheck -= dt) <= 0) {
+      owenSpawnUsed = true;
+      // Rare, one-time encounter per regular run.
+      if (Math.random() < .28) spawnOwen();
+    }
+    return;
+  }
+  owen.age += dt;
+  if ((owen.soundT -= dt) <= 0) {
+    // A spaced, positional warning gives away his general direction without a UI marker.
+    const bearing = Math.sin(Math.atan2(owen.y - P.y, owen.x - P.x) - (P.a + Math.PI * P.lookBack));
+    sh(.14, .072, 'bandpass', 1100, 390, 1.15, bearing, .014);
+    beep(690, .065, 'sine', .035, 360);
+    owen.soundT = rand(2.4, 3.3);
+  }
+  const viewA = P.a + Math.PI * P.lookBack;
+  const toOwen = Math.atan2(owen.y - P.y, owen.x - P.x);
+  const delta = Math.atan2(Math.sin(toOwen - viewA), Math.cos(toOwen - viewA));
+  const directlyCentered = Math.abs(delta) < .11;
+  const grounded = P.jumpZ < .06 && Math.abs(P.jumpV) < .25;
+  const fullyCrouched = !panelOpen && P.crouching && P.crouchAmount > .72 && cameraHeight < .35;
+  const fullyStanding = !panelOpen && !P.crouching && P.crouchAmount < .18 && cameraHeight > .42;
+  const correctHeight = grounded && (owen.pose === 'crouching' ? fullyCrouched : fullyStanding);
+  const visible = los(P.x, P.y, owen.x, owen.y) && closure() < .30;
+  if (directlyCentered && correctHeight && visible) {
+    // Holding RMB makes the encounter resolve more quickly.
+    owen.lookProgress += dt * (zoomHeld ? 3.4 : 1);
+  } else {
+    owen.lookProgress = Math.max(0, owen.lookProgress - dt * .32);
+  }
+  if (owen.lookProgress >= .78) {
+    owen = null;
+    beep(980, .08, 'sine', .035, 620);
+    return;
+  }
+  if (owen.age >= 7.5) {
+    if (invincibleCheat) { owen = null; msg = 'INVINCIBILITY PREVENTED A HIT'; msgT = 2; return; }
+    if (selectedMode === 'sandbox') {
+      // Sandbox stays invincible, but a failed test still gives clear feedback.
+      owen = null; fxT = Math.max(fxT, .8); msg = 'OWEN CAUGHT YOU'; msgT = 1.8; beep(155, .28, 'sawtooth', .08, 42); sh(.24, .12, 'bandpass', 180, 48, 1.4, 0, .02); return;
+    }
+    deathAside = owen.pose === 'crouching' ? 'You forgot to get down and look.' : 'You heard him. You had time.';
+    state = 'dead'; endT = 0; quip = pick(QUIPS); speechCaptionTimer = 0;
+    silencePersistentAudio(); jumpscareSound();
+    if (document.exitPointerLock) document.exitPointerLock();
+  }
+}
+
 function updateLars(dt) {
   L.d = Math.hypot(L.x - P.x, L.y - P.y);
-  if (L.knocked) { L.knockT += dt; if (L.knockT > 1.15) { state = 'secret'; endT = 0; } return; }
+  if (selectedMode === 'sandbox' && !sandboxLarsEnabled) { L.d = 99; L.sees = false; return; }
+  if (L.knocked) { if (selectedMode === 'sandbox') { L.knocked = false; L.st = 'search'; L.knockT = 0; return; } L.knockT += dt; if (L.knockT > 1.15) { state = 'secret'; endT = 0; } return; }
   if (L.knockback) {
     const kb = L.knockback;
     let remaining = Math.min(kb.speed * dt, kb.maxDistance - kb.distance);
@@ -1206,6 +2012,7 @@ function updateLars(dt) {
     }
     return;
   }
+  if (selectedMode === 'lore') { updateLoreAccurateLars(dt); return; }
   if (L.st === 'sleep') { if ((wakeT -= dt) <= 0) { const j = jitter(P.x, P.y, 6); wakeUp('LARS WOKE UP ON HIS OWN', j[0], j[1]); } return; }
   const toPlayer = Math.atan2(P.y - L.y, P.x - L.x);
   const facing = Math.atan2(Math.sin(toPlayer - L.a), Math.cos(toPlayer - L.a));
@@ -1270,16 +2077,16 @@ function updateLars(dt) {
     }
   }
   if ((L.stepT -= dt * sp) <= 0) { lstep(); L.stepT = 1.1; }   // footsteps you can hear coming
-  if (L.d < .58 && P.jumpZ < .42 && L.flashStun <= 0 && state === 'play') { deathAside = getDeathAside(); state = 'dead'; endT = 0; quip = pick(QUIPS); speechCaptionTimer = 0; silencePersistentAudio(); jumpscareSound(); if (document.exitPointerLock) document.exitPointerLock(); }
+  if (L.d < .58 && P.jumpZ < .42 && L.flashStun <= 0 && state === 'play' && selectedMode !== 'sandbox' && !invincibleCheat) { deathAside = getDeathAside(); state = 'dead'; endT = 0; quip = pick(QUIPS); speechCaptionTimer = 0; silencePersistentAudio(); jumpscareSound(); if (document.exitPointerLock) document.exitPointerLock(); }
 }
 
 
 /* ---------- Update ---------- */
 function update(dt) {
   t += dt; if (msgT > 0) msgT -= dt; if (fxT > 0) fxT = Math.max(0, fxT - dt * 1.1);
-  light += (1 - light) * Math.min(1, dt * 6);
+  light += ((power ? 1 : .12) - light) * Math.min(1, dt * 6);
   if (Math.random() < dt * .045) { light = rand(.18, .48); sh(.16, .018, 'bandpass', 520, 180, .8, 0, .004); } // rare electrical flicker and soft ballast buzz
-  if (state !== 'play') { endT += dt; if (droneG) droneG.gain.value = 0; if (chaseG) chaseG.gain.value = 0; if (lbG) lbG.gain.value = 0; return; }
+  if (state !== 'play') { syncSandboxTools(); endT += dt; if (droneG) droneG.gain.value = 0; if (chaseG) chaseG.gain.value = 0; if (lbG) lbG.gain.value = 0; if (loreDroneG) loreDroneG.gain.value = 0; return; }
   time += dt;
   updateVendingMachines(dt);
   updateRat(dt);
@@ -1308,7 +2115,7 @@ function update(dt) {
     if (P.blinkT > .34) {
       P.blinkT = -1;
       P.bm = 0;
-      P.blinkInterval = (selectedMode === 'extreme' ? rand(5, 7) : rand(7, 9)) + P.eyeBonus;
+      P.blinkInterval = ((selectedMode === 'extreme' || selectedMode === 'lore') ? rand(5, 7) : rand(7, 9)) + P.eyeBonus;
       if (L.st !== 'sleep' && L.d < 7 && L.sees) { noise(.15, .3); beep(900, .14, 'sawtooth', .1, 300); }
     }
   } else if (!qHeld && P.eyeHold < .08 && !panelOpen) {
@@ -1323,14 +2130,22 @@ function update(dt) {
     }
   } else P.squintBlinkT = 0;
   if (speechCaptionTimer > 0) speechCaptionTimer = Math.max(0, speechCaptionTimer - dt);
-  if ((ambientBreathT -= dt) <= 0) {
+  if (selectedMode === 'lore') {
+    if ((loreAmbientT -= dt) <= 0) {
+      const pan = rand(-.85, .85);
+      sh(rand(.45, .95), rand(.018, .036), 'bandpass', rand(220, 460), rand(48, 92), 2.1, pan, .06);
+      if (Math.random() < .32) { beep(rand(38, 58), rand(.22, .42), 'sine', .055, rand(22, 31)); }
+      loreAmbientT = rand(6.5, 13.5);
+    }
+  } else if ((ambientBreathT -= dt) <= 0) {
     if (!actionDown('sprint') && !P.crouching && P.eyeHold < .2) sh(.62, .022, 'bandpass', 760, 490, .85, 0, .16);
     ambientBreathT = rand(5.5, 9.5);
   }
 
   // --- movement: momentum, sprint with stamina, FOV kick, head bob ---
   const turn = (keys.ArrowRight ? 1 : 0) - (keys.ArrowLeft ? 1 : 0);
-  P.a += turn * 2.6 * dt;
+  const nextAngle = P.a + turn * 2.6 * dt;
+  P.a = Math.atan2(Math.sin(nextAngle), Math.cos(nextAngle));
   P.lookBack += (((actionDown('lookBehind') && !panelOpen) ? 1 : 0) - P.lookBack) * Math.min(1, dt * 15);
   P.lookFov = Math.sin(P.lookBack * Math.PI) * .075;
   const fwd = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0), str = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0);
@@ -1341,8 +2156,10 @@ function update(dt) {
   const sprint = !panelOpen && !P.crouching && !zoomHeld && actionDown('sprint') && len > 0 && P.stam > 0 && !P.tired;
   const squintSlow = (zoomHeld ? .78 : 1) * (1 - P.eyeHold * .38);
   const v = (P.crouching ? 2.0 : sprint ? 6.2 : 4.15) * squintSlow * (fwd < 0 ? .76 : 1), k = Math.min(1, dt * (P.crouching ? 13 : 9)); P.vx += (wx * v - P.vx) * k; P.vy += (wy * v - P.vy) * k;
-  if (free(P.x + P.vx * dt, P.y)) P.x += P.vx * dt;
-  if (free(P.x, P.y + P.vy * dt)) P.y += P.vy * dt;
+  // A jump clears the low generator housings; tall cabinets and machines remain solid.
+  const jumpClearsGenerators = P.jumpV > .15 || P.jumpZ > .38;
+  if (free(P.x + P.vx * dt, P.y, jumpClearsGenerators)) P.x += P.vx * dt;
+  if (free(P.x, P.y + P.vy * dt, jumpClearsGenerators)) P.y += P.vy * dt;
   const spd = Math.hypot(P.vx, P.vy);
   const standingStill = spd < .18;
   const regenMultiplier = P.crouching && standingStill ? 1.75 : (P.crouching || standingStill ? 1.5 : 1);
@@ -1410,36 +2227,49 @@ function update(dt) {
     }
   }
   if (Math.hypot(EXIT.x - P.x, EXIT.y - P.y) < .8) {
-    if (fixed === gens.length) { recordModeWin(); state = 'win'; endT = 0; beep(440, .6, 'triangle', .15, 880); return; }
+    if (fixed === gens.length) { if (selectedMode !== 'sandbox') recordModeWin(); state = 'win'; endT = 0; beep(440, .6, 'triangle', .15, 880); return; }
     if (msgT <= 0) say('Exit is locked. Fix the generators first.', 2);
   }
 
   // --- power: Lars walks to the fuse box and kills the lights; you flip it back on ---
   if (power && L.st === 'patrol' && !L.fuse && (blackIn -= dt) <= 0) { L.fuse = true; route(FUSE.x, FUSE.y); blackIn = selectedMode === 'extreme' ? rand(55, 78) : rand(82, 108); }
   blackT = power ? 0 : 1;
-  const visibility = selectedMode === 'extreme' ? (power ? 7.1 : 2.25) : (power ? 10 : 3.2);
+  const visibility = selectedMode === 'lore' ? (power ? 5.1 : 1.35) : selectedMode === 'extreme' ? (power ? 7.1 : 2.25) : (power ? 10 : 3.2);
   fogD += (visibility - fogD) * Math.min(1, dt * 5);
   nearFuse = Math.hypot(FUSE.x - P.x, FUSE.y - P.y) < 1.6;
   if (panelOpen && !nearFuse) closePanel();
 
-  updateLars(dt); if (state !== 'play') return; larsAudio();
+  updateLars(dt); if (state !== 'play') return; updateOwen(dt); if (state !== 'play') return; larsAudio();
   const d = L.d, prox = clamp(1 - d / 14, 0, 1);
-  if (L.st === 'chase') {
-    music(dt, prox);
-    if (chaseG) { const rel = Math.atan2(L.y - P.y, L.x - P.x) - P.a; chaseG.gain.value = prox * prox * .22 * (1 + L.mom * .6); chaseO.frequency.value = 62 + prox * 46 + L.mom * 20; if (chaseP) chaseP.pan.value = Math.sin(rel); }
-    if ((shoutT -= dt) <= 0) {
-      shout(clamp(1.1 - d / 20, .15, 1));
-      shoutT = 1.8 + d * .12 + rand(0, 1.5);
+  if (selectedMode === 'lore') {
+    if (chaseG) chaseG.gain.value = 0;
+    if (lbG) lbG.gain.value = 0;
+    if (droneG) droneG.gain.value = 0;
+    if (loreDroneG) loreDroneG.gain.value = .018 + prox * .045 + (L.watching ? .012 : 0);
+    if ((loreHeartbeatT -= dt) <= 0 && d < 10) {
+      const volume = clamp(1 - d / 11, .12, .72);
+      thud(.13 + volume * .28, Math.sin(Math.atan2(L.y-P.y,L.x-P.x)-P.a));
+      loreHeartbeatT = rand(1.35, 2.6) - prox * .55;
     }
   } else {
-    if (chaseG) chaseG.gain.value = 0;
-    if (L.st !== 'sleep' && (shoutT -= dt) <= 0) {
-      shout(clamp(.7 - d / 30, .05, .5), ['hello?', 'where are you', 'i just want to talk', 'come out', 'i can hear you', 'Lars?']);
-      shoutT = rand(6, 11);
+    if (loreDroneG) loreDroneG.gain.value = 0;
+    if (L.st === 'chase') {
+      music(dt, prox);
+      if (chaseG) { const rel = Math.atan2(L.y - P.y, L.x - P.x) - P.a; chaseG.gain.value = prox * prox * .22 * (1 + L.mom * .6); chaseO.frequency.value = 62 + prox * 46 + L.mom * 20; if (chaseP) chaseP.pan.value = Math.sin(rel); }
+      if ((shoutT -= dt) <= 0) {
+        shout(clamp(1.1 - d / 20, .15, 1));
+        shoutT = 1.8 + d * .12 + rand(0, 1.5);
+      }
+    } else {
+      if (chaseG) chaseG.gain.value = 0;
+      if (L.st !== 'sleep' && (shoutT -= dt) <= 0) {
+        shout(clamp(.7 - d / 30, .05, .5), ['hello?', 'where are you', 'i just want to talk', 'come out', 'i can hear you', 'Lars?']);
+        shoutT = rand(6, 11);
+      }
+      if (d < 8 && L.st !== 'sleep') { musicT -= dt; if (musicT <= 0) { beep(60, .14, 'sine', .3, 35); musicT = .4 + d * .1; } }
     }
-    if (d < 8 && L.st !== 'sleep') { musicT -= dt; if (musicT <= 0) { beep(60, .14, 'sine', .3, 35); musicT = .4 + d * .1; } }   // heartbeat
+    if (droneG) droneG.gain.value = .04 + (L.st !== 'sleep' ? prox * .08 : 0);
   }
-  if (droneG) droneG.gain.value = .04 + (L.st !== 'sleep' ? prox * .08 : 0);
 }
 
 /* ---------- Render ---------- */
@@ -1647,7 +2477,7 @@ function drawGeneratorHud() {
   const gx = x + 4, gy = y + 4, gw = w - 8, gh = 5, gap = 2;
   const seg = (gw - gap * (gens.length - 1)) / gens.length;
   for (let i = 0; i < gens.length; i++) {
-    rr(ctx, gx + i * (seg + gap), gy, seg, gh, i < fixed ? '#50e47c' : '#493538');
+    rr(ctx, gx + i * (seg + gap), gy, seg, gh, i < fixed ? (selectedMode === 'lore' ? '#a7a0a0' : '#50e47c') : (selectedMode === 'lore' ? '#421d24' : '#493538'));
   }
   ctx.restore();
 }
@@ -1905,50 +2735,75 @@ function propFaces(prop, palette) {
   return ambient;
 }
 function drawGenerator3D(generator) {
-  const g = { ...generator, hw: generator.hw || .255, hd: generator.hd || .19, height: generator.height || .88, bodyScale:1, heightScale:1, state: generator.done ? 'done' : 'idle' };
-  const ambient = propFaces(g, { base:'#15191c', left:'#31383a', right:'#20272a', top:'#65706a', back:'#293033', front:'#46504d' });
+  const g = { ...generator, hw: generator.hw || .205, hd: generator.hd || .145, height: generator.height || .36, bodyScale:1, heightScale:1, state: generator.done ? 'done' : 'idle' };
+  const zoneAccent = { '#':'#d6a84e', 'B':'#63c8ee', 'R':'#ff765d', 'G':'#d8d8a1', 'T':'#5dd9b7' };
+  const accent = g.done ? '#52ef91' : (zoneAccent[g.zone] || '#d6a84e');
+  const ambient = propFaces(g, { base:'#21090c', left:'#65151c', right:'#27090e', top:'#a72a32', back:'#3c0d13', front:'#8d2029' });
   const frontSide = (P.x-g.x)*g.fx + (P.y-g.y)*g.fy > .02;
   if (!frontSide) return;
-  // Generator: chunky industrial cabinet, exposed vents, cable conduits and indicator lamps.
-  vendingRect(g,-.215,.215,.008,.12,.77,'#20282a',ambient);
-  vendingRect(g,-.185,.185,.016,.52,.735,'#11191b',ambient);
-  vendingRect(g,-.155,.155,.022,.565,.69,g.done?'#183b2a':'#3c2521',ambient);
-  for (let i=0;i<5;i++) vendingRect(g,-.145+i*.072,-.12+i*.072,.028,.60,.62,'#85918a',ambient);
-  vendingRect(g,-.19,.19,.012,.43,.46,'#b39435',ambient);
-  vendingRect(g,-.19,-.15,.024,.17,.38,'#101517',ambient);
-  for(let i=0;i<4;i++) vendingRect(g,-.17,-.10,.03,.20+i*.045,.215+i*.045,'#798783',ambient);
-  vendingRect(g,.10,.18,.024,.19,.39,'#111619',ambient);
-  drawVendingPoly(g,[[.13,g.hd+.035,.27],[.185,g.hd+.035,.27],[.185,g.hd+.035,.38],[.13,g.hd+.035,.38]],g.done?'#4dff91':'#e0b638',ambient);
-  vendingRect(g,-.22,.22,.018,.075,.105,'#8d9b92',ambient);
-  // Raised top cap and side cable box make the silhouette unlike the vending machine.
-  drawVendingPoly(g,[[-.15,-.025,.79],[.15,-.025,.79],[.15,.05,.79],[-.15,.05,.79]],'#87948b',ambient);
-  drawVendingPoly(g,[[g.hw+.002,-.13,.20],[g.hw+.002,.13,.20],[g.hw+.002,.13,.60],[g.hw+.002,-.13,.60]],'#111719',ambient);
+  // Low, squat engine block: red casing, exposed top pipes and a small zone-colour lamp.
+  vendingRect(g,-.18,.18,.012,.035,.085,'#140609',ambient);
+  vendingRect(g,-.155,.155,.025,.07,.29,'#561018',ambient);
+  vendingRect(g,-.138,.138,.042,.095,.265,'#a51e2a',ambient);
+  vendingRect(g,-.12,.12,.055,.11,.235,'#6f101c',ambient);
+  // Front cover and three recessed ventilation slots.
+  vendingRect(g,-.10,.10,.068,.105,.205,'#351016',ambient);
+  for (let i=0;i<3;i++) vendingRect(g,-.078+i*.055,-.052+i*.055,.075,.125,.133,'#ba4750',ambient);
+  // Two short steel exhaust stubs and a visible coil on top.
+  vendingRect(g,-.105,-.055,.045,.275,.345,'#9ba5a4',ambient);
+  vendingRect(g,.055,.105,.045,.275,.345,'#9ba5a4',ambient);
+  vendingRect(g,-.04,.04,.09,.285,.335,'#202125',ambient);
+  for (let i=0;i<3;i++) {
+    const u=-.027+i*.027;
+    vendingRect(g,u-.008,u+.008,.098,.29,.331,accent,ambient);
+  }
+  // A small status lamp changes with the map zone and goes green when repaired.
+  vendingRect(g,.105,.145,.045,.16,.205,'#19080c',ambient);
+  vendingRect(g,.112,.138,.052,.17,.197,accent,ambient);
+  drawVendingPoly(g,[[-.14,.12,.29],[.14,.12,.29],[.14,.15,.29],[-.14,.15,.29]],'#d44a50',ambient);
+  if (g.done) vendingRect(g,-.095,.095,.084,.14,.17,'#53ef91',ambient);
 }
 function drawFuse3D() {
-  const f = { ...FUSE, hw:.19, hd:.13, height:1.02, bodyScale:1, heightScale:1, state:'fuse' };
-  const ambient = propFaces(f, { base:'#171b20', left:'#2b343a', right:'#111a20', top:'#7d8b8e', back:'#25323a', front:'#59666b' });
+  const f = { ...FUSE, hw:.22, hd:.15, height:.96, bodyScale:1, heightScale:1, state:'fuse' };
+  const ambient = propFaces(f, { base:'#242a2f', left:'#586168', right:'#171c20', top:'#a5adb0', back:'#2c3439', front:'#414b52' });
   const frontSide = (P.x-f.x)*f.fx + (P.y-f.y)*f.fy > .02;
   if (!frontSide) return;
-  // Narrow electrical breaker pedestal: fuse wells and a prominent red disconnect handle.
-  vendingRect(f,-.155,.155,.008,.17,.86,'#10171c',ambient);
-  vendingRect(f,-.135,.135,.016,.63,.81,'#29343a',ambient);
-  vendingRect(f,-.12,.12,.024,.66,.76,'#8b2823',ambient);
-  vendingRect(f,-.11,.11,.03,.695,.725,'#e6c25b',ambient);
-  for(let i=0;i<5;i++) {
-    const u=-.105+i*.052;
-    vendingRect(f,u-.018,u+.018,.03,.39,.61,'#090d11',ambient);
-    vendingRect(f,u-.013,u+.013,.035,power? .405 : (sw[i] ? .405 : .49),power? .48 : (sw[i] ? .48 : .565),power?'#54ec83':(sw[i]?'#54ec83':'#c33b34'),ambient);
-    vendingRect(f,u-.019,u+.019,.035,.37,.39,'#d3d9d2',ambient);
-  }
-  vendingRect(f,-.08,.08,.034,.23,.30,'#4d5d62',ambient);
-  // Master switch lever is a raised red diagonal slab.
-  drawVendingPoly(f,[[-.035,f.hd+.055,.25],[.025,f.hd+.055,.25],[.105,f.hd+.055,.43],[.045,f.hd+.055,.43]],'#b83a31',ambient);
-  vendingRect(f,-.15,.15,.02,.12,.15,'#c7ab55',ambient);
+  // Fuse unit is a chunky electrical service cabinet with a cable arch and one large selector.
+  vendingRect(f,-.20,.20,.01,.12,.84,'#11171b',ambient);
+  vendingRect(f,-.17,.17,.025,.18,.80,'#657078',ambient);
+  vendingRect(f,-.145,.145,.04,.24,.75,'#252e35',ambient);
+  vendingRect(f,-.12,.12,.06,.58,.70,'#d1ad43',ambient);
+  vendingRect(f,-.105,.105,.075,.595,.68,'#161c20',ambient);
+  // Single large fuse window; distinct from the generator's repeated engine parts.
+  vendingRect(f,-.075,.075,.085,.47,.62,power?'#3ddb7b':'#c94336',ambient);
+  vendingRect(f,-.06,.06,.095,.49,.60,'#e5e8dc',ambient);
+  vendingRect(f,-.18,.18,.05,.38,.42,'#141a1e',ambient);
+  // Prominent rotary handle, angled in 3D.
+  drawVendingPoly(f,[[-.035,f.hd+.12,.27],[.045,f.hd+.12,.27],[.09,f.hd+.13,.50],[.015,f.hd+.13,.50]],'#b84232',ambient);
+  drawVendingPoly(f,[[-.12,-.08,.85],[.12,-.08,.85],[.12,.08,.85],[-.12,.08,.85]],'#9aa5a9',ambient);
+  for (let i=0;i<4;i++) vendingRect(f,-.18+i*.10,-.14+i*.10,.055,.20,.23,'#e2c85b',ambient);
 }
 
+function drawLoreAtmosphere() {
+  if (selectedMode !== 'lore' || state !== 'play') return;
+  ctx.save();
+  const pulse = .025 * (0.5 + 0.5 * Math.sin(t * .63)) + (Math.sin(t * .19) > .985 ? .07 : 0);
+  ctx.fillStyle = 'rgba(0,0,0,' + (.16 + pulse) + ')'; ctx.fillRect(0, 0, RW, RH);
+  const edge = ctx.createRadialGradient(RW / 2, RH * .49, 20, RW / 2, RH * .49, 174);
+  edge.addColorStop(0, 'rgba(0,0,0,0)'); edge.addColorStop(.36, 'rgba(0,0,0,.12)');
+  edge.addColorStop(.72, 'rgba(0,0,0,.55)'); edge.addColorStop(1, 'rgba(0,0,0,.94)');
+  ctx.fillStyle = edge; ctx.fillRect(0, 0, RW, RH);
+  ctx.globalAlpha = .10; ctx.strokeStyle = '#9d5961'; ctx.lineWidth = 1;
+  for (let y = (t * 9 | 0) % 5; y < RH; y += 5) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(RW, y); ctx.stroke(); }
+  if (Math.random() < .022) {
+    const y = rand(18, RH - 18); ctx.globalAlpha = rand(.06, .15); ctx.fillStyle = '#bb6b76';
+    ctx.fillRect(rand(0, RW * .45), y, rand(18, RW * .42), 1);
+  }
+  ctx.restore();
+}
 
 function drawLarsNightEyes() {
-  if (power || !L || L.knocked) return;
+  if (power || !L || L.knocked || (selectedMode === 'sandbox' && !sandboxLarsEnabled)) return;
   const ex = L.x - P.x, ey = L.y - P.y;
   const inv = 1 / P.fov;
   const tx = (cam.dx * ey - cam.dy * ex) * inv;
@@ -1979,14 +2834,24 @@ function drawLarsNightEyes() {
 function draw() {
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, RW, RH);
   if (state === 'title') {
-    ctx.fillStyle = '#e8e8e8';
-    ctx.font = 'bold 25px Arial, Helvetica, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('LARS SIMULATOR', RW / 2, 62);
-    ctx.fillStyle = '#ffe14d';
-    ctx.font = '10px Arial, Helvetica, sans-serif';
-    if (Math.sin(t * 3) > -.2) ctx.fillText('PRESS SPACE OR CLICK TO START', RW / 2, 145);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    if (selectedMode === 'lore') {
+      ctx.fillStyle = '#050304'; ctx.fillRect(0, 0, RW, RH);
+      const pulse = .5 + .5 * Math.sin(t * .42);
+      ctx.fillStyle = 'rgba(92,8,18,.13)'; ctx.fillRect(0, 0, RW, RH);
+      ctx.fillStyle = '#7d303a'; ctx.font = 'bold 12px Courier New'; ctx.letterSpacing = '2px';
+      ctx.fillText('OBSERVATION LOG // 06', RW / 2, 38);
+      ctx.fillStyle = '#b9a5a7'; ctx.font = 'bold 24px Courier New'; ctx.fillText('DO NOT LOOK AWAY', RW / 2, 78);
+      ctx.fillStyle = 'rgba(160,48,62,' + (.22 + pulse * .5) + ')'; ctx.fillRect(54, 104, 212, 1);
+      ctx.fillStyle = '#8b686d'; ctx.font = '8px Courier New'; ctx.fillText('SIX POWER UNITS REMAIN OFFLINE', RW / 2, 120);
+      ctx.fillStyle = '#c3a6aa'; ctx.font = '9px Courier New';
+      if (Math.sin(t * 1.7) > -.45) ctx.fillText('PRESS SPACE. KEEP WATCH.', RW / 2, 151);
+    } else {
+      ctx.fillStyle = '#e8e8e8'; ctx.font = 'bold 25px Arial, Helvetica, sans-serif';
+      ctx.fillText('LARS SIMULATOR', RW / 2, 62);
+      ctx.fillStyle = '#ffe14d'; ctx.font = '10px Arial, Helvetica, sans-serif';
+      if (Math.sin(t * 3) > -.2) ctx.fillText('PRESS SPACE OR CLICK TO START', RW / 2, 145);
+    }
     return;
   }
   const darkRoom = !power && !(torchOn && torchBattery > 0);
@@ -1994,7 +2859,7 @@ function draw() {
   const darkSquintBoost = selectedMode === 'extreme' ? .12 : .16;
   // Keep the original focus benefit in lit areas; only the dark-room boost is reduced.
   const squintSightBoost = zoomAmount * (darkRoom ? darkSquintBoost : normalSquintBoost);
-  FL = torchPower * (selectedMode === 'extreme' ? 3.5 : 4.3) + squintSightBoost; const renderA = P.a + Math.PI * P.lookBack; cam.dx = Math.cos(renderA); cam.dy = Math.sin(renderA); vk = RH * Math.pow(.66 / P.fov, .6);   // keeps wall height sensible at wide FOV
+  FL = selectedMode === 'lore' ? torchPower * 5.0 + squintSightBoost * .28 : torchPower * (selectedMode === 'extreme' ? 3.5 : 4.3) + squintSightBoost; const renderA = P.a + Math.PI * P.lookBack; cam.dx = Math.cos(renderA); cam.dy = Math.sin(renderA); vk = RH * Math.pow(.66 / P.fov, .6);   // keeps wall height sensible at wide FOV
   const prox = L.st === 'sleep' ? 0 : clamp(1 - L.d / 10, 0, 1);
   // V2 camera feel: threat shake on both axes, plus the player's actual run/crouch/jump motion.
   const shakeX = rand(-1, 1) * prox * 2
@@ -2005,12 +2870,13 @@ function draw() {
   drawFloor();
   castWalls();
   larsFrame();
-  const things = [{ x: EXIT.x, y: EXIT.y, c: fixed === gens.length ? exitOpen : exitShut, h: .95, l: 0 },
-                  { x: L.x, y: L.y, c: larsC, h: L.knocked ? .54 : .95, l: .04 }];
+  const things = [{ x: EXIT.x, y: EXIT.y, c: fixed === gens.length ? exitOpen : exitShut, h: .95, l: 0 }];
+  if (!(selectedMode === 'sandbox' && !sandboxLarsEnabled)) things.push({ x: L.x, y: L.y, c: larsC, h: L.knocked ? .54 : .95, l: .04 });
   for (const g of gens) things.push({ kind:'generator', ref:g, x:g.x, y:g.y });
   if (cheatWall) things.push({ x: cheatWall[0], y: cheatWall[1], c: cheatSign, h: .24, l: .48 });
   things.push({ kind:'fuse', x:FUSE.x, y:FUSE.y });
   if (rat && ratImage.complete && ratImage.naturalWidth) things.push({ x:rat.x, y:rat.y, c:ratImage, h:.19, l:0, rat:true });
+  if (owen && owen.active && owenImage.complete && owenImage.naturalWidth) things.push({ x:owen.x, y:owen.y, c:owenImage, h:owen.h, l:owen.lift, owen:true });
   if (BATTERY.active) things.push({ x: BATTERY.x, y: BATTERY.y, c: getWorldPickupArt('battery'), h: .42, l: 0, item3d: true });
   for (const item of quarterPickups) if (item.active) things.push({ x: item.x, y: item.y, c: quarterCv, h: .34, l: 0, item3d: true });
   for (const item of droppedItems) if (item.active) things.push({ x: item.x, y: item.y, c: getWorldPickupArt(item.type), h: .42, l: 0, item3d: true });
@@ -2028,6 +2894,7 @@ function draw() {
   ctx.restore();
 
   ctx.fillStyle = `rgba(0,0,0,${(1 - light) * (blackT > 0 ? .48 : .56)})`; ctx.fillRect(0, 0, RW, RH);   // retain darkness without fading world objects into near-invisibility
+  drawLoreAtmosphere();
   drawLarsNightEyes();
   if (L.st === 'chase' && L.d < 8) { ctx.globalAlpha = (1 - L.d / 8) * .8; ctx.fillStyle = vig; ctx.fillRect(0, 0, RW, RH); ctx.globalAlpha = 1; }
   { const ca = clamp((L.st === 'chase' ? 1 - L.d / 9 : 0) + fxT * .7, 0, 1);               // Evade-style: colour bleeds at the edges and the screen pulses as he closes in
@@ -2099,11 +2966,10 @@ function draw() {
     ctx.fillStyle = endT < .25 ? '#fff' : '#000'; ctx.fillRect(0, 0, RW, RH);
     const f = IMG[(endT < 1.3 && Math.sin(endT * 40) > .5) ? 'flash' : 'near'] || IMG.flash || IMG.idle;
     if (f) ctx.drawImage(f, RW / 2 - s / 2 + j, RH / 2 - s / 2 + j, s, s);
-    if (endT > .5) txt('LARS GOT YOU', RW / 2, 40, 30, '#fff');
+    if (endT > .5) txt(selectedMode === 'lore' ? 'CONTAINMENT FAILED' : 'LARS GOT YOU', RW / 2, 40, selectedMode === 'lore' ? 22 : 30, '#fff');
     
-    if (endT > 1.1) txt(quip, RW / 2, 142, 10, '#ddd');
-    if (endT > 1.65) txt(deathAside, RW / 2, 158, 8, '#aaa');
-    if (endT > 2.4) txt('SPACE TO RETRY', RW / 2, 174, 11, '#ffe14d');
+    if (selectedMode === 'lore') { if (endT > 1.0) txt(quip, RW / 2, 143, 9, '#b79da1'); if (endT > 1.65) txt(deathAside, RW / 2, 158, 9, '#d5b8bc'); if (endT > 2.4) txt('SPACE TO RETURN', RW / 2, 174, 10, '#b06c75'); }
+    else { if (endT > 1.1) txt(quip, RW / 2, 142, 10, '#ddd'); if (endT > 1.65) txt(deathAside, RW / 2, 158, 8, '#aaa'); if (endT > 2.4) txt('SPACE TO RETRY', RW / 2, 174, 11, '#ffe14d'); }
   }
   if (state === 'win') {
     ctx.fillStyle = 'rgba(0,30,0,.8)'; ctx.fillRect(0, 0, RW, RH);
@@ -2128,6 +2994,7 @@ function draw() {
 function lockMouse() { if (cv.requestPointerLock && document.pointerLockElement !== cv) { try { cv.requestPointerLock(); } catch (e) {} } }
 function act() { if (state === 'title' || (state === 'dead' && endT > 2.4) || (state === 'win' && endT > 1) || (state === 'secret' && endT > 1.5)) start(); }
 addEventListener('keydown', e => {
+  if (e.target && e.target.closest && e.target.closest('input, textarea, select, [contenteditable="true"]') && !bindCapture) return;
   if (bindCapture) {
     e.preventDefault();
     if (e.code === 'Escape') {
@@ -2153,12 +3020,27 @@ addEventListener('keydown', e => {
   if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code) || action || /^Digit[1-3]$/.test(e.code)) e.preventDefault();
   if (e.repeat) return;
   if (/^[a-z]$/i.test(e.key || '')) {
-    cheatBuffer = (cheatBuffer + e.key.toLowerCase()).slice(-7);
-    if (cheatBuffer.endsWith('extreme')) {
+    cheatBuffer = (cheatBuffer + e.key.toLowerCase()).slice(-10);
+    if (cheatBuffer.endsWith('invincible')) {
+      invincibleCheat = !invincibleCheat;
+      msg = invincibleCheat ? 'INVINCIBLE MODE ON' : 'INVINCIBLE MODE OFF';
+      msgT = 3.2;
+      beep(invincibleCheat ? 980 : 520, .15, 'triangle', .08, invincibleCheat ? 1320 : 360);
+      cheatBuffer = '';
+    } else if (cheatBuffer.endsWith('extreme')) {
       if (unlockExtreme() && state === 'play') { beep(740, .12, 'square', .1, 1180); beep(980, .18, 'triangle', .08, 660); }
       cheatBuffer = '';
     } else if (cheatBuffer.endsWith('lore')) {
       if (!loreUnlocked) { loreUnlocked = true; saveModeProgress(); renderModeSelector(); animateModeUnlock('lore'); beep(740, .12, 'square', .1, 1180); beep(980, .18, 'triangle', .08, 660); }
+      cheatBuffer = '';
+    } else if (cheatBuffer.endsWith('sandbox')) {
+      if (!sandboxUnlocked) {
+        sandboxUnlocked = true;
+        if (state !== 'play') selectedMode = 'sandbox';
+        saveModeProgress(); renderModeSelector(); animateModeUnlock('sandbox');
+        msg = 'PRIVATE SANDBOX UNLOCKED'; msgT = 2.5;
+        beep(740, .12, 'square', .1, 1180); beep(980, .18, 'triangle', .08, 660);
+      }
       cheatBuffer = '';
     } else if (state === 'play' && cheatBuffer.endsWith('ssadad') && !shotgun) {
       shotgun = true; msg = 'CHEAT CODE ACCEPTED — SHOTGUN UNLOCKED'; msgT = 3;
@@ -2213,13 +3095,23 @@ cv.addEventListener('mousedown', e => {
   }
 });
 addEventListener('mouseup', e => { if (e.button === 2) { zoomHeld = false; P.squintBlinkT = 0; } });
-addEventListener('mousemove', e => { if (document.pointerLockElement === cv && state === 'play') P.a += e.movementX * .0024; });
+addEventListener('mousemove', e => {
+  if (document.pointerLockElement !== cv || state !== 'play' || panelOpen) return;
+  const dx = Number(e.movementX);
+  if (!Number.isFinite(dx)) return;
+  // Pointer lock keeps the cursor captured even when the physical mouse reaches a monitor edge.
+  // Apply the browser's native relative delta without clamping, smoothing or discarding fast turns.
+  const nextAngle = P.a + dx * .0024;
+  P.a = Math.atan2(Math.sin(nextAngle), Math.cos(nextAngle));
+});
 
 /* ---------- Gun images: paste your two image URLs here ---------- */
 const GUN_IMAGE_NORMAL_URL = 'https://raw.githubusercontent.com/blazewingz/lars-simulator/main/assets/gun.png'; // image shown when RMB is NOT held
 const GUN_IMAGE_RMB_URL = 'https://raw.githubusercontent.com/blazewingz/lars-simulator/main/assets/gun%20but%20aiming.png'; // image shown while RMB IS held
 const gunImageNormal = new Image();
 const gunImageRmb = new Image();
+gunImageNormal.crossOrigin = 'anonymous';
+gunImageRmb.crossOrigin = 'anonymous';
 if (GUN_IMAGE_NORMAL_URL) gunImageNormal.src = GUN_IMAGE_NORMAL_URL;
 if (GUN_IMAGE_RMB_URL) gunImageRmb.src = GUN_IMAGE_RMB_URL;
 
