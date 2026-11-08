@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Lars Simulator v0.41</title>
+<title>Lars Simulator v0.43</title>
 <style>
 :root{--yellow:#ffe14d;--red:#c4160a;--ink:#111;color-scheme:dark}
 *{box-sizing:border-box}
@@ -285,7 +285,7 @@ body.lore-mode #nicknameWrap:focus-within::after{background:linear-gradient(90de
       <span class="sandbox-tag">SANDBOX · INVINCIBLE · ESC TO ACCESS TOOLS</span>
       <button type="button" id="sandboxLarsBtn">DISABLE LARS</button>
       <select id="sandboxItemSelect" aria-label="Item to spawn">
-        <option value="battery">Battery</option><option value="quarter">Quarter</option><option value="energy">Energy bar</option><option value="eyedrops">Eye drops</option><option value="bsoda">BSODA chair</option><option value="pewpew">Pew Pew</option>
+        <option value="battery">Battery</option><option value="quarter">Quarter</option><option value="energy">Energy bar</option><option value="eyedrops">Eye drops</option><option value="bandages">Bandages</option><option value="chair">Wooden chair</option><option value="bsoda">BSODA chair</option><option value="pewpew">Pew Pew</option>
       </select>
       <button type="button" id="sandboxSpawnItem">SPAWN ITEM</button>
       <button type="button" id="sandboxSpawnRat">SPAWN RUBIN</button>
@@ -331,7 +331,7 @@ body.lore-mode #nicknameWrap:focus-within::after{background:linear-gradient(90de
     </section>
   </aside>
 </div>
-<div id="version">v0.41 · bugs included</div>
+<div id="version">v0.43 · still not a safe place</div>
 <a id="watermark" href="https://sites.google.com/view/blazewingz/home" target="_blank" rel="noopener noreferrer">bit.ly/blazewingz</a>
 <script>
 /* =========================================================
@@ -463,6 +463,16 @@ eyedropsCx.fillStyle = 'rgba(255,255,255,.48)'; eyedropsCx.fillRect(17, 25, 4, 3
 eyedropsCx.fillStyle = '#5baccb'; eyedropsCx.beginPath(); eyedropsCx.moveTo(32, 33); eyedropsCx.bezierCurveTo(43, 45, 39, 52, 32, 53); eyedropsCx.bezierCurveTo(24, 52, 21, 45, 32, 33); eyedropsCx.fill();
 eyedropsCx.fillStyle = '#e8fbff'; eyedropsCx.beginPath(); eyedropsCx.arc(29, 43, 3, 0, Math.PI*2); eyedropsCx.fill();
 
+// Bandages fallback: a little wrapped first-aid roll with a red cross.
+const [bandagesCv, bandagesCx] = mk(72, 72);
+bandagesCx.fillStyle = 'rgba(0,0,0,.27)'; bandagesCx.beginPath(); bandagesCx.ellipse(36, 63, 25, 5, 0, 0, Math.PI * 2); bandagesCx.fill();
+grad = bandagesCx.createLinearGradient(12, 10, 60, 54); grad.addColorStop(0, '#fff9e9'); grad.addColorStop(.55, '#d7d1c3'); grad.addColorStop(1, '#8d8b83');
+bandagesCx.fillStyle = grad; bandagesCx.beginPath(); bandagesCx.roundRect(12, 13, 48, 42, 8); bandagesCx.fill();
+bandagesCx.strokeStyle = '#aaa397'; bandagesCx.lineWidth = 1.3; bandagesCx.beginPath(); bandagesCx.moveTo(18, 18); bandagesCx.lineTo(18, 50); bandagesCx.moveTo(54, 18); bandagesCx.lineTo(54, 50); bandagesCx.stroke();
+bandagesCx.fillStyle = '#ba3943'; bandagesCx.beginPath(); bandagesCx.roundRect(9, 27, 54, 17, 5); bandagesCx.fill();
+bandagesCx.fillStyle = '#fff'; bandagesCx.fillRect(32, 29, 8, 13); bandagesCx.fillRect(29.5, 31.5, 13, 8);
+bandagesCx.fillStyle = 'rgba(255,255,255,.62)'; bandagesCx.fillRect(17, 16, 3, 31);
+
 const [bsodaCv, bsodaCx] = mk(72, 72);
 bsodaCx.fillStyle = 'rgba(0,0,0,.25)'; bsodaCx.beginPath(); bsodaCx.ellipse(36, 64, 24, 4, 0, 0, Math.PI*2); bsodaCx.fill();
 // Clearly recognisable little blue chair: back, seat, frame and four legs.
@@ -472,6 +482,16 @@ bsodaCx.fillStyle = '#1d638e'; bsodaCx.fillRect(21, 30, 30, 9); bsodaCx.fillStyl
 bsodaCx.strokeStyle = '#d5f4ff'; bsodaCx.lineWidth = 4; bsodaCx.lineCap = 'round'; bsodaCx.beginPath(); bsodaCx.moveTo(18, 43); bsodaCx.lineTo(15, 62); bsodaCx.moveTo(54, 43); bsodaCx.lineTo(57, 62); bsodaCx.moveTo(25, 44); bsodaCx.lineTo(27, 61); bsodaCx.moveTo(47, 44); bsodaCx.lineTo(45, 61); bsodaCx.stroke();
 bsodaCx.strokeStyle = '#17476a'; bsodaCx.lineWidth = 2; bsodaCx.beginPath(); bsodaCx.moveTo(24, 11); bsodaCx.lineTo(24, 28); bsodaCx.moveTo(33, 11); bsodaCx.lineTo(33, 28); bsodaCx.moveTo(42, 11); bsodaCx.lineTo(42, 28); bsodaCx.stroke();
 bsodaCx.fillStyle = 'rgba(255,255,255,.65)'; bsodaCx.fillRect(20, 10, 3, 17); bsodaCx.fillRect(17, 35, 18, 2);
+
+// Fallback artwork for the rare wooden floor chair.
+const [woodChairCv, woodChairCx] = mk(72, 80);
+woodChairCx.fillStyle = 'rgba(0,0,0,.30)'; woodChairCx.beginPath(); woodChairCx.ellipse(36, 73, 24, 4, 0, 0, Math.PI*2); woodChairCx.fill();
+grad = woodChairCx.createLinearGradient(17, 8, 53, 52); grad.addColorStop(0, '#e2bb79'); grad.addColorStop(.5, '#a66a32'); grad.addColorStop(1, '#63391f');
+woodChairCx.fillStyle = grad; woodChairCx.beginPath(); woodChairCx.roundRect(19, 6, 34, 34, 4); woodChairCx.fill();
+woodChairCx.strokeStyle = '#5b351f'; woodChairCx.lineWidth = 3; woodChairCx.beginPath(); woodChairCx.moveTo(25, 12); woodChairCx.lineTo(25, 35); woodChairCx.moveTo(47, 12); woodChairCx.lineTo(47, 35); woodChairCx.stroke();
+woodChairCx.fillStyle = '#bc8045'; woodChairCx.beginPath(); woodChairCx.moveTo(13, 37); woodChairCx.lineTo(59, 37); woodChairCx.lineTo(55, 49); woodChairCx.lineTo(17, 49); woodChairCx.closePath(); woodChairCx.fill();
+woodChairCx.strokeStyle = '#74441f'; woodChairCx.lineWidth = 3.5; woodChairCx.lineCap = 'round'; woodChairCx.beginPath(); woodChairCx.moveTo(19, 47); woodChairCx.lineTo(15, 70); woodChairCx.moveTo(53, 47); woodChairCx.lineTo(57, 70); woodChairCx.moveTo(23, 48); woodChairCx.lineTo(25, 69); woodChairCx.moveTo(49, 48); woodChairCx.lineTo(47, 69); woodChairCx.stroke();
+woodChairCx.strokeStyle = 'rgba(255,230,185,.55)'; woodChairCx.lineWidth = 1; woodChairCx.beginPath(); woodChairCx.moveTo(22, 10); woodChairCx.lineTo(50, 10); woodChairCx.moveTo(18, 40); woodChairCx.lineTo(54, 40); woodChairCx.stroke();
 
 // A deliberately fantastical arcade ray-prop, not a realistic firearm.
 const [pewpewCv, pewpewCx] = mk(80, 56);
@@ -484,7 +504,7 @@ pewpewCx.fillStyle = '#9d8cff'; pewpewCx.beginPath(); pewpewCx.roundRect(12, 19,
 pewpewCx.fillStyle = '#63f0ff'; pewpewCx.beginPath(); pewpewCx.arc(60, 26, 9, 0, Math.PI*2); pewpewCx.fill();
 pewpewCx.fillStyle = '#e5ffff'; pewpewCx.beginPath(); pewpewCx.arc(58, 23, 3, 0, Math.PI*2); pewpewCx.fill();
 pewpewCx.fillStyle = '#c8bcff'; pewpewCx.fillRect(15, 17, 18, 3); pewpewCx.fillStyle = '#f5eaff'; pewpewCx.font = 'bold 7px Arial'; pewpewCx.textAlign = 'center'; pewpewCx.fillText('PEW', 36, 29);
-const VENDING_FALLBACK_ART = { battery: batteryCv, energy: energyCv, eyedrops: eyedropsCv, bsoda: bsodaCv, pewpew: pewpewCv, quarter: quarterCv };
+const VENDING_FALLBACK_ART = { battery: batteryCv, energy: energyCv, eyedrops: eyedropsCv, bandages: bandagesCv, bsoda: bsodaCv, chair: woodChairCv, pewpew: pewpewCv, quarter: quarterCv };
 const VENDING_ART = { ...VENDING_FALLBACK_ART };
 // The supplied product illustrations load from the project's public assets.
 // Hand-drawn canvases remain as a fallback if a remote image is unavailable.
@@ -492,6 +512,8 @@ const VENDING_ART_URLS = {
   battery: 'https://raw.githubusercontent.com/blazewingz/lars-simulator/main/assets/battery.png',
   energy: 'https://raw.githubusercontent.com/blazewingz/lars-simulator/main/assets/energy%20bar.png',
   bsoda: 'https://raw.githubusercontent.com/blazewingz/lars-simulator/main/assets/chair.png',
+  chair: 'https://raw.githubusercontent.com/blazewingz/lars-simulator/main/assets/chair.png',
+  bandages: 'https://raw.githubusercontent.com/blazewingz/lars-simulator/main/assets/bandages.png',
   eyedrops: 'https://raw.githubusercontent.com/blazewingz/lars-simulator/main/assets/eye%20drops.png',
   pewpew: 'https://raw.githubusercontent.com/blazewingz/lars-simulator/main/assets/pew%20pew.png'
 };
@@ -517,7 +539,7 @@ function getWorldPickupArt(type) {
 }
 // The machine's prize reel cycles through the standard supplies. It never
 // changes the separately existing special-ending item or its behaviour.
-const VENDING_PRIZES = ['battery','energy','eyedrops','bsoda'];
+const VENDING_PRIZES = ['battery','energy','eyedrops','bandages','bsoda'];
 let vendingPrizeBag = [];
 function rollVendingPrize() {
   if (!vendingPrizeBag.length) {
@@ -725,6 +747,7 @@ function jitter(x, y, r) {                      // a random nearby floor spot (s
 const P = { x: 3, y: 3, a: 0, vx: 0, vy: 0, stam: 100, tired: false, fov: 1.1, fv: 1.1, bobP: 0, bm: 0, blinkT: -1, blinkInterval: 3, squintBlinkT: 0, crouching: false, crouchAmount: 0, jumpZ: 0, jumpV: 0, jumpFov: 0, eyeHold: 0, lookBack: 0, lookFov: 0, energyBonus: 0, eyeBonus: 0 };
 let L, gens, dist = new Int16Array(N * N), cheatWall = null;
 let state = 'title', t = 0, light = 1, bob = 0, msg = '', msgT = 0, time = 0, endT = 0, fixed = 0, fogD = 10;
+let playerHealth = 100, hurtFlash = 0, hitShakeT = 0, hitShakePower = 0, larsContacting = false;
 let wakeT = 30, clankT = 0, near = null, fixing = null, seenT = 0, routeT = 0, blackT = 0, blackIn = 30, shoutT = 8, hearT = 0, quip = '';
 let speechCaption = '', speechCaptionTimer = 0, speechCaptionToken = 0, ambientBreathT = 0, deathAside = ''; 
 const zbuf = new Float32Array(RW), keys = {}, cam = { dx: 1, dy: 0 };
@@ -941,7 +964,7 @@ function renderModeSelector() {
   const loreTheme = selectedMode === 'lore';
   document.body.classList.toggle('lore-mode', loreTheme);
   document.querySelector('h1').textContent = loreTheme ? 'L A R S  /  OBSERVATION' : 'LARS SIMULATOR';
-  document.title = loreTheme ? 'OBSERVATION FAILURE · LARS SIMULATOR' : 'Lars Simulator v0.41';
+  document.title = loreTheme ? 'OBSERVATION FAILURE · LARS SIMULATOR' : 'Lars Simulator v0.43';
   const selectorTitle = document.getElementById('modeSelectorTitle');
   if (selectorTitle) selectorTitle.textContent = loreTheme ? 'CONTAINMENT STATUS' : 'Game mode';
   const rows = document.querySelectorAll('#controlsPanel .bind-row');
@@ -989,7 +1012,7 @@ document.getElementById('sandboxLarsBtn').addEventListener('click', () => {
 document.getElementById('sandboxSpawnItem').addEventListener('click', sandboxSpawnItem);
 document.getElementById('sandboxSpawnRat').addEventListener('click', () => {
   if (selectedMode !== 'sandbox' || state !== 'play') return;
-  const pos = sandboxSpawnPoint(); rat = { x: pos.x, y: pos.y, tx: null, ty: null, moveT: .1, soundT: .5 };
+  const pos = sandboxSpawnPoint(); rat = createRat(pos);
   say('RUBIN SPAWNED.', 1.2);
 });
 document.getElementById('sandboxSpawnOwen').addEventListener('click', () => {
@@ -1317,7 +1340,7 @@ const QUIPS = ['You blinked. Classic.', 'Lars was only thirsty.', 'Lars would li
 
 function start() {
   if (selectedMode === 'sandbox' && !sandboxUnlocked) { selectedMode = 'normal'; }
-  audio(); genLevel(); buildFloor(); owen = null; owenSpawnUsed = false; owenSpawnCheck = rand(42, 78); cheatWall = null; if (Math.random() < .1) { const options = FLOORS.filter(([x,y]) => Math.hypot(x - SPAWN[0], y - SPAWN[1]) > 5 && Math.hypot(x - EXIT.x, y - EXIT.y) > 3 && GEN_POS.every(([gx,gy]) => Math.hypot(x-gx,y-gy) > 2) && [[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy]) => map[(y|0)+dy]?.[(x|0)+dx] !== '.')); if (options.length) { const [sx,sy] = pick(options); const sides = [[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy]) => map[(sy|0)+dy]?.[(sx|0)+dx] !== '.'); const [dx,dy] = pick(sides); cheatWall = [sx + dx*.38, sy + dy*.38]; } } P.x = SPAWN[0]; P.y = SPAWN[1]; P.a = 0; P.vx = P.vy = 0; P.stam = 100; P.tired = false; P.bm = 0; P.blinkT = -1; P.squintBlinkT = 0; P.crouching = false; P.crouchAmount = 0; P.jumpZ = P.jumpV = P.jumpFov = 0; P.eyeHold = 0; P.lookBack = 0; P.lookFov = 0; P.energyBonus = 0; P.eyeBonus = 0; P.blinkInterval = (selectedMode === 'extreme' || selectedMode === 'lore') ? rand(5, 7) : rand(7, 9); P.blinkMode = 'normal'; speechCaption = ''; speechCaptionTimer = 0; ambientBreathT = rand(5, 9); cameraHeight = .5; zoomAmount = 0; zoomHeld = false; zoomScale = 1.0; shotgun = false; cheatBuffer = ''; shotCooldown = shotFlash = 0;
+  audio(); genLevel(); buildFloor(); owen = null; owenSpawnUsed = false; owenSpawnCheck = rand(42, 78); cheatWall = null; if (Math.random() < .1) { const options = FLOORS.filter(([x,y]) => Math.hypot(x - SPAWN[0], y - SPAWN[1]) > 5 && Math.hypot(x - EXIT.x, y - EXIT.y) > 3 && GEN_POS.every(([gx,gy]) => Math.hypot(x-gx,y-gy) > 2) && [[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy]) => map[(y|0)+dy]?.[(x|0)+dx] !== '.')); if (options.length) { const [sx,sy] = pick(options); const sides = [[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy]) => map[(sy|0)+dy]?.[(sx|0)+dx] !== '.'); const [dx,dy] = pick(sides); cheatWall = [sx + dx*.38, sy + dy*.38]; } } P.x = SPAWN[0]; P.y = SPAWN[1]; P.a = 0; P.vx = P.vy = 0; P.stam = 100; playerHealth = 100; hurtFlash = 0; hitShakeT = 0; hitShakePower = 0; larsContacting = false; P.tired = false; P.bm = 0; P.blinkT = -1; P.squintBlinkT = 0; P.crouching = false; P.crouchAmount = 0; P.jumpZ = P.jumpV = P.jumpFov = 0; P.eyeHold = 0; P.lookBack = 0; P.lookFov = 0; P.energyBonus = 0; P.eyeBonus = 0; P.blinkInterval = (selectedMode === 'extreme' || selectedMode === 'lore') ? rand(5, 7) : rand(7, 9); P.blinkMode = 'normal'; speechCaption = ''; speechCaptionTimer = 0; ambientBreathT = rand(5, 9); cameraHeight = .5; zoomAmount = 0; zoomHeld = false; zoomScale = 1.0; shotgun = false; cheatBuffer = ''; shotCooldown = shotFlash = 0;
   torchOn = false; torchBaseBattery = 20; torchBonusBattery = 0; torchBattery = 20; torchPower = 0; torchFlicker = 1; nearBattery = false; inventory = [null, null, null]; selectedInventorySlot = 0;
   gens = GEN_POS.slice(0, selectedMode === 'lore' ? 6 : selectedMode === 'extreme' ? 5 : 4).map(([x, y]) => ({ x, y, p: 0, done: false, zone: zoneForPosition(x, y), hw: .205, hd: .145, height: .36, bodyScale: 1, heightScale: 1, ...propOrientationAt(x, y) }));
   for (const [x, y] of SHUTTERS) map[y][x] = 'D';
@@ -1343,7 +1366,7 @@ let SPAWN = [3.5, 3.5], LSPAWN = [20.5, 20.5], power = true, fuseP = 0, nearFuse
   torchOn = false, torchBattery = 20, torchBatteryMax = 30, torchBaseBattery = 20, torchBonusBattery = 0, torchFlicker = 1, torchPower = 0, FL = 0, fxT = 0, snapA = 0, snapT = 0, punch = 0, pvel = 0, ts = 1, slowT = 0, breathT = 0, breathPh = 0, lastStep = 0, panelOpen = false, sw = [1, 1, 1, 1, 1];
 function bfsFrom(sx, sy) {
   const d = new Int16Array(N * N).fill(-1), q = [[sx, sy]]; d[sy * N + sx] = 0;
-  for (let i = 0; i < q.length; i++) { const [x, y] = q[i]; for (const [a, b] of D4) { const nx = x + a, ny = y + b; if (map[ny][nx] === '.' && d[ny * N + nx] < 0) { d[ny * N + nx] = d[y * N + x] + 1; q.push([nx, ny]); } } }
+  for (let i = 0; i < q.length; i++) { const [x, y] = q[i]; for (const [a, b] of D4) { const nx = x + a, ny = y + b; if (map[ny]?.[nx] === '.' && d[ny * N + nx] < 0) { d[ny * N + nx] = d[y * N + x] + 1; q.push([nx, ny]); } } }
   return d;
 }
 function genLevel() {
@@ -1461,6 +1484,20 @@ function genLevel() {
     }
     for (const c of coinSpots) quarterPickups.push({ type: 'quarter', x: c[0] + .5, y: c[1] + .5, active: true });
 
+    // A genuinely rare bit of furniture: one wooden chair may appear as floor loot.
+    if (Math.random() < .01) {
+      const chairSpots = fl.filter(c => dd(c) > 8 &&
+        Math.hypot(c[0] + .5 - st[0], c[1] + .5 - st[1]) > 7 &&
+        Math.hypot(c[0] + .5 - ex[0], c[1] + .5 - ex[1]) > 4 &&
+        gp.every(g => Math.hypot(c[0] + .5 - g[0], c[1] + .5 - g[1]) > 2) &&
+        vendingMachines.every(vm => Math.hypot(c[0] + .5 - vm.x, c[1] + .5 - vm.y) > 2) &&
+        Math.hypot(c[0] - batteryFloor[0], c[1] - batteryFloor[1]) > 2);
+      if (chairSpots.length) {
+        const [cx, cy] = pick(chairSpots);
+        droppedItems.push({ type: 'chair', x: cx + .5, y: cy + .5, active: true });
+      }
+    }
+
     // Rubin is a rare, harmless ambient visitor. He never touches the generators.
     if (Math.random() < .28) {
       const ratSpots = fl.filter(c => dd(c) > 7 && Math.hypot(c[0] - st[0], c[1] - st[1]) > 5 &&
@@ -1469,7 +1506,7 @@ function genLevel() {
         vendingMachines.every(vm => Math.hypot(c[0] + .5 - vm.x, c[1] + .5 - vm.y) > 1.6));
       if (ratSpots.length) {
         const [rx, ry] = pick(ratSpots);
-        rat = { x: rx + .5, y: ry + .5, tx: null, ty: null, moveT: rand(.2, 1), soundT: rand(1, 2.8) };
+        rat = createRat({ x: rx + .5, y: ry + .5 });
       }
     }
     return;
@@ -1559,6 +1596,19 @@ function useSelectedInventoryItem() {
     say('YOUR EYES FEEL CLEARER.', 1.5); beep(680, .10, 'sine', .07, 1080);
     return true;
   }
+  if (slot.type === 'bandages') {
+    if (playerHealth >= 99.9) { say('YOU ARE ALREADY AT FULL HEALTH.', 1.5); return true; }
+    playerHealth = 100; hurtFlash = 0; hitShakeT = 0; hitShakePower = 0;
+    consumeInventoryItem();
+    say('BANDAGES APPLIED. HEALTH RESTORED.', 1.9);
+    beep(520, .12, 'sine', .08, 780); beep(780, .16, 'triangle', .07, 1120);
+    return true;
+  }
+  if (slot.type === 'chair') {
+    say('YOU HAVE A WOODEN CHAIR.', 1.5);
+    beep(320, .07, 'triangle', .035, 260);
+    return true;
+  }
   if (slot.type === 'pewpew') {
     shotgun = true;
     consumeInventoryItem();
@@ -1584,34 +1634,69 @@ function useSelectedInventoryItem() {
   }
   return false;
 }
+function createRat(pos) {
+  return { x: pos.x, y: pos.y, tx: null, ty: null, dirX: 0, dirY: 0,
+    soundT: rand(.10, .22), gait: 0 };
+}
 function updateRat(dt) {
   if (!rat) return;
-  if (rat.tx == null || rat.ty == null) {
-    rat.moveT -= dt;
-    if (rat.moveT <= 0) {
-      const cx = Math.floor(rat.x), cy = Math.floor(rat.y);
-      const options = D4.filter(([dx,dy]) => map[cy + dy]?.[cx + dx] === '.');
-      if (options.length) {
-        const [dx,dy] = pick(options);
-        rat.tx = cx + dx + .5; rat.ty = cy + dy + .5;
-      }
-      rat.moveT = rand(.45, 1.1);
+
+  // Rubin is a small animal, not a patrol NPC: he keeps moving and tries to
+  // increase the distance between himself and the player at every junction.
+  const awayX0 = rat.x - P.x, awayY0 = rat.y - P.y;
+  const awayLen = Math.hypot(awayX0, awayY0) || 1;
+  const awayX = awayX0 / awayLen, awayY = awayY0 / awayLen;
+
+  if (rat.tx == null || rat.ty == null || Math.hypot(rat.tx - rat.x, rat.ty - rat.y) < .055) {
+    const cx = Math.floor(rat.x), cy = Math.floor(rat.y);
+    let options = D4.filter(([dx,dy]) => map[cy + dy]?.[cx + dx] === '.');
+    if (options.length > 1 && (rat.dirX !== 0 || rat.dirY !== 0)) {
+      const alternatives = options.filter(([dx,dy]) => !(dx === -rat.dirX && dy === -rat.dirY));
+      if (alternatives.length) options = alternatives;
     }
-  } else {
+    if (options.length) {
+      const scored = options.map(([dx,dy]) => ({ dx, dy, score:
+        dx * awayX + dy * awayY + ((dx === rat.dirX && dy === rat.dirY) ? .16 : 0) + Math.random() * .13
+      })).sort((a,b) => b.score - a.score);
+      const { dx, dy } = scored[0];
+      rat.dirX = dx; rat.dirY = dy;
+      rat.tx = cx + dx + .5; rat.ty = cy + dy + .5;
+    } else {
+      rat.tx = rat.ty = null;
+    }
+  }
+
+  let moving = false;
+  if (rat.tx != null && rat.ty != null) {
     const dx = rat.tx - rat.x, dy = rat.ty - rat.y, d = Math.hypot(dx,dy);
-    const step = Math.min(d, dt * 1.45);
-    if (d > .001) { rat.x += dx / d * step; rat.y += dy / d * step; }
-    if (d <= .045) { rat.x = rat.tx; rat.y = rat.ty; rat.tx = rat.ty = null; rat.moveT = rand(.25, .8); }
+    const step = Math.min(d, dt * 2.05);
+    if (d > .001 && step > 0) {
+      const nx = rat.x + dx / d * step, ny = rat.y + dy / d * step;
+      if (free(nx, ny)) {
+        rat.x = nx; rat.y = ny; rat.gait += step; moving = true;
+      } else {
+        rat.tx = rat.ty = null;
+        rat.dirX = rat.dirY = 0;
+      }
+    }
+    if (d <= .045) { rat.x = rat.tx; rat.y = rat.ty; rat.tx = rat.ty = null; }
   }
+
+  // Irregular, soft paw-scrapes; stereo pan and volume both follow his world position.
   rat.soundT -= dt;
-  if (rat.soundT <= 0) {
-    const rel = Math.atan2(rat.y - P.y, rat.x - P.x) - P.a;
-    const pan = Math.sin(rel);
-    sh(.075, .045, 'highpass', 1450, 2450, .9, pan, .004);
-    sh(.06, .026, 'bandpass', 800, 1500, 1.1, pan, .004);
-    rat.soundT = rand(2.1, 4.4);
+  if (moving && rat.soundT <= 0) {
+    const distance = Math.hypot(rat.x - P.x, rat.y - P.y);
+    const relative = Math.atan2(rat.y - P.y, rat.x - P.x) - (P.a + Math.PI * P.lookBack);
+    const pan = Math.sin(relative);
+    const audible = clamp(1 - distance / 12, 0, 1) * (los(P.x, P.y, rat.x, rat.y) ? 1 : .38);
+    if (audible > .01) {
+      const pace = clamp(1 - distance / 9, .25, 1);
+      sh(.092, .052 * audible * pace, 'lowpass', 620 + rand(-70,70), 230 + rand(-35,35), .72, pan, .009);
+      if (Math.random() < .58) sh(.062, .021 * audible * pace, 'bandpass', 430, 190, .75, pan, .005);
+    }
+    rat.soundT = rand(.15, .27);
   }
-}
+} 
 
 function updateVendingMachines(dt) {
   for (const vm of vendingMachines) {
@@ -1681,7 +1766,7 @@ function route(tx, ty) {                       // path-finding: distance from th
     const [x, y] = q[i];
     for (const [dx, dy] of D4) {
       const nx = x + dx, ny = y + dy;
-      if (map[ny][nx] === '.' && dist[ny * N + nx] < 0) { dist[ny * N + nx] = dist[y * N + x] + 1; q.push([nx, ny]); }
+      if (map[ny]?.[nx] === '.' && dist[ny * N + nx] < 0) { dist[ny * N + nx] = dist[y * N + x] + 1; q.push([nx, ny]); }
     }
   }
 }
@@ -1766,6 +1851,46 @@ function getDeathAside() {
     'You were not quite as alone as you thought.',
     'There was less room than you remembered.'
   ]);
+}
+
+function finishPlayerDeath(aside) {
+  if (state !== 'play') return;
+  deathAside = aside || getDeathAside();
+  state = 'dead'; endT = 0; quip = pick(QUIPS); speechCaptionTimer = 0;
+  silencePersistentAudio(); jumpscareSound();
+  if (document.exitPointerLock) document.exitPointerLock();
+}
+function damagePlayer(amount, source = 'impact') {
+  if (state !== 'play' || selectedMode === 'sandbox' || invincibleCheat || amount <= 0) return 0;
+  const before = playerHealth;
+  playerHealth = clamp(playerHealth - amount, 0, 100);
+  const applied = before - playerHealth;
+  if (applied <= 0) return 0;
+  hurtFlash = Math.max(hurtFlash, source === 'owen' ? 1 : .24);
+  hitShakeT = Math.max(hitShakeT, source === 'owen' ? .42 : .12);
+  hitShakePower = Math.max(hitShakePower, source === 'owen' ? 2.6 : .85);
+  if (source === 'owen') {
+    thud(.48, 0); noise(.16, .18); beep(92, .13, 'sawtooth', .10, 48);
+    fxT = Math.max(fxT, .72);
+  }
+  if (playerHealth <= 0) {
+    finishPlayerDeath(source === 'owen' ? 'Owen got a running start.' : getDeathAside());
+  }
+  return applied;
+}
+function updateLarsContactDamage(dt) {
+  L.d = Math.hypot(L.x - P.x, L.y - P.y);
+  const contactRange = selectedMode === 'lore' ? .68 : .64;
+  const touching = state === 'play' && selectedMode !== 'sandbox' && !invincibleCheat
+    && L.st !== 'sleep' && !L.knocked && L.flashStun <= 0 && P.jumpZ < .42 && L.d < contactRange;
+  if (!touching) { larsContacting = false; return; }
+  if (!larsContacting) {
+    // A single scrape cue when contact begins; the actual damage is time-based.
+    thud(.18, Math.sin(Math.atan2(L.y - P.y, L.x - P.x) - P.a));
+    beep(58, .12, 'sine', .055, 34);
+  }
+  larsContacting = true;
+  damagePlayer(320 * dt, 'lars'); // About 0.31 seconds of uninterrupted contact is fatal.
 }
 
 function fireShot() {
@@ -1886,11 +2011,7 @@ function updateLoreAccurateLars(dt) {
     lstep(); L.stepT = L.loreMode === 'pursue' ? .58 : L.loreMode === 'search' ? rand(1.9, 2.8) : rand(.9, 1.5);
   }
   L.d = Math.hypot(L.x - P.x, L.y - P.y);
-  if (L.d < .62 && P.jumpZ < .42 && L.flashStun <= 0 && state === 'play' && selectedMode !== 'sandbox' && !invincibleCheat) {
-    deathAside = getDeathAside(); state = 'dead'; endT = 0;
-    quip = pick(QUIPS); speechCaptionTimer = 0; silencePersistentAudio(); jumpscareSound();
-    if (document.exitPointerLock) document.exitPointerLock();
-  }
+  // Contact damage is applied centrally after Lars has finished moving this frame.
 }
 const OWEN_IMAGE_URL = 'https://raw.githubusercontent.com/blazewingz/lars-simulator/main/assets/characters/shrek.png';
 const owenImage = new Image();
@@ -1933,10 +2054,20 @@ function spawnOwen(force = false) {
     if (candidates.length) { const [x, y] = pick(candidates); spot = { x, y }; }
   }
   if (!spot) return false;
-  owen = { ...spot, pose, targetCameraHeight, lift, h: height, age: 0, lookProgress: 0, soundT: rand(2.2, 3.0), active: true };
+  owen = { ...spot, pose, targetCameraHeight, lift, h: height, age: 0, lookProgress: 0, soundT: rand(2.2, 3.0), active: true, phase: 'watch', phaseTime: 0, hitPlayer: false, dashX: 0, dashY: 0, dashDistance: 0 };
   playOwenWarning();
   if (force) owenSpawnUsed = true;
   return true;
+}
+function resolveOwenImpact() {
+  if (!owen || owen.hitPlayer) return;
+  owen.hitPlayer = true;
+  if (selectedMode === 'sandbox' || invincibleCheat) {
+    fxT = Math.max(fxT, .45); msg = 'OWEN RAM TEST · NO DAMAGE'; msgT = 1.2;
+    thud(.3, 0); noise(.12, .12);
+  } else {
+    damagePlayer(40, 'owen');
+  }
 }
 function updateOwen(dt) {
   if (state !== 'play') return;
@@ -1965,27 +2096,63 @@ function updateOwen(dt) {
   const fullyStanding = !panelOpen && !P.crouching && P.crouchAmount < .18 && cameraHeight > .42;
   const correctHeight = grounded && (owen.pose === 'crouching' ? fullyCrouched : fullyStanding);
   const visible = los(P.x, P.y, owen.x, owen.y) && closure() < .30;
-  if (directlyCentered && correctHeight && visible) {
-    // Holding RMB makes the encounter resolve more quickly.
-    owen.lookProgress += dt * (zoomHeld ? 3.4 : 1);
-  } else {
-    owen.lookProgress = Math.max(0, owen.lookProgress - dt * .32);
+  if (owen.phase === 'watch') {
+    if (directlyCentered && correctHeight && visible) {
+      // Holding RMB makes the encounter resolve more quickly.
+      owen.lookProgress += dt * (zoomHeld ? 3.4 : 1);
+    } else {
+      owen.lookProgress = Math.max(0, owen.lookProgress - dt * .32);
+    }
   }
-  if (owen.lookProgress >= .78) {
+  if (owen.phase === 'watch' && owen.lookProgress >= .78) {
     owen = null;
     beep(980, .08, 'sine', .035, 620);
     return;
   }
-  if (owen.age >= 7.5) {
-    if (invincibleCheat) { owen = null; msg = 'INVINCIBILITY PREVENTED A HIT'; msgT = 2; return; }
-    if (selectedMode === 'sandbox') {
-      // Sandbox stays invincible, but a failed test still gives clear feedback.
-      owen = null; fxT = Math.max(fxT, .8); msg = 'OWEN CAUGHT YOU'; msgT = 1.8; beep(155, .28, 'sawtooth', .08, 42); sh(.24, .12, 'bandpass', 180, 48, 1.4, 0, .02); return;
+  if (owen.phase === 'watch' && owen.age >= 5.8) {
+    // The old instant-fail timer becomes a readable, short wind-up before his charge.
+    owen.phase = 'windup'; owen.phaseTime = 0;
+    sh(.24, .115, 'bandpass', 310, 75, 1.55, 0, .012);
+    beep(190, .16, 'sawtooth', .075, 520);
+  }
+  if (owen.phase === 'windup') {
+    owen.phaseTime += dt;
+    if (owen.phaseTime >= .52) {
+      const dx = P.x - owen.x, dy = P.y - owen.y, distance = Math.hypot(dx, dy) || 1;
+      owen.dashX = dx / distance; owen.dashY = dy / distance;
+      owen.impactDelay = clamp(distance / 11.5 - .045, .08, .34);
+      owen.phase = 'charge'; owen.phaseTime = 0; owen.dashDistance = 0;
+      // Lock the attack's impact timing to the player's position at charge start.
+      // Moving or jumping after the wind-up begins cannot evade the ram.
+      sh(.28, .17, 'bandpass', 420, 90, 1.7, 0, .008);
+      noise(.12, .10); beep(125, .13, 'sawtooth', .10, 65);
     }
-    deathAside = owen.pose === 'crouching' ? 'You forgot to get down and look.' : 'You heard him. You had time.';
-    state = 'dead'; endT = 0; quip = pick(QUIPS); speechCaptionTimer = 0;
-    silencePersistentAudio(); jumpscareSound();
-    if (document.exitPointerLock) document.exitPointerLock();
+    return;
+  }
+  if (owen.phase === 'charge') {
+    const speed = 11.5, step = Math.min(speed * dt, 7.0 - owen.dashDistance);
+    owen.phaseTime += dt;
+    if (step > 0) {
+      const oldX = owen.x, oldY = owen.y;
+      const nextX = oldX + owen.dashX * step, nextY = oldY + owen.dashY * step;
+      if (!free(nextX, nextY)) { if (!owen.hitPlayer) resolveOwenImpact(); owen = null; return; }
+      owen.x = nextX; owen.y = nextY; owen.dashDistance += step;
+      if (!owen.hitPlayer && owen.phaseTime >= owen.impactDelay) {
+        resolveOwenImpact();
+        if (state !== 'play') { owen = null; return; }
+      }
+      // The impact occurs as he reaches the player; the remaining dash is his
+      // visible follow-through as he barrels past and vanishes.
+    }
+    if (owen && !owen.hitPlayer && owen.phaseTime >= owen.impactDelay) {
+      resolveOwenImpact();
+      if (state !== 'play') { owen = null; return; }
+    }
+    if (owen && (owen.dashDistance >= 7.0 || owen.phaseTime >= .9)) {
+      if (!owen.hitPlayer) resolveOwenImpact();
+      owen = null; // He keeps running past the player, then disappears into the maze.
+    }
+    return;
   }
 }
 
@@ -2077,13 +2244,15 @@ function updateLars(dt) {
     }
   }
   if ((L.stepT -= dt * sp) <= 0) { lstep(); L.stepT = 1.1; }   // footsteps you can hear coming
-  if (L.d < .58 && P.jumpZ < .42 && L.flashStun <= 0 && state === 'play' && selectedMode !== 'sandbox' && !invincibleCheat) { deathAside = getDeathAside(); state = 'dead'; endT = 0; quip = pick(QUIPS); speechCaptionTimer = 0; silencePersistentAudio(); jumpscareSound(); if (document.exitPointerLock) document.exitPointerLock(); }
+  // Contact damage is applied centrally after Lars has finished moving this frame.
 }
 
 
 /* ---------- Update ---------- */
 function update(dt) {
   t += dt; if (msgT > 0) msgT -= dt; if (fxT > 0) fxT = Math.max(0, fxT - dt * 1.1);
+  hurtFlash = Math.max(0, hurtFlash - dt * 2.6);
+  hitShakeT = Math.max(0, hitShakeT - dt);
   light += ((power ? 1 : .12) - light) * Math.min(1, dt * 6);
   if (Math.random() < dt * .045) { light = rand(.18, .48); sh(.16, .018, 'bandpass', 520, 180, .8, 0, .004); } // rare electrical flicker and soft ballast buzz
   if (state !== 'play') { syncSandboxTools(); endT += dt; if (droneG) droneG.gain.value = 0; if (chaseG) chaseG.gain.value = 0; if (lbG) lbG.gain.value = 0; if (loreDroneG) loreDroneG.gain.value = 0; return; }
@@ -2239,7 +2408,7 @@ function update(dt) {
   nearFuse = Math.hypot(FUSE.x - P.x, FUSE.y - P.y) < 1.6;
   if (panelOpen && !nearFuse) closePanel();
 
-  updateLars(dt); if (state !== 'play') return; updateOwen(dt); if (state !== 'play') return; larsAudio();
+  updateLars(dt); if (state !== 'play') return; updateLarsContactDamage(dt); if (state !== 'play') return; updateOwen(dt); if (state !== 'play') return; larsAudio();
   const d = L.d, prox = clamp(1 - d / 14, 0, 1);
   if (selectedMode === 'lore') {
     if (chaseG) chaseG.gain.value = 0;
@@ -2831,6 +3000,89 @@ function drawLarsNightEyes() {
   }
 }
 
+function drawHealthEffects() {
+  if (state !== 'play') return;
+  const severity = clamp(1 - playerHealth / 100, 0, 1);
+  if (severity < .012 && hurtFlash <= .01) return;
+  const critical = clamp((34 - playerHealth) / 34, 0, 1);
+  const pulse = critical > 0 ? (.5 + .5 * Math.sin(t * (5.8 + critical * 3.2))) : 0;
+  const centreAlpha = clamp(.025 + severity * .20 + critical * .43 + (playerHealth <= 2 ? .14 : 0), 0, .78);
+  const edgeAlpha = clamp(.04 + Math.pow(severity, 1.12) * .86 + pulse * critical * .09, 0, .985);
+  ctx.save();
+
+  // Low, broad crimson haze under the more concentrated edge vignette.
+  ctx.fillStyle = `rgba(48,0,8,${.018 + severity * .18 + critical * .07})`;
+  ctx.fillRect(0, 0, RW, RH);
+  const bloodShade = ctx.createRadialGradient(RW / 2, RH * .49, 12 + (1 - severity) * 55, RW / 2, RH * .49, 205);
+  bloodShade.addColorStop(0, `rgba(20,0,5,${centreAlpha})`);
+  bloodShade.addColorStop(.25, `rgba(64,0,11,${centreAlpha * .64})`);
+  bloodShade.addColorStop(.58, `rgba(105,0,15,${edgeAlpha * .58})`);
+  bloodShade.addColorStop(.82, `rgba(132,4,20,${edgeAlpha * .86})`);
+  bloodShade.addColorStop(1, `rgba(32,0,5,${edgeAlpha})`);
+  ctx.fillStyle = bloodShade; ctx.fillRect(0, 0, RW, RH);
+
+  // Organic pooling at the edges, leaving the centre more readable until health is critical.
+  const pools = [[-8,18,60,92],[RW+8,22,58,88],[-7,RH-14,68,72],[RW+7,RH-12,72,76],[RW*.5,-28,108,56]];
+  for (let i=0;i<pools.length;i++) {
+    const [x,y,rx,ry] = pools[i];
+    const g = ctx.createRadialGradient(x,y,2,x,y,Math.max(rx,ry));
+    g.addColorStop(0, `rgba(86,0,12,${.07 + severity * .20 + critical * .12})`);
+    g.addColorStop(.58, `rgba(116,5,19,${.035 + severity * .14})`);
+    g.addColorStop(1, 'rgba(90,0,12,0)');
+    ctx.fillStyle = g; ctx.fillRect(x-rx,y-ry,rx*2,ry*2);
+  }
+
+  // Branching capillaries: paired dark vessels and fine bright edges create depth at low resolution.
+  if (severity > .20) {
+    const paths = [
+      [[0,8],[9,15],[14,27],[24,34],[29,46]], [[14,27],[8,38],[13,49],[22,58]], [[24,34],[22,23],[31,16],[35,7]], [[29,46],[40,50],[46,62]],
+      [[0,57],[12,62],[20,73],[31,76],[38,88]], [[20,73],[18,86],[25,97]], [[31,76],[34,66],[45,61]],
+      [[0,125],[12,119],[20,126],[30,123],[40,137]], [[20,126],[16,139],[23,151]], [[40,137],[49,135],[55,145]],
+      [[RW,11],[RW-10,18],[RW-15,30],[RW-25,37],[RW-30,49]], [[RW-15,30],[RW-9,42],[RW-14,53],[RW-23,60]], [[RW-25,37],[RW-23,25],[RW-32,18]], [[RW-30,49],[RW-41,54],[RW-47,65]],
+      [[RW,64],[RW-12,69],[RW-20,80],[RW-31,83],[RW-39,96]], [[RW-20,80],[RW-18,94],[RW-27,105]],
+      [[RW,129],[RW-11,124],[RW-19,132],[RW-30,129],[RW-40,143]], [[RW-19,132],[RW-16,146],[RW-25,157]], [[RW-40,143],[RW-49,141],[RW-55,151]],
+      [[0,RH-7],[12,RH-14],[23,RH-11],[33,RH-20]], [[RW,RH-8],[RW-12,RH-15],[RW-24,RH-12],[RW-34,RH-21]]
+    ];
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.strokeStyle = `rgba(35,0,7,${.16 + severity * .46})`;
+    ctx.lineWidth = .8 + severity * 1.15; ctx.shadowColor = 'rgba(10,0,3,.9)'; ctx.shadowBlur = 2 + critical * 3;
+    for (const points of paths) {
+      ctx.beginPath(); ctx.moveTo(points[0][0], points[0][1]);
+      for (let i=1;i<points.length;i++) ctx.lineTo(points[i][0], points[i][1]);
+      ctx.stroke();
+    }
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = `rgba(190,34,52,${.08 + severity * .38})`;
+    ctx.lineWidth = .35 + severity * .38;
+    for (const points of paths) {
+      ctx.beginPath(); ctx.moveTo(points[0][0], points[0][1]);
+      for (let i=1;i<points.length;i++) ctx.lineTo(points[i][0], points[i][1]);
+      ctx.stroke();
+    }
+  }
+
+  // A few soft, fixed edge specks build the impression of a damaged lens without obscuring play early.
+  if (severity > .48) {
+    const specks = [[5,22,2.6],[13,54,1.5],[4,104,2.1],[23,161,2.2],[RW-8,19,2.4],[RW-17,54,1.7],[RW-5,99,2.2],[RW-24,157,2.4],[RW*.5,4,2.4],[RW*.5+18,10,1.4]];
+    ctx.fillStyle = `rgba(112,0,16,${.12 + severity * .33})`;
+    for (const [x,y,r] of specks) { ctx.beginPath(); ctx.arc(x,y,r*(.8 + pulse*.12),0,Math.PI*2); ctx.fill(); }
+  }
+
+  // At one or two HP the centre itself darkens: visibility becomes genuinely difficult.
+  if (playerHealth <= 2) {
+    const criticalWash = ctx.createRadialGradient(RW/2,RH/2,18,RW/2,RH/2,145);
+    criticalWash.addColorStop(0, `rgba(14,0,4,${.42 + pulse*.10})`);
+    criticalWash.addColorStop(.55, `rgba(40,0,7,${.24 + pulse*.08})`);
+    criticalWash.addColorStop(1, 'rgba(55,0,10,0)');
+    ctx.fillStyle = criticalWash; ctx.fillRect(0,0,RW,RH);
+  }
+  if (hurtFlash > .01) {
+    ctx.fillStyle = `rgba(220,12,30,${hurtFlash * .24})`;
+    ctx.fillRect(0, 0, RW, RH);
+  }
+  ctx.restore();
+}
+
 function draw() {
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, RW, RH);
   if (state === 'title') {
@@ -2862,10 +3114,12 @@ function draw() {
   FL = selectedMode === 'lore' ? torchPower * 5.0 + squintSightBoost * .28 : torchPower * (selectedMode === 'extreme' ? 3.5 : 4.3) + squintSightBoost; const renderA = P.a + Math.PI * P.lookBack; cam.dx = Math.cos(renderA); cam.dy = Math.sin(renderA); vk = RH * Math.pow(.66 / P.fov, .6);   // keeps wall height sensible at wide FOV
   const prox = L.st === 'sleep' ? 0 : clamp(1 - L.d / 10, 0, 1);
   // V2 camera feel: threat shake on both axes, plus the player's actual run/crouch/jump motion.
+  const hitShake = hitShakeT > 0 ? hitShakePower * clamp(hitShakeT / .42, 0, 1) : 0;
+  const owenChargeShake = owen && (owen.phase === 'windup' || owen.phase === 'charge') ? .7 : 0;
   const shakeX = rand(-1, 1) * prox * 2
-    + rand(-1, 1) * (fxT * 3 + (L.st === 'chase' ? clamp(1 - L.d / 7, 0, 1) * 1.5 : 0))
+    + rand(-1, 1) * (fxT * 3 + (L.st === 'chase' ? clamp(1 - L.d / 7, 0, 1) * 1.5 : 0) + hitShake + owenChargeShake)
     + Math.cos(P.bobP * .5) * Math.min(1, Math.hypot(P.vx, P.vy) / 4) * 1.2;
-  const shakeY = bob + rand(-1, 1) * prox * 2;
+  const shakeY = bob + rand(-1, 1) * prox * 2 + rand(-1, 1) * hitShake * .65;
   ctx.save(); ctx.translate(shakeX, shakeY);
   drawFloor();
   castWalls();
@@ -2876,7 +3130,7 @@ function draw() {
   if (cheatWall) things.push({ x: cheatWall[0], y: cheatWall[1], c: cheatSign, h: .24, l: .48 });
   things.push({ kind:'fuse', x:FUSE.x, y:FUSE.y });
   if (rat && ratImage.complete && ratImage.naturalWidth) things.push({ x:rat.x, y:rat.y, c:ratImage, h:.19, l:0, rat:true });
-  if (owen && owen.active && owenImage.complete && owenImage.naturalWidth) things.push({ x:owen.x, y:owen.y, c:owenImage, h:owen.h, l:owen.lift, owen:true });
+  if (owen && owen.active && owenImage.complete && owenImage.naturalWidth) things.push({ x:owen.x, y:owen.y, c:owenImage, h:owen.h * (owen.phase === 'windup' ? 1.08 : owen.phase === 'charge' ? 1.16 : 1), l:owen.lift, owen:true });
   if (BATTERY.active) things.push({ x: BATTERY.x, y: BATTERY.y, c: getWorldPickupArt('battery'), h: .42, l: 0, item3d: true });
   for (const item of quarterPickups) if (item.active) things.push({ x: item.x, y: item.y, c: quarterCv, h: .34, l: 0, item3d: true });
   for (const item of droppedItems) if (item.active) things.push({ x: item.x, y: item.y, c: getWorldPickupArt(item.type), h: .42, l: 0, item3d: true });
@@ -2903,53 +3157,65 @@ function draw() {
     if (fxT > 0) { ctx.globalAlpha = fxT * .85; ctx.fillStyle = vig; ctx.fillRect(0, 0, RW, RH); }
     ctx.globalAlpha = 1; }
   if (P.crouchAmount > .01) { ctx.globalAlpha = P.crouchAmount * .78; ctx.fillStyle = stealthVig; ctx.fillRect(0, 0, RW, RH); ctx.globalAlpha = 1; }
-
+  if (owen && owen.phase === 'windup') {
+    ctx.fillStyle = `rgba(115,5,17,${.045 + .055 * (.5 + .5 * Math.sin(t * 19))})`;
+    ctx.fillRect(0, 0, RW, RH);
+  }
+  drawHealthEffects();
 
   drawTorchHud();
   drawInventoryHud();
   if (shotgun) drawWeaponOverlay();
-  // Compact generator status and continuous resource meters.
+  // Minimal HUD: three floating meters, no plates, labels or numeric readouts.
   drawGeneratorHud();
-  const barX = 6, barW = 72, meterY = 161;
-  // Stamina: the orange bonus segment joins the green base segment directly.
+  const healthRatio = clamp(playerHealth / 100, 0, 1);
+  const healthPulse = playerHealth <= 20 ? (.5 + .5 * Math.sin(t * 8.4)) : 0;
+  ctx.save();
+
+  // Health: bottom-left, a compact red strip that becomes more urgent at low HP.
+  const healthX = 8, healthY = 170, healthW = 78;
+  ctx.fillStyle = 'rgba(8,4,6,.56)'; ctx.fillRect(healthX, healthY, healthW, 4);
+  const hpGradient = ctx.createLinearGradient(healthX, 0, healthX + healthW, 0);
+  hpGradient.addColorStop(0, playerHealth <= 20 ? '#7e101d' : '#8e2632');
+  hpGradient.addColorStop(.55, playerHealth <= 20 ? '#d51c35' : '#bf3b48');
+  hpGradient.addColorStop(1, playerHealth <= 20 ? '#ff626c' : '#dd7772');
+  ctx.fillStyle = hpGradient; ctx.fillRect(healthX, healthY, healthW * healthRatio, 4);
+  ctx.fillStyle = `rgba(255,225,225,${.12 + healthRatio * .22 + healthPulse * .16})`;
+  ctx.fillRect(healthX, healthY, healthW * healthRatio, 1);
+  if (playerHealth <= 20) {
+    ctx.fillStyle = `rgba(255,55,70,${.22 + healthPulse * .35})`;
+    ctx.fillRect(healthX - 1, healthY - 1, healthW * healthRatio + 2, 1);
+  }
+
+  // Stamina and blink/focus: bottom-right, represented only by clean meter lines.
+  const barX = 238, barW = 62;
   const energyMax = 100 + Math.max(0, P.energyBonus);
   const staminaBaseSlot = barW * (100 / energyMax);
   const staminaBonusSlot = barW - staminaBaseSlot;
-  ctx.fillStyle = 'rgba(0,0,0,.68)'; ctx.fillRect(barX, meterY, barW, 4);
   const staminaBaseFill = staminaBaseSlot * clamp(Math.min(P.stam, 100) / 100, 0, 1);
-  ctx.fillStyle = P.tired ? '#c64b45' : '#4c6';
-  ctx.fillRect(barX, meterY + 1, staminaBaseFill, 2);
+  ctx.fillStyle = P.tired ? '#c64b45' : '#70bf83';
+  ctx.fillRect(barX, 164, staminaBaseFill, 3);
   if (P.energyBonus > .01 && P.stam > 100) {
     const staminaBonusFill = staminaBonusSlot * clamp((P.stam - 100) / P.energyBonus, 0, 1);
-    ctx.fillStyle = '#e8a43a';
-    ctx.fillRect(barX + staminaBaseSlot, meterY + 1, staminaBonusFill, 2);
+    ctx.fillStyle = '#e8a43a'; ctx.fillRect(barX + staminaBaseSlot, 164, staminaBonusFill, 3);
   }
 
-  // Eye drops extend the same bar instead of reserving a permanently empty tail.
   const eyeBaseInterval = 8;
   const eyeTotalInterval = eyeBaseInterval + Math.max(0, P.eyeBonus);
   const eyeBaseSlot = barW * eyeBaseInterval / eyeTotalInterval;
   const eyeBonusSlot = barW - eyeBaseSlot;
   const eyeRemaining = clamp(1 - P.bm, 0, 1);
-  ctx.fillStyle = 'rgba(0,0,0,.68)'; ctx.fillRect(barX, 168, barW, 4);
-  ctx.fillStyle = P.bm > .8 ? '#e33' : '#6af';
-  ctx.fillRect(barX, 169, eyeBaseSlot * eyeRemaining, 2);
-  if (P.eyeBonus > .01) {
-    ctx.fillStyle = '#b58bff';
-    ctx.fillRect(barX + eyeBaseSlot, 169, eyeBonusSlot * eyeRemaining, 2);
-  }
-  // A clearer almond-shaped eye icon with an iris, pupil and highlight.
-  ctx.save();
-  ctx.lineWidth = .8; ctx.strokeStyle = '#7faec8'; ctx.fillStyle = '#d9f1fa';
-  ctx.beginPath(); ctx.moveTo(78.5, 170); ctx.bezierCurveTo(81, 165.5, 87, 165.5, 89.5, 170); ctx.bezierCurveTo(87, 174.5, 81, 174.5, 78.5, 170); ctx.closePath(); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = '#62b7e9'; ctx.beginPath(); ctx.arc(84, 170, 2.8, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#172330'; ctx.beginPath(); ctx.arc(84, 170, 1.35, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#fff'; ctx.fillRect(83, 168.8, 1, 1);
+  ctx.fillStyle = P.bm > .8 ? '#db454b' : '#69bce8';
+  ctx.fillRect(barX, 172, eyeBaseSlot * eyeRemaining, 3);
+  if (P.eyeBonus > .01) { ctx.fillStyle = '#b58bff'; ctx.fillRect(barX + eyeBaseSlot, 172, eyeBonusSlot * eyeRemaining, 3); }
+  ctx.strokeStyle = 'rgba(190,225,238,.8)'; ctx.lineWidth = .8;
+  ctx.beginPath(); ctx.moveTo(305, 173.5); ctx.bezierCurveTo(307, 170, 312, 170, 314, 173.5); ctx.bezierCurveTo(312, 177, 307, 177, 305, 173.5); ctx.stroke();
+  ctx.fillStyle = '#83c8eb'; ctx.beginPath(); ctx.arc(309.5, 173.5, 1.7, 0, Math.PI * 2); ctx.fill();
   ctx.restore();
   if (L.st === 'chase' && L.sees && !L.watching && closure() < .5 && Math.abs(L.rel) > Math.atan(P.fov) * .9) { const sd = L.rel > 0 ? 1 : -1, ax = sd > 0 ? RW - 6 : 6; ctx.fillStyle = '#e22'; ctx.beginPath(); ctx.moveTo(ax, RH / 2); ctx.lineTo(ax - sd * 12, RH / 2 - 9); ctx.lineTo(ax - sd * 12, RH / 2 + 9); ctx.fill(); }
   if ((near && !fixing) || (nearFuse && !panelOpen) || nearBattery || nearQuarterPickup) {
     ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(RW / 2, 130, 8, 0, 7); ctx.fill(); txt('E', RW / 2, 134, 11, '#ffe14d');
-    if (nearBattery) { const pickupName = ({battery:'BATTERY',energy:'ENERGY BAR',eyedrops:'EYE DROPS',bsoda:'BSODA',pewpew:'PEW PEW',quarter:'QUARTER'})[nearBatteryPickup.type || 'battery'] || 'ITEM'; txt('PICK UP ' + pickupName, RW / 2, 145, 7, '#aaf2a0'); }
+    if (nearBattery) { const pickupName = ({battery:'BATTERY',energy:'ENERGY BAR',eyedrops:'EYE DROPS',bandages:'BANDAGES',chair:'WOODEN CHAIR',bsoda:'BSODA',pewpew:'PEW PEW',quarter:'QUARTER'})[nearBatteryPickup.type || 'battery'] || 'ITEM'; txt('PICK UP ' + pickupName, RW / 2, 145, 7, '#aaf2a0'); }
     else if (nearQuarterPickup) txt('PICK UP QUARTER', RW / 2, 145, 7, '#e8c66d');
   }
   if (nearVendingMachine && nearVendingMachine.state === 'ready' && nearVendingMachine.stock?.length) {
@@ -2957,7 +3223,7 @@ function draw() {
     txt(slot && slot.type === 'quarter' ? 'LMB INSERT QUARTER' : 'SELECT A QUARTER · LMB', RW / 2, 155, 7, '#ffe14d');
   }
   if (fixing) bar(RW / 2 - 40, 114, 80, 5, fixing.p, '#ffe14d');
-  if (msgT > 0) txt(msg, RW / 2, 165, 10, '#fff');
+  if (msgT > 0) txt(msg, RW / 2, 148, 10, '#fff');
   if (speechCaptionTimer > 0 && state === 'play') { txt(speechCaption, RW / 2, 133, 8, '#fff'); }
 
   if (panelOpen) drawPanel();
@@ -3054,7 +3320,7 @@ addEventListener('keydown', e => {
   if (action === 'drop' && state === 'play' && !panelOpen) { dropSelectedInventoryItem(); keys[e.code] = false; return; }
   if (action === 'blink' && state === 'play' && !panelOpen && P.blinkT < 0) blink(false);
   if (action === 'interact' && state === 'play' && !panelOpen) {
-    if (nearBatteryPickup && collectWorldItem(nearBatteryPickup, ({battery:'BATTERY',energy:'ENERGY BAR',eyedrops:'EYE DROPS',bsoda:'BSODA',pewpew:'PEW PEW'})[nearBatteryPickup.type || 'battery'] || 'ITEM')) {
+    if (nearBatteryPickup && collectWorldItem(nearBatteryPickup, ({battery:'BATTERY',energy:'ENERGY BAR',eyedrops:'EYE DROPS',bandages:'BANDAGES',chair:'WOODEN CHAIR',bsoda:'BSODA',pewpew:'PEW PEW'})[nearBatteryPickup.type || 'battery'] || 'ITEM')) {
       keys[e.code] = false; return;
     }
     if (nearQuarterPickup && collectWorldItem(nearQuarterPickup, 'QUARTER')) { keys[e.code] = false; return; }
