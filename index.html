@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Lars Simulator v0.52</title>
+<title>Lars Simulator v0.53</title>
 <style>
 :root{--yellow:#ffe14d;--red:#c4160a;--ink:#111;color-scheme:dark}
 *{box-sizing:border-box}
@@ -378,38 +378,107 @@ const IMG = {};
 for (const k in FR) { const im = new Image(); im.onload = () => IMG[k] = im; im.src = FR[k]; }
 const larsC = document.createElement('canvas'); larsC.width = larsC.height = 256;
 const lc = larsC.getContext('2d');
-function larsFrame() {
-  lc.clearRect(0, 0, 256, 256);
-  const f = seenT > 0 ? 'flash' : (L.st === 'chase' && L.d < 9 ? 'near' : 'idle');
-  if (L.knocked && IMG.idle) {
-    // The cheat-code hit is deliberately arcade-like: Lars tips over, with no graphic detail.
-    const fall = clamp(L.knockT / .42, 0, 1);
-    lc.save(); lc.translate(128, 128); lc.rotate(fall * Math.PI / 2);
-    lc.drawImage(IMG.idle, -128, -128, 256, 256); lc.restore();
-    return;
+
+/* ---------- Classic Lars: an image-built articulated puppet ----------
+   Body sections are cut from the supplied transparent PNG at runtime.
+   This is a deliberately rough 2.5D puppet for the existing billboard renderer. */
+const LarsPuppet = { image: new Image(), ready: false, parts: Object.create(null) };
+LarsPuppet.image.onload = buildLarsPuppetParts;
+LarsPuppet.image.src = 'assets/characters/lars%20polygon.png';
+
+function buildLarsPuppetParts() {
+  const img=LarsPuppet.image;
+  if(!img.naturalWidth||!img.naturalHeight)return;
+  const defs=[
+    {name:'leftLeg',pivot:[184,500],points:[[128,478],[155,483],[184,499],[210,523],[221,577],[104,577],[99,552],[112,519]]},
+    {name:'rightLeg',pivot:[252,500],points:[[208,493],[239,482],[277,484],[316,501],[353,531],[390,577],[220,577],[218,544]]},
+    {name:'leftArm',pivot:[145,337],points:[[151,287],[125,297],[94,313],[62,331],[34,354],[12,385],[0,417],[0,478],[9,510],[31,526],[60,521],[86,502],[110,480],[132,454],[148,421],[160,380],[164,341]]},
+    {name:'torso',pivot:[218,405],points:[[153,285],[174,293],[192,306],[215,311],[244,302],[268,289],[296,291],[317,307],[328,347],[337,408],[350,476],[341,511],[317,530],[280,536],[240,527],[202,533],[164,525],[139,508],[130,470],[133,409],[137,349]]},
+    {name:'rightArm',pivot:[291,329],points:[[282,287],[311,292],[341,313],[364,347],[386,392],[404,441],[423,492],[423,535],[405,562],[374,568],[350,550],[329,518],[309,476],[292,432],[277,381],[272,333]]},
+    {name:'head',pivot:[218,291],points:[[127,230],[130,188],[143,160],[165,140],[194,129],[229,132],[263,145],[291,168],[307,197],[311,231],[303,258],[286,281],[265,296],[239,306],[207,306],[177,296],[151,281],[136,259]]}
+  ];
+  const parts=Object.create(null);
+  for(const def of defs){
+    const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;
+    const p=c.getContext('2d');p.save();p.beginPath();
+    def.points.forEach(([x,y],i)=>i?p.lineTo(x,y):p.moveTo(x,y));
+    p.closePath();p.clip();p.drawImage(img,0,0);p.restore();
+    parts[def.name]={canvas:c,pivot:def.pivot};
   }
-  if (IMG[f]) {
-    const stride = Math.sin(L.gait);
-    lc.save();
-    lc.translate(128, 128 - Math.abs(stride) * 1.8);
-    lc.rotate(stride * .008);
-    lc.drawImage(IMG[f], -128, -128, 256, 256);
-    lc.restore();
+  LarsPuppet.parts=parts;LarsPuppet.ready=true;
+}
+function drawLarsPuppet(){
+  if(!LarsPuppet.ready)return false;
+  const img=LarsPuppet.image,scale=240/img.naturalHeight;
+  const ox=(256-img.naturalWidth*scale)*.5,oy=7;
+  const stride=Math.sin(L.gait||0);
+  const moving=L.knockback?1:L.st==='chase'?1:L.st==='sleep'?.08:.42;
+  const lazy=Math.sin(t*2.6+(L.gait||0)*.18);
+  const ragEnergy=L.knocked?Math.exp(-L.knockT*1.45):(L.knockback ? .86 : 0);
+  const ragWobble=Math.sin((L.knocked?L.knockT:t)*19)*ragEnergy;
+  lc.save();lc.translate(ox,oy);lc.scale(scale,scale);
+  lc.save();lc.globalAlpha=.26;lc.fillStyle='#000';lc.beginPath();lc.ellipse(216,559,118,12,0,0,Math.PI*2);lc.fill();lc.restore();
+  if(L.knocked){
+    const fall=clamp(L.knockT/.40,0,1);
+    lc.translate(216,557+fall*13);lc.rotate(fall*1.18);lc.translate(-216,-557);
+  }else if(L.knockback){
+    lc.translate(216,557);lc.rotate(.20+Math.sin(t*12)*.045);lc.translate(-216,-557);
   }
-  if (!power && !L.knocked) {
-    lc.save(); lc.globalCompositeOperation = 'lighter';
-    for (const [ex, ey] of [[87, 130], [171, 130]]) {
-      const glow = lc.createRadialGradient(ex, ey, 1, ex, ey, 15);
-      glow.addColorStop(0, 'rgba(255,245,190,.95)');
-      glow.addColorStop(.22, 'rgba(255,214,112,.72)');
-      glow.addColorStop(1, 'rgba(255,150,45,0)');
-      lc.fillStyle = glow; lc.beginPath(); lc.ellipse(ex, ey, 15, 9, 0, 0, Math.PI * 2); lc.fill();
-      lc.fillStyle = '#fff5c4'; lc.beginPath(); lc.ellipse(ex, ey, 3.2, 2.2, 0, 0, Math.PI * 2); lc.fill();
+  const drawPart=(name,angle,dx=0,dy=0)=>{
+    const part=LarsPuppet.parts[name];if(!part)return;
+    const [px,py]=part.pivot;lc.save();lc.translate(px+dx,py+dy);
+    lc.rotate(angle);lc.translate(-px,-py);
+    lc.filter='brightness(.16) saturate(.35)';
+    for(let d=4;d>=1;d--){lc.globalAlpha=.19;lc.drawImage(part.canvas,d*1.8,d*.85);}
+    lc.globalAlpha=1;lc.filter='none';lc.drawImage(part.canvas,0,0);lc.restore();
+  };
+  const headTilt=L.knocked?(-.38+ragWobble*.42):(L.knockback ? .28+ragWobble*.36 : -.10*stride*moving+lazy*.045);
+  const torsoTilt=L.knocked?(.10+ragWobble*.10):(L.knockback ? -.16+ragWobble*.10 : stride*.025*moving+lazy*.018);
+  let leftArm=stride*.78*moving+Math.sin(t*3.1)*.07;
+  let rightArm=-stride*.72*moving-Math.sin(t*2.8)*.06;
+  let leftLeg=-stride*.42*moving,rightLeg=stride*.42*moving,headY=lazy*2.2;
+  if(L.knocked){
+    leftArm=-1.24+ragWobble*.72;rightArm=1.55-ragWobble*.82;
+    leftLeg=.98+ragWobble*.88;rightLeg=-.82-ragWobble*.74;headY+=3+ragEnergy*3;
+  }else if(L.knockback){
+    leftArm=-1.05+ragWobble*.85;rightArm=1.30-ragWobble*.92;
+    leftLeg=.82+ragWobble*.9;rightLeg=-.72-ragWobble*.8;headY+=ragWobble*3;
+  }
+  drawPart('leftLeg',leftLeg);drawPart('rightLeg',rightLeg);drawPart('leftArm',leftArm);
+  drawPart('torso',torsoTilt);drawPart('rightArm',rightArm);drawPart('head',headTilt,0,headY);
+  lc.restore();return true;
+}
+function larsFrame(){
+  lc.clearRect(0,0,256,256);
+  const f=seenT>0?'flash':(L.st==='chase'&&L.d<9?'near':'idle');
+  const puppetMode=selectedGameMode==='Classic'&&selectedMode!=='lore'&&LarsPuppet.ready;
+  if(puppetMode)drawLarsPuppet();
+  else if(L.knocked&&IMG.idle){
+    const fall=clamp(L.knockT/.42,0,1);
+    lc.save();lc.translate(128,128);lc.rotate(fall*Math.PI/2);
+    lc.drawImage(IMG.idle,-128,-128,256,256);lc.restore();
+  }else if(IMG[f]){
+    const stride=Math.sin(L.gait);lc.save();
+    lc.translate(128,128-Math.abs(stride)*1.8);lc.rotate(stride*.008);
+    lc.drawImage(IMG[f],-128,-128,256,256);lc.restore();
+  }
+  if(!power&&!L.knocked){
+    lc.save();lc.globalCompositeOperation='lighter';
+    const eyes=puppetMode?[[117,91],[139,91]]:[[87,130],[171,130]];
+    for(const [ex,ey] of eyes){
+      const glow=lc.createRadialGradient(ex,ey,1,ex,ey,15);
+      glow.addColorStop(0,'rgba(255,245,190,.95)');
+      glow.addColorStop(.22,'rgba(255,214,112,.72)');
+      glow.addColorStop(1,'rgba(255,150,45,0)');
+      lc.fillStyle=glow;lc.beginPath();lc.ellipse(ex,ey,15,9,0,0,Math.PI*2);lc.fill();
+      lc.fillStyle='#fff5c4';lc.beginPath();lc.ellipse(ex,ey,3.2,2.2,0,0,Math.PI*2);lc.fill();
     }
     lc.restore();
   }
-  if (L.st === 'sleep') { lc.font = 'bold 30px Impact, sans-serif'; lc.fillStyle = '#fff'; lc.strokeStyle = '#000'; lc.lineWidth = 5;
-    lc.strokeText('z z z', 150, 36); lc.fillText('z z z', 150, 36); }
+  if(L.st==='sleep'){
+    lc.font='bold 30px Impact,sans-serif';lc.fillStyle='#fff';lc.strokeStyle='#000';lc.lineWidth=5;
+    lc.strokeText('z z z',150,36);lc.fillText('z z z',150,36);
+  }
 }
 function mk(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return [c, c.getContext('2d')]; }
 const rr = (c, x, y, w, h, col) => { c.fillStyle = col; c.fillRect(x, y, w, h); };
