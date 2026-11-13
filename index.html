@@ -379,10 +379,10 @@ for (const k in FR) { const im = new Image(); im.onload = () => IMG[k] = im; im.
 const larsC = document.createElement('canvas'); larsC.width = larsC.height = 256;
 const lc = larsC.getContext('2d');
 
-/* ---------- Lars 3D model ----------
-   Real low-poly geometry, projected into the existing raycaster billboard.
-   Only the face crop is sampled from the reference photograph; the seated
-   pose and bottle are intentionally not used. All limbs are separate meshes. */
+/* ---------- HUSSROOMS Lars: textured low-poly 3D model ----------
+   A chunky, separate-part 3D mesh projected into the raycaster billboard.
+   Face, jacket, sleeves and trousers use cropped textures from the original
+   Lars photo. The seated pose is reconstructed in geometry; the bottle is omitted. */
 const Lars3D = { photo:new Image(), photoReady:false };
 Lars3D.photo.onload=()=>{Lars3D.photoReady=true;};
 Lars3D.photo.src='assets/characters/lars%20polygon.png';
@@ -500,8 +500,8 @@ function drawLars3D(){
     const hip=[side*.22,1.42,.12];
     const knee=[side*.43,.92,.52];
     const ankle=[side*.46,.22,.60];
-    const legSwing=stride*(side===-1?1:-1)*.08+wobble*(side===-1?1.2:-1.1);
-    const kneeMove=[knee[0]+legSwing*.10,knee[1]+(L.knocked?-.10:0),knee[2]];
+    const legSwing=stride*(side===-1?1:-1)*.12+wobble*(side===-1?1.8:-1.6);
+    const kneeMove=[knee[0]+legSwing*.18,knee[1]+(L.knocked?-.10+wobble*.18:0),knee[2]];
     addSegment(hip,kneeMove,.22,.19,'#24262a',[180,474,190,92]);
     addEllipsoid(kneeMove,[.20,.17,.18],'#25272a',0,8,5);
     addSegment(kneeMove,ankle,.15,.15,'#202226',[190,485,175,78]);
@@ -528,9 +528,9 @@ function drawLars3D(){
     const shoulder=[side*.48,2.40,.02];
     const elbow=[side*.67,1.98,.17];
     const hand=[side*.47,1.58,.48];
-    const armSwing=stride*(side===-1?1:-1)*.12+wobble*(side===-1?1.4:-1.4);
-    const elbow2=[elbow[0]+armSwing*.10,elbow[1]+(L.knocked?-.13:0),elbow[2]];
-    const hand2=[hand[0]+armSwing*.18,hand[1]+(L.knocked?-.15:0),hand[2]];
+    const armSwing=stride*(side===-1?1:-1)*.18+wobble*(side===-1?1.8:-1.8);
+    const elbow2=[elbow[0]+armSwing*.20,elbow[1]+(L.knocked?wobble*.18:L.knockback?wobble*.14:0),elbow[2]];
+    const hand2=[hand[0]+armSwing*.34,hand[1]+(L.knocked?wobble*.42:L.knockback?wobble*.34:0),hand[2]+(L.knocked?Math.abs(wobble)*.10:0)];
     addSegment(shoulder,elbow2,.17,.16,'#202328',[280,315,92,150]);
     addEllipsoid(elbow2,[.16,.15,.15],'#202328',0,8,5);
     addSegment(elbow2,hand2,.135,.14,'#1d2024',[282,355,90,140]);
@@ -538,12 +538,14 @@ function drawLars3D(){
   }
 
   // Head: a faceted 3D volume, with a photographic face decal projected onto it.
-  addEllipsoid([0,2.58,.015],[.16,.22,.16],'#d9a07f',0,8,5);
-  addEllipsoid([0,2.98,.015],[.39,.49,.30],'#c58e6d',0,12,7);
-  addEllipsoid([0,3.22,-.015],[.405,.25,.30],'#78543a',-.035,10,5);
-  addEllipsoid([-.31,3.04,.015],[.105,.27,.28],'#805638',-.15,8,5);
-  addEllipsoid([.31,3.04,.015],[.105,.25,.28],'#805638',.14,8,5);
-  addTexturedFace([0,2.99,.015],[.39,.49,.30],[137,141,170,166]);
+  const headTilt=Math.sin(t*2.4)*.055+wobble*.26;
+  const headX=wobble*.045, headY=2.98+Math.sin(t*3.1)*.014;
+  addEllipsoid([headX,2.58,.015],[.16,.22,.16],'#d9a07f',headTilt,8,5);
+  addEllipsoid([headX,headY,.015],[.39,.49,.30],'#c58e6d',headTilt,12,7);
+  addEllipsoid([headX,3.22,-.015],[.405,.25,.30],'#78543a',headTilt-.035,10,5);
+  addEllipsoid([headX-.31,3.04,.015],[.105,.27,.28],'#805638',headTilt-.15,8,5);
+  addEllipsoid([headX+.31,3.04,.015],[.105,.25,.28],'#805638',headTilt+.14,8,5);
+  addTexturedFace([headX,headY,.015],[.39,.49,.30],[137,141,170,166]);
 
   // Deliberately crude secondary motion, then loose limbs when knocked down.
   if(L.knocked){
