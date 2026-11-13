@@ -411,9 +411,10 @@ function drawLarsPuppet(){
   if(!LarsPuppet.ready)return false;
   const img=LarsPuppet.image,scale=240/img.naturalHeight;
   const ox=(256-img.naturalWidth*scale)*.5,oy=7;
-  const stride=Math.sin(L.gait||0);
   const moving=L.knockback?1:L.st==='chase'?1:L.st==='sleep'?.08:.42;
-  const lazy=Math.sin(t*2.6+(L.gait||0)*.18);
+  const gaitPhase=(L.gait||0)+t*(L.knockback?0:L.st==='chase'?8:L.st==='sleep'?.35:3.2);
+  const stride=Math.sin(gaitPhase);
+  const lazy=Math.sin(t*2.6+gaitPhase*.18);
   const ragEnergy=L.knocked?Math.exp(-L.knockT*1.45):(L.knockback ? .86 : 0);
   const ragWobble=Math.sin((L.knocked?L.knockT:t)*19)*ragEnergy;
   lc.save();lc.translate(ox,oy);lc.scale(scale,scale);
